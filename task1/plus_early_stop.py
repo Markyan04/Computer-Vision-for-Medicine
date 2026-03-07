@@ -37,6 +37,49 @@ from sklearn.metrics import (
     average_precision_score,
 )
 
+
+# early stop
+class EarlyStopping:
+    def __init__(self, patience=7, delta=0.0, save_path="isic_resnet50_best_model.pt"):
+        """
+        :param patience: 容忍多少个 epoch 没有提升就停止训练
+        :param delta: 提升的最小阈值
+        :param save_path: 最佳模型的保存路径
+        """
+        self.patience = patience
+        self.delta = delta
+        self.best_score = None  # 注意：这里改成了 score，因为我们要监控 macro_f1
+        self.num_bad_epochs = 0
+        self.early_stop = False
+        self.save_path = save_path
+
+        # 确保保存目录存在
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
+
+    def __call__(self, score, model):
+        if self.best_score is None:
+            # 首次调用：直接保存
+            self.best_score = score
+            torch.save(model.state_dict(), self.save_path)
+            print(f"✅ Initial model saved to {self.save_path} (macro_f1={score:.4f})")
+
+        # 注意这里的改动：因为是 F1 分数，所以是“大于”才算有提升
+        elif score > self.best_score + self.delta:
+            # 验证集有改善：更新并保存
+            self.best_score = score
+            self.num_bad_epochs = 0
+            torch.save(model.state_dict(), self.save_path)
+            print(f"✅ Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
+        else:
+            # 验证集无改善：计数+1
+            self.num_bad_epochs += 1
+            print(f"⚠️ No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+
+        if self.num_bad_epochs >= self.patience:
+            self.early_stop = True
+            print("⏹️ Early stopping triggered.")  # 触发早停
+
+
 # -----------------------
 # Reproducibility
 # -----------------------
@@ -94,6 +137,7 @@ class ISICDataset(data.Dataset):
 
 class TransformSubset(data.Dataset):
     """Subset wrapper allowing different transforms on the same underlying dataset samples."""
+
     def __init__(self, base_dataset: ISICDataset, indices, transform=None):
         self.base = base_dataset
         self.indices = list(indices)
@@ -220,7 +264,7 @@ def calculate_topk_accuracy(logits, y, ks=(1, 3)):
 
         max_k = max(ks)
         _, top_pred = logits.topk(max_k, dim=1)  # [B, max_k]
-        top_pred = top_pred.t()                  # [max_k, B]
+        top_pred = top_pred.t()  # [max_k, B]
         correct = top_pred.eq(y.view(1, -1).expand_as(top_pred))  # [max_k, B]
 
         out = {}
@@ -433,12 +477,12 @@ def main():
 
     train_dataset = TransformSubset(base_dataset, train_idx, transform=train_tf)
     valid_dataset = TransformSubset(base_dataset, valid_idx, transform=test_tf)
-    test_dataset  = TransformSubset(base_dataset, test_idx,  transform=test_tf)
+    test_dataset = TransformSubset(base_dataset, test_idx, transform=test_tf)
 
     BATCH_SIZE = 32
     train_loader = data.DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
     valid_loader = data.DataLoader(valid_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
-    test_loader  = data.DataLoader(test_dataset,  batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
+    test_loader = data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
 
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
 
@@ -474,7 +518,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss().to(device)
 
-    EPOCHS = 10
+    EPOCHS = 20
     steps_per_epoch = len(train_loader)
     total_steps = EPOCHS * steps_per_epoch
     max_lrs = [g["lr"] for g in optimizer.param_groups]
@@ -484,7 +528,9 @@ def main():
     TOPK = (1, 3)
 
     best_valid_macro_f1 = -1.0
-    best_path = "isic_resnet50_model.pt"
+    best_path = "isic_resnet50_model_early.pt"
+    # 这里我们把 patience 设为 5，也就是如果连续 5 个 epoch 的 F1 分数都不涨，就提前结束
+    early_stopping = EarlyStopping(patience=5, delta=0.0004, save_path=best_path)
 
     print("Starting training...")
     for epoch in range(EPOCHS):
@@ -497,20 +543,24 @@ def main():
             model, valid_loader, criterion, device, num_classes, class_names, topk=TOPK
         )
 
-        # Save by macro F1 (better for imbalance than acc)
-        if valid_metrics["macro_f1"] > best_valid_macro_f1:
-            best_valid_macro_f1 = valid_metrics["macro_f1"]
-            torch.save(model.state_dict(), best_path)
-
         end_time = time.time()
         m, s = epoch_time(start_time, end_time)
 
-        print(f"Epoch {epoch+1:02}/{EPOCHS} | Time {m}m{s}s")
-        print(f"  Train | loss={train_loss:.4f} | top1={train_top['top1']*100:.2f}% | top3={train_top['top3']*100:.2f}%")
-        print(f"  Valid | loss={valid_loss:.4f} | top1={valid_top['top1']*100:.2f}% | top3={valid_top['top3']*100:.2f}% "
-              f"| bal_acc={valid_metrics['balanced_acc']*100:.2f}% | macro_f1={valid_metrics['macro_f1']:.4f} | weighted_f1={valid_metrics['weighted_f1']:.4f}")
-        if valid_metrics["ovr_roc_auc_macro"] is not None:
-            print(f"         ovr_roc_auc_macro={valid_metrics['ovr_roc_auc_macro']:.4f} | ovr_pr_auc_macro={valid_metrics['ovr_pr_auc_macro']:.4f}")
+        print(f"\nEpoch {epoch + 1:02}/{EPOCHS} | Time {m}m{s}s")
+        print(
+            f"  Train | loss={train_loss:.4f} | top1={train_top['top1'] * 100:.2f}% | top3={train_top['top3'] * 100:.2f}%")
+        print(
+            f"  Valid | loss={valid_loss:.4f} | top1={valid_top['top1'] * 100:.2f}% | top3={valid_top['top3'] * 100:.2f}% "
+            f"| bal_acc={valid_metrics['balanced_acc'] * 100:.2f}% | macro_f1={valid_metrics['macro_f1']:.4f}")
+
+        # === 新增：调用早停机制 ===
+        # 传入当前的 macro_f1 分数和当前模型
+        early_stopping(valid_metrics["macro_f1"], model)
+
+        # 如果触发了早停条件，直接跳出 for 循环结束训练
+        if early_stopping.early_stop:
+            print(f"🛑 Training stopped early at epoch {epoch + 1} to prevent overfitting.")
+            break
 
     # Test
     print("\nLoading best model and evaluating on test set...")
@@ -520,11 +570,12 @@ def main():
         model, test_loader, criterion, device, num_classes, class_names, topk=TOPK
     )
 
-    print(f"\nTest | loss={test_loss:.4f} | top1={test_top['top1']*100:.2f}% | top3={test_top['top3']*100:.2f}% "
-          f"| acc={test_metrics['acc']*100:.2f}% | bal_acc={test_metrics['balanced_acc']*100:.2f}% | macro_f1={test_metrics['macro_f1']:.4f} | weighted_f1={test_metrics['weighted_f1']:.4f}")
+    print(f"\nTest | loss={test_loss:.4f} | top1={test_top['top1'] * 100:.2f}% | top3={test_top['top3'] * 100:.2f}% "
+          f"| acc={test_metrics['acc'] * 100:.2f}% | bal_acc={test_metrics['balanced_acc'] * 100:.2f}% | macro_f1={test_metrics['macro_f1']:.4f} | weighted_f1={test_metrics['weighted_f1']:.4f}")
 
     if test_metrics["ovr_roc_auc_macro"] is not None:
-        print(f"     ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f} | ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}")
+        print(
+            f"     ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f} | ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}")
 
     print("\nConfusion Matrix:\n", test_metrics["confusion_matrix"])
     print("\nClassification Report:\n", test_metrics["classification_report"])

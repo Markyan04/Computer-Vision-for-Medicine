@@ -1,0 +1,12 @@
+.idea/
+
+
+data/
+datasets/
+*.pth
+*.pt
+*.h5
+*.ckpt
+
+Learning/
+ISIC/
