@@ -135,8 +135,8 @@ class MDFA(nn.Module):
         channel_refined = feature_cat * ca
         spatial_refined = feature_cat * sa
 
-        # 图里是 Add，不是 max
-        fused = channel_refined + spatial_refined
+        # 图里是 Add
+        fused = channel_refined + spatial_refined + feature_cat
 
         # 最终输出
         out = self.conv_out(fused)
