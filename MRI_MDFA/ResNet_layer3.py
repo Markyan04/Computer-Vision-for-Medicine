@@ -2,29 +2,32 @@
 # -*- coding: utf-8 -*-
 
 """
-Chest X-ray Pneumonia Baseline using ResNet50
-Directory structure:
+Brain Tumor MRI Baseline using ResNet50 + MDFA(after layer3)
+
+Dataset structure:
 dataset_root/
-├── train/
-│   ├── NORMAL/
-│   └── PNEUMONIA/
-├── val/
-│   ├── NORMAL/
-│   └── PNEUMONIA/
-└── test/
-    ├── NORMAL/
-    └── PNEUMONIA/
+├── Training/
+│   ├── glioma_tumor/
+│   ├── meningioma_tumor/
+│   ├── no_tumor/
+│   └── pituitary_tumor/
+└── Testing/
+    ├── glioma_tumor/
+    ├── meningioma_tumor/
+    ├── no_tumor/
+    └── pituitary_tumor/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- Use official train / val / test split directly
+- MDFA inserted after layer3
+- Split validation set from Training directory
 - Weighted CrossEntropyLoss for class imbalance
 - Top-1 / Top-2 accuracy
 - Accuracy / Balanced Accuracy
 - Macro / Weighted F1
 - Macro Precision / Macro Recall
 - Confusion Matrix / Classification Report
-- Binary ROC-AUC / PR-AUC
+- Multi-class ROC-AUC / PR-AUC (OvR macro)
 - Early Stopping based on validation macro_f1
 """
 
@@ -34,15 +37,19 @@ import random
 import warnings
 
 import numpy as np
+from PIL import Image
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.transforms as transforms
 import torchvision.models as models
-
 from torchvision.datasets import ImageFolder
+
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -59,17 +66,17 @@ warnings.filterwarnings("ignore")
 
 
 # =======================
-# Early Stopping (双指标：macro_f1 优先，val_loss 兜底)
+# Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=7, delta=0.0, loss_delta=1e-4, save_path="best_resnet50.pt"):
+    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4,
+                 save_path="best_resnet50_mdfa_layer3_brain_mri.pt"):
         self.patience = patience
         self.delta = delta
-        self.loss_delta = loss_delta  # loss 改进的判定阈值
+        self.loss_delta = loss_delta
 
-        self.best_score = None  # 记录最好的 macro_f1
-        self.best_loss = None  # 记录对应的 val_loss
-
+        self.best_score = None
+        self.best_loss = None
         self.num_bad_epochs = 0
         self.early_stop = False
         self.save_path = save_path
@@ -79,27 +86,23 @@ class EarlyStopping:
             os.makedirs(save_dir, exist_ok=True)
 
     def __call__(self, score, val_loss, model):
-        # 初始化第一轮
         if self.best_score is None:
             self.best_score = score
             self.best_loss = val_loss
             self.save_checkpoint(score, val_loss, model, is_initial=True)
 
-        # 1. 优先判断 macro_f1 是否提升
         elif score > self.best_score + self.delta:
             self.best_score = score
             self.best_loss = val_loss
             self.num_bad_epochs = 0
             self.save_checkpoint(score, val_loss, model, msg="Validation macro_f1 improved.")
 
-        # 2. 如果 macro_f1 没变（或者变化微小），判断 val_loss 是否下降
         elif abs(score - self.best_score) <= self.delta and val_loss < self.best_loss - self.loss_delta:
             self.best_score = score
             self.best_loss = val_loss
             self.num_bad_epochs = 0
             self.save_checkpoint(score, val_loss, model, msg="Validation loss improved at same macro_f1.")
 
-        # 3. 两个指标都没进步
         else:
             self.num_bad_epochs += 1
             print(f"⚠️ No improvement in metrics. Bad epochs: {self.num_bad_epochs}/{self.patience}")
@@ -130,17 +133,19 @@ torch.backends.cudnn.benchmark = False
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\Pneumonia"  # 改成你的数据集根目录
-TRAIN_DIR = os.path.join(DATA_ROOT, "train")
-VAL_DIR = os.path.join(DATA_ROOT, "val")
-TEST_DIR = os.path.join(DATA_ROOT, "test")
+DATA_ROOT = r"..\MRI"  # 改成你的数据集根目录
+TRAIN_DIR = os.path.join(DATA_ROOT, "Training")
+TEST_DIR = os.path.join(DATA_ROOT, "Testing")
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
 EPOCHS = 30
 
+VAL_RATIO = 0.15
+
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
+LR_MDFA = 5e-4
 WEIGHT_DECAY = 1e-4
 
 NUM_WORKERS = 4
@@ -164,15 +169,8 @@ def epoch_time(start_time, end_time):
     return int(s // 60), int(s % 60)
 
 
-def get_class_weights_from_dataset(dataset, num_classes):
-    """
-    根据训练集类别样本数自动生成 CrossEntropyLoss 的类别权重
-    权重公式：total_samples / (num_classes * class_count)
-    类别越少，权重越大
-    """
-    targets = [label for _, label in dataset.samples]
+def get_class_weights_from_targets(targets, num_classes):
     class_counts = np.bincount(targets, minlength=num_classes)
-
     total_samples = class_counts.sum()
     class_weights = total_samples / (num_classes * class_counts.astype(np.float32))
 
@@ -180,6 +178,189 @@ def get_class_weights_from_dataset(dataset, num_classes):
     print("Class weights:", class_weights.tolist())
 
     return torch.tensor(class_weights, dtype=torch.float32)
+
+
+# =======================
+# Dataset wrapper
+# =======================
+class SubsetImageDataset(data.Dataset):
+    def __init__(self, samples, class_to_idx, transform=None):
+        self.samples = samples
+        self.class_to_idx = class_to_idx
+        self.transform = transform
+        self.targets = [label for _, label in self.samples]
+
+        idx_to_class = {v: k for k, v in class_to_idx.items()}
+        self.classes = [idx_to_class[i] for i in range(len(idx_to_class))]
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        path, label = self.samples[index]
+        img = Image.open(path).convert("RGB")
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, label
+
+
+# =======================
+# MDFA
+# =======================
+class ChannelAttention(nn.Module):
+    def __init__(self, channels, reduction=2):
+        super().__init__()
+        mid_channels = max(1, channels // reduction)
+
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Conv2d(channels, mid_channels, kernel_size=1, bias=True)
+        self.relu = nn.ReLU(inplace=True)
+        self.fc2 = nn.Conv2d(mid_channels, channels, kernel_size=1, bias=True)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        w = self.avg_pool(x)
+        w = self.fc1(w)
+        w = self.relu(w)
+        w = self.fc2(w)
+        w = self.sigmoid(w)
+        return w
+
+
+class SpatialAttention(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = nn.Conv2d(1, 1, kernel_size=1, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_map = torch.mean(x, dim=1, keepdim=True)
+        m = self.conv(avg_map)
+        m = self.sigmoid(m)
+        return m
+
+
+class MDFA(nn.Module):
+    def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1, reduction=2):
+        super(MDFA, self).__init__()
+
+        self.branch1 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+
+        self.branch2 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
+                      padding=6 * rate, dilation=6 * rate, bias=False),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+
+        self.branch3 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
+                      padding=12 * rate, dilation=12 * rate, bias=False),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+
+        self.branch4 = nn.Sequential(
+            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
+                      padding=18 * rate, dilation=18 * rate, bias=False),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+
+        self.branch5_conv = nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, padding=0, bias=False)
+        self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
+        self.branch5_relu = nn.ReLU(inplace=True)
+
+        cat_channels = dim_out * 5
+
+        self.channel_att = ChannelAttention(cat_channels, reduction=reduction)
+        self.spatial_att = SpatialAttention()
+
+        self.conv_out = nn.Sequential(
+            nn.Conv2d(cat_channels, dim_out, kernel_size=1, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(dim_out, momentum=bn_mom),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        b, c, h, w = x.size()
+
+        feat1 = self.branch1(x)
+        feat2 = self.branch2(x)
+        feat3 = self.branch3(x)
+        feat4 = self.branch4(x)
+
+        global_feat = F.adaptive_avg_pool2d(x, output_size=1)
+        global_feat = self.branch5_conv(global_feat)
+        global_feat = self.branch5_bn(global_feat)
+        global_feat = self.branch5_relu(global_feat)
+        global_feat = F.interpolate(global_feat, size=(h, w), mode='bilinear', align_corners=True)
+
+        feature_cat = torch.cat([feat1, feat2, feat3, feat4, global_feat], dim=1)
+
+        ca = self.channel_att(feature_cat)
+        sa = self.spatial_att(feature_cat)
+
+        channel_refined = feature_cat * ca
+        spatial_refined = feature_cat * sa
+
+        fused = channel_refined + spatial_refined + feature_cat
+
+        out = self.conv_out(fused)
+        return out
+
+
+# =======================
+# ResNet50 + MDFA(after layer3)
+# =======================
+class ResNet50_MDFA_Layer3(nn.Module):
+    def __init__(self, num_classes=4, mdfa_reduction=2):
+        super().__init__()
+
+        backbone = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+
+        self.conv1 = backbone.conv1
+        self.bn1 = backbone.bn1
+        self.relu = backbone.relu
+        self.maxpool = backbone.maxpool
+
+        self.layer1 = backbone.layer1
+        self.layer2 = backbone.layer2
+        self.layer3 = backbone.layer3
+
+        # CHANGED: layer3 output channels in ResNet50 is 1024 (layer2 was 512)
+        self.mdfa = MDFA(dim_in=1024, dim_out=1024, reduction=mdfa_reduction)
+
+        self.layer4 = backbone.layer4
+
+        self.avgpool = backbone.avgpool
+        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)  # [B, 64, 112, 112]
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)  # [B, 64, 56, 56]
+
+        x = self.layer1(x)  # [B, 256, 56, 56]
+        x = self.layer2(x)  # [B, 512, 28, 28]
+        x = self.layer3(x)  # [B, 1024, 14, 14]
+
+        # CHANGED: MDFA is now applied after layer3
+        x = self.mdfa(x)  # [B, 1024, 14, 14]
+
+        x = self.layer4(x)  # [B, 2048, 7, 7]
+
+        x = self.avgpool(x)  # [B, 2048, 1, 1]
+        x = torch.flatten(x, 1)
+        x = self.fc(x)  # [B, num_classes]
+        return x
 
 
 # =======================
@@ -220,18 +401,13 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     metrics["pr_auc"] = None
 
     try:
-        if num_classes == 2:
-            pos_prob = y_prob[:, 1]
-            metrics["roc_auc"] = roc_auc_score(y_true, pos_prob)
-            metrics["pr_auc"] = average_precision_score(y_true, pos_prob)
-        else:
-            y_true_oh = np.eye(num_classes)[y_true]
-            metrics["roc_auc"] = roc_auc_score(
-                y_true_oh, y_prob, average="macro", multi_class="ovr"
-            )
-            metrics["pr_auc"] = average_precision_score(
-                y_true_oh, y_prob, average="macro"
-            )
+        y_true_oh = np.eye(num_classes)[y_true]
+        metrics["roc_auc"] = roc_auc_score(
+            y_true_oh, y_prob, average="macro", multi_class="ovr"
+        )
+        metrics["pr_auc"] = average_precision_score(
+            y_true_oh, y_prob, average="macro"
+        )
     except Exception:
         pass
 
@@ -319,21 +495,21 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
 # Main
 # =======================
 def main():
-    print("Starting Chest X-ray Pneumonia ResNet50 Baseline...")
+    print("Starting Brain Tumor MRI ResNet50 + MDFA(after layer3)...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    for d in [TRAIN_DIR, VAL_DIR, TEST_DIR]:
+    for d in [TRAIN_DIR, TEST_DIR]:
         if not os.path.exists(d):
             print(f"Directory not found: {d}")
             return
 
     train_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(5),
+        transforms.RandomRotation(10),
+        transforms.ColorJitter(brightness=0.1, contrast=0.1),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -342,7 +518,6 @@ def main():
     ])
 
     eval_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(
@@ -351,18 +526,33 @@ def main():
         ),
     ])
 
-    train_dataset = ImageFolder(TRAIN_DIR, transform=train_transform)
-    valid_dataset = ImageFolder(VAL_DIR, transform=eval_transform)
-    test_dataset = ImageFolder(TEST_DIR, transform=eval_transform)
+    full_train_dataset = ImageFolder(TRAIN_DIR)
+    test_dataset_raw = ImageFolder(TEST_DIR)
 
-    class_names = train_dataset.classes
+    class_names = full_train_dataset.classes
+    class_to_idx = full_train_dataset.class_to_idx
     num_classes = len(class_names)
 
     print(f"Classes: {class_names}")
-    print(f"Class-to-index: {train_dataset.class_to_idx}")
+    print(f"Class-to-index: {class_to_idx}")
+
+    all_samples = full_train_dataset.samples
+    all_targets = [label for _, label in all_samples]
+
+    train_samples, valid_samples = train_test_split(
+        all_samples,
+        test_size=VAL_RATIO,
+        random_state=SEED,
+        stratify=all_targets,
+    )
+
+    train_dataset = SubsetImageDataset(train_samples, class_to_idx, transform=train_transform)
+    valid_dataset = SubsetImageDataset(valid_samples, class_to_idx, transform=eval_transform)
+    test_dataset = SubsetImageDataset(test_dataset_raw.samples, class_to_idx, transform=eval_transform)
+
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
 
-    class_weights = get_class_weights_from_dataset(train_dataset, num_classes).to(device)
+    class_weights = get_class_weights_from_targets(train_dataset.targets, num_classes).to(device)
 
     train_loader = data.DataLoader(
         train_dataset,
@@ -386,30 +576,31 @@ def main():
         pin_memory=True,
     )
 
-    print("Loading pretrained ResNet50...")
-    weights = models.ResNet50_Weights.DEFAULT
-    model = models.resnet50(weights=weights)
+    print("Loading pretrained ResNet50 + inserting MDFA after layer3...")
 
-    in_features = model.fc.in_features
-    model.fc = nn.Linear(in_features, num_classes)
-    model = model.to(device)
+    # CHANGED: initialize the new Layer3 class
+    model = ResNet50_MDFA_Layer3(num_classes=num_classes).to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
-    # 加权交叉熵：处理类别不平衡
     criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     backbone_params = []
+    mdfa_params = []
     head_params = []
+
     for name, param in model.named_parameters():
-        if "fc" in name:
+        if name.startswith("fc"):
             head_params.append(param)
+        elif name.startswith("mdfa"):
+            mdfa_params.append(param)
         else:
             backbone_params.append(param)
 
     optimizer = optim.AdamW(
         [
             {"params": backbone_params, "lr": LR_BACKBONE},
+            {"params": mdfa_params, "lr": LR_MDFA},
             {"params": head_params, "lr": LR_HEAD},
         ],
         weight_decay=WEIGHT_DECAY,
@@ -418,13 +609,14 @@ def main():
     total_steps = EPOCHS * len(train_loader)
     scheduler = lr_scheduler.OneCycleLR(
         optimizer,
-        max_lr=[LR_BACKBONE, LR_HEAD],
+        max_lr=[LR_BACKBONE, LR_MDFA, LR_HEAD],
         total_steps=total_steps,
         pct_start=0.1,
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_pneumonia.pt"
+    # CHANGED: updated best model save path
+    best_path = "best_resnet50_mdfa_layer3_brain_mri.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -505,7 +697,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nChest X-ray Pneumonia ResNet50 baseline completed!")
+    print("\nBrain Tumor MRI ResNet50 + MDFA(after layer3) completed!")
 
 
 if __name__ == "__main__":

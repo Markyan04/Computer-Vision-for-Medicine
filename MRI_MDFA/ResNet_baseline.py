@@ -2,38 +2,43 @@
 # -*- coding: utf-8 -*-
 
 """
-Chest X-ray Pneumonia Baseline using ResNet50
-Directory structure:
+Brain Tumor MRI Baseline using ResNet50
+
+Dataset structure:
 dataset_root/
-├── train/
-│   ├── NORMAL/
-│   └── PNEUMONIA/
-├── val/
-│   ├── NORMAL/
-│   └── PNEUMONIA/
-└── test/
-    ├── NORMAL/
-    └── PNEUMONIA/
+├── Training/
+│   ├── glioma_tumor/
+│   ├── meningioma_tumor/
+│   ├── no_tumor/
+│   └── pituitary_tumor/
+└── Testing/
+    ├── glioma_tumor/
+    ├── meningioma_tumor/
+    ├── no_tumor/
+    └── pituitary_tumor/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- Use official train / val / test split directly
+- Split validation set from Training directory
 - Weighted CrossEntropyLoss for class imbalance
 - Top-1 / Top-2 accuracy
 - Accuracy / Balanced Accuracy
 - Macro / Weighted F1
 - Macro Precision / Macro Recall
 - Confusion Matrix / Classification Report
-- Binary ROC-AUC / PR-AUC
+- Multi-class ROC-AUC / PR-AUC (OvR macro)
 - Early Stopping based on validation macro_f1
 """
 
 import os
 import time
+import copy
 import random
 import warnings
 
 import numpy as np
+from PIL import Image
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -41,8 +46,9 @@ import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.transforms as transforms
 import torchvision.models as models
-
 from torchvision.datasets import ImageFolder
+
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -59,17 +65,16 @@ warnings.filterwarnings("ignore")
 
 
 # =======================
-# Early Stopping (双指标：macro_f1 优先，val_loss 兜底)
+# Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=7, delta=0.0, loss_delta=1e-4, save_path="best_resnet50.pt"):
+    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4, save_path="best_resnet50_brain_mri.pt"):
         self.patience = patience
         self.delta = delta
-        self.loss_delta = loss_delta  # loss 改进的判定阈值
+        self.loss_delta = loss_delta
 
-        self.best_score = None  # 记录最好的 macro_f1
-        self.best_loss = None  # 记录对应的 val_loss
-
+        self.best_score = None
+        self.best_loss = None
         self.num_bad_epochs = 0
         self.early_stop = False
         self.save_path = save_path
@@ -79,27 +84,23 @@ class EarlyStopping:
             os.makedirs(save_dir, exist_ok=True)
 
     def __call__(self, score, val_loss, model):
-        # 初始化第一轮
         if self.best_score is None:
             self.best_score = score
             self.best_loss = val_loss
             self.save_checkpoint(score, val_loss, model, is_initial=True)
 
-        # 1. 优先判断 macro_f1 是否提升
         elif score > self.best_score + self.delta:
             self.best_score = score
             self.best_loss = val_loss
             self.num_bad_epochs = 0
             self.save_checkpoint(score, val_loss, model, msg="Validation macro_f1 improved.")
 
-        # 2. 如果 macro_f1 没变（或者变化微小），判断 val_loss 是否下降
         elif abs(score - self.best_score) <= self.delta and val_loss < self.best_loss - self.loss_delta:
             self.best_score = score
             self.best_loss = val_loss
             self.num_bad_epochs = 0
             self.save_checkpoint(score, val_loss, model, msg="Validation loss improved at same macro_f1.")
 
-        # 3. 两个指标都没进步
         else:
             self.num_bad_epochs += 1
             print(f"⚠️ No improvement in metrics. Bad epochs: {self.num_bad_epochs}/{self.patience}")
@@ -130,14 +131,15 @@ torch.backends.cudnn.benchmark = False
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\Pneumonia"  # 改成你的数据集根目录
-TRAIN_DIR = os.path.join(DATA_ROOT, "train")
-VAL_DIR = os.path.join(DATA_ROOT, "val")
-TEST_DIR = os.path.join(DATA_ROOT, "test")
+DATA_ROOT = r"..\MRI"  # 改成你的数据集根目录
+TRAIN_DIR = os.path.join(DATA_ROOT, "Training")
+TEST_DIR = os.path.join(DATA_ROOT, "Testing")
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
 EPOCHS = 30
+
+VAL_RATIO = 0.15
 
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
@@ -164,15 +166,8 @@ def epoch_time(start_time, end_time):
     return int(s // 60), int(s % 60)
 
 
-def get_class_weights_from_dataset(dataset, num_classes):
-    """
-    根据训练集类别样本数自动生成 CrossEntropyLoss 的类别权重
-    权重公式：total_samples / (num_classes * class_count)
-    类别越少，权重越大
-    """
-    targets = [label for _, label in dataset.samples]
+def get_class_weights_from_targets(targets, num_classes):
     class_counts = np.bincount(targets, minlength=num_classes)
-
     total_samples = class_counts.sum()
     class_weights = total_samples / (num_classes * class_counts.astype(np.float32))
 
@@ -180,6 +175,32 @@ def get_class_weights_from_dataset(dataset, num_classes):
     print("Class weights:", class_weights.tolist())
 
     return torch.tensor(class_weights, dtype=torch.float32)
+
+
+# =======================
+# Dataset wrapper
+# =======================
+class SubsetImageDataset(data.Dataset):
+    def __init__(self, samples, class_to_idx, transform=None):
+        self.samples = samples
+        self.class_to_idx = class_to_idx
+        self.transform = transform
+        self.targets = [label for _, label in self.samples]
+
+        idx_to_class = {v: k for k, v in class_to_idx.items()}
+        self.classes = [idx_to_class[i] for i in range(len(idx_to_class))]
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        path, label = self.samples[index]
+        img = Image.open(path).convert("RGB")
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, label
 
 
 # =======================
@@ -220,18 +241,13 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     metrics["pr_auc"] = None
 
     try:
-        if num_classes == 2:
-            pos_prob = y_prob[:, 1]
-            metrics["roc_auc"] = roc_auc_score(y_true, pos_prob)
-            metrics["pr_auc"] = average_precision_score(y_true, pos_prob)
-        else:
-            y_true_oh = np.eye(num_classes)[y_true]
-            metrics["roc_auc"] = roc_auc_score(
-                y_true_oh, y_prob, average="macro", multi_class="ovr"
-            )
-            metrics["pr_auc"] = average_precision_score(
-                y_true_oh, y_prob, average="macro"
-            )
+        y_true_oh = np.eye(num_classes)[y_true]
+        metrics["roc_auc"] = roc_auc_score(
+            y_true_oh, y_prob, average="macro", multi_class="ovr"
+        )
+        metrics["pr_auc"] = average_precision_score(
+            y_true_oh, y_prob, average="macro"
+        )
     except Exception:
         pass
 
@@ -319,21 +335,21 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
 # Main
 # =======================
 def main():
-    print("Starting Chest X-ray Pneumonia ResNet50 Baseline...")
+    print("Starting Brain Tumor MRI ResNet50 Baseline...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    for d in [TRAIN_DIR, VAL_DIR, TEST_DIR]:
+    for d in [TRAIN_DIR, TEST_DIR]:
         if not os.path.exists(d):
             print(f"Directory not found: {d}")
             return
 
     train_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(5),
+        transforms.RandomRotation(10),
+        transforms.ColorJitter(brightness=0.1, contrast=0.1),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -342,7 +358,6 @@ def main():
     ])
 
     eval_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(
@@ -351,18 +366,33 @@ def main():
         ),
     ])
 
-    train_dataset = ImageFolder(TRAIN_DIR, transform=train_transform)
-    valid_dataset = ImageFolder(VAL_DIR, transform=eval_transform)
-    test_dataset = ImageFolder(TEST_DIR, transform=eval_transform)
+    full_train_dataset = ImageFolder(TRAIN_DIR)
+    test_dataset_raw = ImageFolder(TEST_DIR)
 
-    class_names = train_dataset.classes
+    class_names = full_train_dataset.classes
+    class_to_idx = full_train_dataset.class_to_idx
     num_classes = len(class_names)
 
     print(f"Classes: {class_names}")
-    print(f"Class-to-index: {train_dataset.class_to_idx}")
+    print(f"Class-to-index: {class_to_idx}")
+
+    all_samples = full_train_dataset.samples
+    all_targets = [label for _, label in all_samples]
+
+    train_samples, valid_samples = train_test_split(
+        all_samples,
+        test_size=VAL_RATIO,
+        random_state=SEED,
+        stratify=all_targets,
+    )
+
+    train_dataset = SubsetImageDataset(train_samples, class_to_idx, transform=train_transform)
+    valid_dataset = SubsetImageDataset(valid_samples, class_to_idx, transform=eval_transform)
+    test_dataset = SubsetImageDataset(test_dataset_raw.samples, class_to_idx, transform=eval_transform)
+
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
 
-    class_weights = get_class_weights_from_dataset(train_dataset, num_classes).to(device)
+    class_weights = get_class_weights_from_targets(train_dataset.targets, num_classes).to(device)
 
     train_loader = data.DataLoader(
         train_dataset,
@@ -396,7 +426,6 @@ def main():
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
-    # 加权交叉熵：处理类别不平衡
     criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     backbone_params = []
@@ -424,7 +453,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_pneumonia.pt"
+    best_path = "best_resnet50_brain_mri.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -505,7 +534,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nChest X-ray Pneumonia ResNet50 baseline completed!")
+    print("\nBrain Tumor MRI ResNet50 baseline completed!")
 
 
 if __name__ == "__main__":
