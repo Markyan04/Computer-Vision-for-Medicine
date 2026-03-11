@@ -1,0 +1,204 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [MRI_GCSA] -> 脚本 [ResNet50layer3+GCSA.py]
+📝 日志保存至: logs\MRI_GCSA_ResNet50layer3+GCSA.log
+🕒 开始于: 2026-03-11 10:18:36.331730
+------------------------------------------------------------
+Starting Brain Tumor MRI ResNet50 + GCSA (after layer3)...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Classes: ['glioma_tumor', 'meningioma_tumor', 'no_tumor', 'pituitary_tumor']
+Class-to-index: {'glioma_tumor': 0, 'meningioma_tumor': 1, 'no_tumor': 2, 'pituitary_tumor': 3}
+Split sizes | train=2439, valid=431, test=394
+Training class counts: [702, 698, 336, 703]
+Class weights: [0.8685897435897436, 0.873567335243553, 1.8147321428571428, 0.8673541963015647]
+Loading pretrained ResNet50 + GCSA...
+Trainable parameters: 49,734,468
+Starting training...
+
+Epoch 01/30 | Time 0m 34s
+  Train | loss=0.9870 | top1=66.09% | top2=82.83%
+  Valid | loss=0.4284 | top1=88.81% | top2=98.44% | acc=88.63% | bal_acc=88.34% | macro_f1=0.8855 | weighted_f1=0.8853 | precision_macro=0.8895 | recall_macro=0.8834
+         roc_auc=0.9747 | pr_auc=0.9337
+✅ Initial best model saved to best_resnet50_gcsa_layer3_brain_mri.pt (macro_f1=0.8855, val_loss=0.4284)
+
+Epoch 02/30 | Time 0m 34s
+  Train | loss=0.3388 | top1=87.96% | top2=98.17%
+  Valid | loss=0.4631 | top1=82.92% | top2=97.74% | acc=83.29% | bal_acc=83.71% | macro_f1=0.8443 | weighted_f1=0.8343 | precision_macro=0.8925 | recall_macro=0.8371
+         roc_auc=0.9825 | pr_auc=0.9618
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 03/30 | Time 0m 34s
+  Train | loss=0.2130 | top1=92.29% | top2=98.94%
+  Valid | loss=0.2108 | top1=95.06% | top2=99.33% | acc=95.13% | bal_acc=94.66% | macro_f1=0.9505 | weighted_f1=0.9509 | precision_macro=0.9556 | recall_macro=0.9466
+         roc_auc=0.9904 | pr_auc=0.9744
+✅ Validation macro_f1 improved. Saved model to best_resnet50_gcsa_layer3_brain_mri.pt (macro_f1=0.9505, val_loss=0.2108)
+
+Epoch 04/30 | Time 0m 35s
+  Train | loss=0.1265 | top1=95.25% | top2=99.47%
+  Valid | loss=0.7714 | top1=76.03% | top2=95.28% | acc=75.87% | bal_acc=79.03% | macro_f1=0.7466 | weighted_f1=0.7761 | precision_macro=0.8228 | recall_macro=0.7903
+         roc_auc=0.9475 | pr_auc=0.9008
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 05/30 | Time 0m 34s
+  Train | loss=0.1106 | top1=95.55% | top2=99.63%
+  Valid | loss=0.0734 | top1=97.04% | top2=99.78% | acc=97.45% | bal_acc=97.78% | macro_f1=0.9778 | weighted_f1=0.9744 | precision_macro=0.9784 | recall_macro=0.9778
+         roc_auc=0.9990 | pr_auc=0.9976
+✅ Validation macro_f1 improved. Saved model to best_resnet50_gcsa_layer3_brain_mri.pt (macro_f1=0.9778, val_loss=0.0734)
+
+Epoch 06/30 | Time 0m 34s
+  Train | loss=0.0622 | top1=97.56% | top2=99.72%
+  Valid | loss=0.0948 | top1=95.51% | top2=99.55% | acc=95.59% | bal_acc=96.17% | macro_f1=0.9552 | weighted_f1=0.9558 | precision_macro=0.9511 | recall_macro=0.9617
+         roc_auc=0.9988 | pr_auc=0.9971
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 07/30 | Time 0m 35s
+  Train | loss=0.0615 | top1=98.09% | top2=99.80%
+  Valid | loss=0.0708 | top1=97.51% | top2=100.00% | acc=97.68% | bal_acc=97.98% | macro_f1=0.9765 | weighted_f1=0.9767 | precision_macro=0.9742 | recall_macro=0.9798
+         roc_auc=0.9990 | pr_auc=0.9974
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 08/30 | Time 0m 35s
+  Train | loss=0.0252 | top1=99.27% | top2=100.00%
+  Valid | loss=0.0947 | top1=97.07% | top2=100.00% | acc=97.22% | bal_acc=97.58% | macro_f1=0.9722 | weighted_f1=0.9717 | precision_macro=0.9705 | recall_macro=0.9758
+         roc_auc=0.9991 | pr_auc=0.9980
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 09/30 | Time 0m 34s
+  Train | loss=0.0234 | top1=99.00% | top2=99.92%
+  Valid | loss=0.1975 | top1=93.27% | top2=98.88% | acc=93.27% | bal_acc=94.15% | macro_f1=0.9310 | weighted_f1=0.9313 | precision_macro=0.9289 | recall_macro=0.9415
+         roc_auc=0.9988 | pr_auc=0.9969
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 10/30 | Time 0m 34s
+  Train | loss=0.0773 | top1=97.48% | top2=99.76%
+  Valid | loss=0.0296 | top1=98.63% | top2=100.00% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9888 | weighted_f1=0.9883 | precision_macro=0.9879 | recall_macro=0.9899
+         roc_auc=0.9997 | pr_auc=0.9994
+✅ Validation macro_f1 improved. Saved model to best_resnet50_gcsa_layer3_brain_mri.pt (macro_f1=0.9888, val_loss=0.0296)
+
+Epoch 11/30 | Time 0m 34s
+  Train | loss=0.0233 | top1=99.31% | top2=100.00%
+  Valid | loss=0.0469 | top1=98.44% | top2=100.00% | acc=98.38% | bal_acc=98.59% | macro_f1=0.9848 | weighted_f1=0.9838 | precision_macro=0.9840 | recall_macro=0.9859
+         roc_auc=0.9993 | pr_auc=0.9987
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 12/30 | Time 0m 34s
+  Train | loss=0.0243 | top1=99.08% | top2=99.96%
+  Valid | loss=0.0509 | top1=97.96% | top2=100.00% | acc=98.14% | bal_acc=98.39% | macro_f1=0.9816 | weighted_f1=0.9814 | precision_macro=0.9797 | recall_macro=0.9839
+         roc_auc=0.9994 | pr_auc=0.9987
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 13/30 | Time 0m 34s
+  Train | loss=0.0283 | top1=98.99% | top2=99.96%
+  Valid | loss=0.0594 | top1=98.21% | top2=100.00% | acc=98.14% | bal_acc=98.39% | macro_f1=0.9796 | weighted_f1=0.9814 | precision_macro=0.9760 | recall_macro=0.9839
+         roc_auc=0.9992 | pr_auc=0.9978
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 14/30 | Time 0m 34s
+  Train | loss=0.0137 | top1=99.43% | top2=100.00%
+  Valid | loss=0.0540 | top1=97.74% | top2=100.00% | acc=97.91% | bal_acc=98.19% | macro_f1=0.9775 | weighted_f1=0.9791 | precision_macro=0.9740 | recall_macro=0.9819
+         roc_auc=0.9996 | pr_auc=0.9990
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 15/30 | Time 0m 34s
+  Train | loss=0.0073 | top1=99.80% | top2=100.00%
+  Valid | loss=0.0371 | top1=98.66% | top2=100.00% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9868 | weighted_f1=0.9861 | precision_macro=0.9858 | recall_macro=0.9879
+         roc_auc=0.9997 | pr_auc=0.9993
+⚠️ No improvement in metrics. Bad epochs: 5/8
+
+Epoch 16/30 | Time 0m 33s
+  Train | loss=0.0062 | top1=99.76% | top2=100.00%
+  Valid | loss=0.0493 | top1=98.18% | top2=100.00% | acc=98.38% | bal_acc=98.59% | macro_f1=0.9826 | weighted_f1=0.9837 | precision_macro=0.9798 | recall_macro=0.9859
+         roc_auc=0.9998 | pr_auc=0.9994
+⚠️ No improvement in metrics. Bad epochs: 6/8
+
+Epoch 17/30 | Time 0m 33s
+  Train | loss=0.0030 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0543 | top1=98.41% | top2=100.00% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9868 | weighted_f1=0.9860 | precision_macro=0.9857 | recall_macro=0.9879
+         roc_auc=0.9996 | pr_auc=0.9990
+⚠️ No improvement in metrics. Bad epochs: 7/8
+
+Epoch 18/30 | Time 0m 33s
+  Train | loss=0.0270 | top1=99.39% | top2=100.00%
+  Valid | loss=0.0379 | top1=98.63% | top2=100.00% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9899 | weighted_f1=0.9884 | precision_macro=0.9899 | recall_macro=0.9899
+         roc_auc=0.9998 | pr_auc=0.9996
+✅ Validation macro_f1 improved. Saved model to best_resnet50_gcsa_layer3_brain_mri.pt (macro_f1=0.9899, val_loss=0.0379)
+
+Epoch 19/30 | Time 0m 33s
+  Train | loss=0.0197 | top1=99.19% | top2=100.00%
+  Valid | loss=0.0438 | top1=98.63% | top2=100.00% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9899 | weighted_f1=0.9884 | precision_macro=0.9899 | recall_macro=0.9899
+         roc_auc=0.9996 | pr_auc=0.9991
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 20/30 | Time 0m 33s
+  Train | loss=0.0070 | top1=99.76% | top2=100.00%
+  Valid | loss=0.0464 | top1=98.63% | top2=99.78% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9888 | weighted_f1=0.9884 | precision_macro=0.9878 | recall_macro=0.9899
+         roc_auc=0.9997 | pr_auc=0.9993
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 21/30 | Time 0m 34s
+  Train | loss=0.0043 | top1=99.92% | top2=100.00%
+  Valid | loss=0.0379 | top1=98.41% | top2=100.00% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9846 | weighted_f1=0.9860 | precision_macro=0.9819 | recall_macro=0.9879
+         roc_auc=0.9998 | pr_auc=0.9996
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 22/30 | Time 0m 33s
+  Train | loss=0.0031 | top1=99.92% | top2=100.00%
+  Valid | loss=0.0463 | top1=98.41% | top2=99.78% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9857 | weighted_f1=0.9860 | precision_macro=0.9840 | recall_macro=0.9879
+         roc_auc=0.9998 | pr_auc=0.9996
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 23/30 | Time 0m 33s
+  Train | loss=0.0017 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0317 | top1=98.41% | top2=99.78% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9857 | weighted_f1=0.9860 | precision_macro=0.9837 | recall_macro=0.9879
+         roc_auc=0.9999 | pr_auc=0.9998
+⚠️ No improvement in metrics. Bad epochs: 5/8
+
+Epoch 24/30 | Time 0m 33s
+  Train | loss=0.0021 | top1=99.88% | top2=100.00%
+  Valid | loss=0.0414 | top1=98.63% | top2=99.78% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9888 | weighted_f1=0.9884 | precision_macro=0.9878 | recall_macro=0.9899
+         roc_auc=0.9998 | pr_auc=0.9996
+⚠️ No improvement in metrics. Bad epochs: 6/8
+
+Epoch 25/30 | Time 0m 32s
+  Train | loss=0.0017 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0442 | top1=98.63% | top2=99.78% | acc=98.84% | bal_acc=98.99% | macro_f1=0.9888 | weighted_f1=0.9884 | precision_macro=0.9878 | recall_macro=0.9899
+         roc_auc=0.9998 | pr_auc=0.9994
+⚠️ No improvement in metrics. Bad epochs: 7/8
+
+Epoch 26/30 | Time 0m 32s
+  Train | loss=0.0037 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0443 | top1=98.41% | top2=99.78% | acc=98.61% | bal_acc=98.79% | macro_f1=0.9857 | weighted_f1=0.9860 | precision_macro=0.9837 | recall_macro=0.9879
+         roc_auc=0.9998 | pr_auc=0.9995
+⚠️ No improvement in metrics. Bad epochs: 8/8
+⏹️ Early stopping triggered.
+🛑 Training stopped early at epoch 26.
+
+Loading best model and evaluating on test set...
+
+Test | loss=1.7928 | top1=78.12% | top2=87.26% | acc=76.90% | bal_acc=76.20% | macro_f1=0.7321 | weighted_f1=0.7240 | precision_macro=0.8601 | recall_macro=0.7620
+     roc_auc=0.9539 | pr_auc=0.9091
+
+Confusion Matrix:
+[[ 21  59  20   0]
+ [  0 115   0   0]
+ [  0   0 105   0]
+ [  0   6   6  62]]
+
+Classification Report:
+                  precision    recall  f1-score   support
+
+    glioma_tumor     1.0000    0.2100    0.3471       100
+meningioma_tumor     0.6389    1.0000    0.7797       115
+        no_tumor     0.8015    1.0000    0.8898       105
+ pituitary_tumor     1.0000    0.8378    0.9118        74
+
+        accuracy                         0.7690       394
+       macro avg     0.8601    0.7620    0.7321       394
+    weighted avg     0.8417    0.7690    0.7240       394
+
+
+Brain Tumor MRI ResNet50 + GCSA completed!
+
+✅ 运行完毕: [ResNet50layer3+GCSA.py] | 退出码: 0
+🕒 结束于: 2026-03-11 10:33:40.696669

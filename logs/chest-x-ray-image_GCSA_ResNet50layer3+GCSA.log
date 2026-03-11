@@ -1,0 +1,147 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [chest-x-ray-image_GCSA] -> 脚本 [ResNet50layer3+GCSA.py]
+📝 日志保存至: logs\chest-x-ray-image_GCSA_ResNet50layer3+GCSA.log
+🕒 开始于: 2026-03-11 02:53:00.575846
+------------------------------------------------------------
+Starting Chest X-ray ResNet50 + GCSA(layer3) ...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Classes: ['COVID19', 'NORMAL', 'PNEUMONIA']
+Class-to-index: {'COVID19': 0, 'NORMAL': 1, 'PNEUMONIA': 2}
+Train samples total: 5144
+Split sizes | train=4630, valid=514, test=1288
+Loading pretrained ResNet50 + GCSA(after layer3)...
+Trainable parameters: 49,732,419
+Starting training...
+
+Epoch 01/40 | Time 0m 45s
+  Train | loss=0.7208 | top1=69.80% | top2=91.97% | top3=100.00%
+  Valid | loss=0.3939 | top1=79.78% | top2=96.14% | top3=100.00% | acc=84.44% | bal_acc=61.84% | macro_f1=0.5940 | weighted_f1=0.8087 | precision_macro=0.8846 | recall_macro=0.6184
+         ovr_roc_auc_macro=0.9796 | ovr_pr_auc_macro=0.9637
+✅ Initial best model saved to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.5940)
+
+Epoch 02/40 | Time 0m 44s
+  Train | loss=0.2144 | top1=92.22% | top2=99.18% | top3=100.00%
+  Valid | loss=0.1243 | top1=95.77% | top2=99.82% | top3=100.00% | acc=95.53% | bal_acc=94.07% | macro_f1=0.9490 | weighted_f1=0.9541 | precision_macro=0.9618 | recall_macro=0.9407
+         ovr_roc_auc_macro=0.9939 | ovr_pr_auc_macro=0.9905
+✅ Validation improved. Saved best model to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.9490)
+
+Epoch 03/40 | Time 0m 43s
+  Train | loss=0.1129 | top1=95.74% | top2=99.91% | top3=100.00%
+  Valid | loss=0.0994 | top1=96.32% | top2=100.00% | top3=100.00% | acc=96.11% | bal_acc=97.13% | macro_f1=0.9578 | weighted_f1=0.9614 | precision_macro=0.9455 | recall_macro=0.9713
+         ovr_roc_auc_macro=0.9957 | ovr_pr_auc_macro=0.9934
+✅ Validation improved. Saved best model to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.9578)
+
+Epoch 04/40 | Time 0m 43s
+  Train | loss=0.1078 | top1=96.36% | top2=99.91% | top3=100.00%
+  Valid | loss=0.0719 | top1=97.98% | top2=100.00% | top3=100.00% | acc=97.86% | bal_acc=96.93% | macro_f1=0.9740 | weighted_f1=0.9785 | precision_macro=0.9791 | recall_macro=0.9693
+         ovr_roc_auc_macro=0.9982 | ovr_pr_auc_macro=0.9961
+✅ Validation improved. Saved best model to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.9740)
+
+Epoch 05/40 | Time 0m 43s
+  Train | loss=0.0743 | top1=97.22% | top2=100.00% | top3=100.00%
+  Valid | loss=0.1054 | top1=96.32% | top2=100.00% | top3=100.00% | acc=96.11% | bal_acc=97.28% | macro_f1=0.9576 | weighted_f1=0.9619 | precision_macro=0.9458 | recall_macro=0.9728
+         ovr_roc_auc_macro=0.9985 | ovr_pr_auc_macro=0.9973
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 06/40 | Time 0m 43s
+  Train | loss=0.0751 | top1=97.48% | top2=99.98% | top3=100.00%
+  Valid | loss=0.0750 | top1=97.79% | top2=100.00% | top3=100.00% | acc=97.67% | bal_acc=96.64% | macro_f1=0.9742 | weighted_f1=0.9765 | precision_macro=0.9825 | recall_macro=0.9664
+         ovr_roc_auc_macro=0.9965 | ovr_pr_auc_macro=0.9944
+✅ Validation improved. Saved best model to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.9742)
+
+Epoch 07/40 | Time 0m 43s
+  Train | loss=0.0615 | top1=97.99% | top2=99.96% | top3=100.00%
+  Valid | loss=0.0783 | top1=98.35% | top2=100.00% | top3=100.00% | acc=98.25% | bal_acc=97.77% | macro_f1=0.9824 | weighted_f1=0.9824 | precision_macro=0.9874 | recall_macro=0.9777
+         ovr_roc_auc_macro=0.9963 | ovr_pr_auc_macro=0.9945
+✅ Validation improved. Saved best model to best_resnet50_gcsa_layer3_chest_xray.pt (macro_f1=0.9824)
+
+Epoch 08/40 | Time 0m 43s
+  Train | loss=0.0515 | top1=98.13% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0873 | top1=97.24% | top2=100.00% | top3=100.00% | acc=97.08% | bal_acc=97.55% | macro_f1=0.9687 | weighted_f1=0.9713 | precision_macro=0.9634 | recall_macro=0.9755
+         ovr_roc_auc_macro=0.9983 | ovr_pr_auc_macro=0.9969
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 09/40 | Time 0m 43s
+  Train | loss=0.0352 | top1=98.63% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0678 | top1=98.35% | top2=100.00% | top3=100.00% | acc=98.25% | bal_acc=98.36% | macro_f1=0.9782 | weighted_f1=0.9825 | precision_macro=0.9732 | recall_macro=0.9836
+         ovr_roc_auc_macro=0.9979 | ovr_pr_auc_macro=0.9969
+⚠️ No improvement in macro_f1. Bad epochs: 2/10
+
+Epoch 10/40 | Time 0m 43s
+  Train | loss=0.0265 | top1=99.12% | top2=99.98% | top3=100.00%
+  Valid | loss=0.0748 | top1=98.35% | top2=99.82% | top3=100.00% | acc=98.25% | bal_acc=98.76% | macro_f1=0.9784 | weighted_f1=0.9826 | precision_macro=0.9697 | recall_macro=0.9876
+         ovr_roc_auc_macro=0.9984 | ovr_pr_auc_macro=0.9970
+⚠️ No improvement in macro_f1. Bad epochs: 3/10
+
+Epoch 11/40 | Time 0m 43s
+  Train | loss=0.0269 | top1=99.07% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0743 | top1=97.79% | top2=100.00% | top3=100.00% | acc=97.67% | bal_acc=98.08% | macro_f1=0.9685 | weighted_f1=0.9768 | precision_macro=0.9573 | recall_macro=0.9808
+         ovr_roc_auc_macro=0.9969 | ovr_pr_auc_macro=0.9954
+⚠️ No improvement in macro_f1. Bad epochs: 4/10
+
+Epoch 12/40 | Time 0m 43s
+  Train | loss=0.0280 | top1=99.14% | top2=100.00% | top3=100.00%
+  Valid | loss=0.1193 | top1=97.24% | top2=100.00% | top3=100.00% | acc=97.08% | bal_acc=96.01% | macro_f1=0.9657 | weighted_f1=0.9703 | precision_macro=0.9740 | recall_macro=0.9601
+         ovr_roc_auc_macro=0.9970 | ovr_pr_auc_macro=0.9951
+⚠️ No improvement in macro_f1. Bad epochs: 5/10
+
+Epoch 13/40 | Time 0m 44s
+  Train | loss=0.0359 | top1=98.60% | top2=99.98% | top3=100.00%
+  Valid | loss=0.0748 | top1=98.16% | top2=99.82% | top3=100.00% | acc=98.05% | bal_acc=98.47% | macro_f1=0.9764 | weighted_f1=0.9806 | precision_macro=0.9686 | recall_macro=0.9847
+         ovr_roc_auc_macro=0.9981 | ovr_pr_auc_macro=0.9970
+⚠️ No improvement in macro_f1. Bad epochs: 6/10
+
+Epoch 14/40 | Time 0m 43s
+  Train | loss=0.0217 | top1=99.35% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0860 | top1=98.35% | top2=100.00% | top3=100.00% | acc=98.25% | bal_acc=98.36% | macro_f1=0.9804 | weighted_f1=0.9825 | precision_macro=0.9773 | recall_macro=0.9836
+         ovr_roc_auc_macro=0.9956 | ovr_pr_auc_macro=0.9946
+⚠️ No improvement in macro_f1. Bad epochs: 7/10
+
+Epoch 15/40 | Time 0m 43s
+  Train | loss=0.0172 | top1=99.48% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0761 | top1=97.79% | top2=100.00% | top3=100.00% | acc=97.67% | bal_acc=97.29% | macro_f1=0.9701 | weighted_f1=0.9765 | precision_macro=0.9686 | recall_macro=0.9729
+         ovr_roc_auc_macro=0.9980 | ovr_pr_auc_macro=0.9971
+⚠️ No improvement in macro_f1. Bad epochs: 8/10
+
+Epoch 16/40 | Time 0m 43s
+  Train | loss=0.0132 | top1=99.59% | top2=99.98% | top3=100.00%
+  Valid | loss=0.0794 | top1=97.79% | top2=99.82% | top3=100.00% | acc=97.67% | bal_acc=98.48% | macro_f1=0.9728 | weighted_f1=0.9768 | precision_macro=0.9617 | recall_macro=0.9848
+         ovr_roc_auc_macro=0.9985 | ovr_pr_auc_macro=0.9970
+⚠️ No improvement in macro_f1. Bad epochs: 9/10
+
+Epoch 17/40 | Time 0m 44s
+  Train | loss=0.0150 | top1=99.42% | top2=100.00% | top3=100.00%
+  Valid | loss=0.0616 | top1=98.35% | top2=100.00% | top3=100.00% | acc=98.25% | bal_acc=98.36% | macro_f1=0.9804 | weighted_f1=0.9825 | precision_macro=0.9773 | recall_macro=0.9836
+         ovr_roc_auc_macro=0.9987 | ovr_pr_auc_macro=0.9975
+⚠️ No improvement in macro_f1. Bad epochs: 10/10
+⏹️ Early stopping triggered.
+🛑 Training stopped early at epoch 17.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.1111 | top1=96.72% | top2=100.00% | top3=100.00% | acc=96.66% | bal_acc=96.16% | macro_f1=0.9673 | weighted_f1=0.9664 | precision_macro=0.9734 | recall_macro=0.9616
+     ovr_roc_auc_macro=0.9956 | ovr_pr_auc_macro=0.9924
+
+Confusion Matrix:
+[[115   1   0]
+ [  0 288  29]
+ [  0  13 842]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+     COVID19     1.0000    0.9914    0.9957       116
+      NORMAL     0.9536    0.9085    0.9305       317
+   PNEUMONIA     0.9667    0.9848    0.9757       855
+
+    accuracy                         0.9666      1288
+   macro avg     0.9734    0.9616    0.9673      1288
+weighted avg     0.9665    0.9666    0.9664      1288
+
+
+Chest X-ray ResNet50 + GCSA(layer3) completed!
+
+✅ 运行完毕: [ResNet50layer3+GCSA.py] | 退出码: 0
+🕒 结束于: 2026-03-11 03:05:49.451920

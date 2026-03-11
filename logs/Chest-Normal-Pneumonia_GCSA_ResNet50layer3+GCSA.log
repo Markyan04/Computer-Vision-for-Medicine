@@ -1,0 +1,260 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [Chest-Normal-Pneumonia_GCSA] -> 脚本 [ResNet50layer3+GCSA.py]
+📝 日志保存至: logs\Chest-Normal-Pneumonia_GCSA_ResNet50layer3+GCSA.log
+🕒 开始于: 2026-03-11 02:18:02.778246
+------------------------------------------------------------
+Starting Chest X-ray Pneumonia ResNet50 + GCSA(layer3) ...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Classes: ['NORMAL', 'PNEUMONIA']
+Class-to-index: {'NORMAL': 0, 'PNEUMONIA': 1}
+Split sizes | train=5216, valid=16, test=624
+Training class counts: [1341, 3875]
+Class weights: [1.9448173005219984, 0.6730322580645162]
+Loading pretrained ResNet50 + GCSA(after layer3)...
+Trainable parameters: 49,730,370
+Starting training...
+
+Epoch 01/40 | Time 0m 33s
+  Train | loss=0.4866 | top1=74.41% | top2=100.00%
+  Valid | loss=0.9437 | top1=62.50% | top2=100.00% | acc=62.50% | bal_acc=62.50% | macro_f1=0.5636 | weighted_f1=0.5636 | precision_macro=0.7857 | recall_macro=0.6250
+         roc_auc=0.9375 | pr_auc=0.9503
+✅ Initial best model saved to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=0.5636, val_loss=0.9437)
+
+Epoch 02/40 | Time 0m 34s
+  Train | loss=0.1119 | top1=96.18% | top2=100.00%
+  Valid | loss=0.1751 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation macro_f1 improved. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.1751)
+
+Epoch 03/40 | Time 0m 34s
+  Train | loss=0.0903 | top1=96.99% | top2=100.00%
+  Valid | loss=0.1861 | top1=93.75% | top2=100.00% | acc=93.75% | bal_acc=93.75% | macro_f1=0.9373 | weighted_f1=0.9373 | precision_macro=0.9444 | recall_macro=0.9375
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 04/40 | Time 0m 33s
+  Train | loss=0.0581 | top1=97.97% | top2=100.00%
+  Valid | loss=0.0569 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0569)
+
+Epoch 05/40 | Time 0m 33s
+  Train | loss=0.0457 | top1=98.35% | top2=100.00%
+  Valid | loss=0.1859 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 06/40 | Time 0m 33s
+  Train | loss=0.0326 | top1=98.87% | top2=100.00%
+  Valid | loss=0.0514 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0514)
+
+Epoch 07/40 | Time 0m 33s
+  Train | loss=0.0286 | top1=99.10% | top2=100.00%
+  Valid | loss=0.3301 | top1=93.75% | top2=100.00% | acc=93.75% | bal_acc=93.75% | macro_f1=0.9373 | weighted_f1=0.9373 | precision_macro=0.9444 | recall_macro=0.9375
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 08/40 | Time 0m 33s
+  Train | loss=0.0152 | top1=99.56% | top2=100.00%
+  Valid | loss=0.0183 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0183)
+
+Epoch 09/40 | Time 0m 33s
+  Train | loss=0.0190 | top1=99.35% | top2=100.00%
+  Valid | loss=0.0228 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 10/40 | Time 0m 33s
+  Train | loss=0.0298 | top1=98.89% | top2=100.00%
+  Valid | loss=0.1141 | top1=93.75% | top2=100.00% | acc=93.75% | bal_acc=93.75% | macro_f1=0.9373 | weighted_f1=0.9373 | precision_macro=0.9444 | recall_macro=0.9375
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 11/40 | Time 0m 33s
+  Train | loss=0.0155 | top1=99.42% | top2=100.00%
+  Valid | loss=0.0017 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0017)
+
+Epoch 12/40 | Time 0m 33s
+  Train | loss=0.0184 | top1=99.29% | top2=100.00%
+  Valid | loss=0.0102 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 13/40 | Time 0m 33s
+  Train | loss=0.0089 | top1=99.69% | top2=100.00%
+  Valid | loss=0.0380 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 14/40 | Time 0m 33s
+  Train | loss=0.0060 | top1=99.79% | top2=100.00%
+  Valid | loss=0.0194 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 15/40 | Time 0m 33s
+  Train | loss=0.0101 | top1=99.52% | top2=100.00%
+  Valid | loss=0.0041 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 16/40 | Time 0m 33s
+  Train | loss=0.0069 | top1=99.73% | top2=100.00%
+  Valid | loss=0.2180 | top1=93.75% | top2=100.00% | acc=93.75% | bal_acc=93.75% | macro_f1=0.9373 | weighted_f1=0.9373 | precision_macro=0.9444 | recall_macro=0.9375
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 5/8
+
+Epoch 17/40 | Time 0m 33s
+  Train | loss=0.0084 | top1=99.71% | top2=100.00%
+  Valid | loss=0.0016 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0016)
+
+Epoch 18/40 | Time 0m 33s
+  Train | loss=0.0041 | top1=99.88% | top2=100.00%
+  Valid | loss=0.0032 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 19/40 | Time 0m 34s
+  Train | loss=0.0038 | top1=99.85% | top2=100.00%
+  Valid | loss=0.0017 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 20/40 | Time 0m 35s
+  Train | loss=0.0096 | top1=99.62% | top2=100.00%
+  Valid | loss=0.0413 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 21/40 | Time 0m 33s
+  Train | loss=0.0032 | top1=99.85% | top2=100.00%
+  Valid | loss=0.3436 | top1=93.75% | top2=100.00% | acc=93.75% | bal_acc=93.75% | macro_f1=0.9373 | weighted_f1=0.9373 | precision_macro=0.9444 | recall_macro=0.9375
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 22/40 | Time 0m 33s
+  Train | loss=0.0016 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0698 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 5/8
+
+Epoch 23/40 | Time 0m 33s
+  Train | loss=0.0060 | top1=99.77% | top2=100.00%
+  Valid | loss=0.0026 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 6/8
+
+Epoch 24/40 | Time 0m 33s
+  Train | loss=0.0046 | top1=99.79% | top2=100.00%
+  Valid | loss=0.0013 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0013)
+
+Epoch 25/40 | Time 0m 33s
+  Train | loss=0.0009 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0030 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 26/40 | Time 0m 34s
+  Train | loss=0.0007 | top1=99.96% | top2=100.00%
+  Valid | loss=0.0021 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 27/40 | Time 0m 33s
+  Train | loss=0.0004 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0007 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0007)
+
+Epoch 28/40 | Time 0m 33s
+  Train | loss=0.0006 | top1=99.98% | top2=100.00%
+  Valid | loss=0.0001 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+✅ Validation loss improved at same macro_f1. Saved model to best_resnet50_gcsa_layer3_pneumonia.pt (macro_f1=1.0000, val_loss=0.0001)
+
+Epoch 29/40 | Time 0m 33s
+  Train | loss=0.0005 | top1=99.98% | top2=100.00%
+  Valid | loss=0.0007 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 1/8
+
+Epoch 30/40 | Time 0m 33s
+  Train | loss=0.0003 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0123 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 2/8
+
+Epoch 31/40 | Time 0m 33s
+  Train | loss=0.0002 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0022 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 3/8
+
+Epoch 32/40 | Time 0m 33s
+  Train | loss=0.0001 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0020 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 4/8
+
+Epoch 33/40 | Time 0m 35s
+  Train | loss=0.0001 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0033 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 5/8
+
+Epoch 34/40 | Time 0m 33s
+  Train | loss=0.0001 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0024 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 6/8
+
+Epoch 35/40 | Time 0m 33s
+  Train | loss=0.0003 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0031 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 7/8
+
+Epoch 36/40 | Time 0m 33s
+  Train | loss=0.0001 | top1=100.00% | top2=100.00%
+  Valid | loss=0.0077 | top1=100.00% | top2=100.00% | acc=100.00% | bal_acc=100.00% | macro_f1=1.0000 | weighted_f1=1.0000 | precision_macro=1.0000 | recall_macro=1.0000
+         roc_auc=1.0000 | pr_auc=1.0000
+⚠️ No improvement in metrics. Bad epochs: 8/8
+⏹️ Early stopping triggered.
+🛑 Training stopped early at epoch 36.
+
+Loading best model and evaluating on test set...
+
+Test | loss=1.2334 | top1=86.56% | top2=100.00% | acc=86.22% | bal_acc=81.88% | macro_f1=0.8392 | weighted_f1=0.8544 | precision_macro=0.9020 | recall_macro=0.8188
+     roc_auc=0.9567 | pr_auc=0.9591
+
+Confusion Matrix:
+[[151  83]
+ [  3 387]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      NORMAL     0.9805    0.6453    0.7784       234
+   PNEUMONIA     0.8234    0.9923    0.9000       390
+
+    accuracy                         0.8622       624
+   macro avg     0.9020    0.8188    0.8392       624
+weighted avg     0.8823    0.8622    0.8544       624
+
+
+Chest X-ray Pneumonia ResNet50 + GCSA(layer3) completed!
+
+✅ 运行完毕: [ResNet50layer3+GCSA.py] | 退出码: 0
+🕒 结束于: 2026-03-11 02:38:38.006418
