@@ -103,18 +103,18 @@ class EarlyStopping:
 
         else:
             self.num_bad_epochs += 1
-            print(f"⚠️ No improvement in metrics. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+            print(f" No improvement in metrics. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
-            print("⏹️ Early stopping triggered.")
+            print("⏹ Early stopping triggered.")
 
     def save_checkpoint(self, score, val_loss, model, is_initial=False, msg=""):
         torch.save(model.state_dict(), self.save_path)
         if is_initial:
-            print(f"✅ Initial best model saved to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
+            print(f" Initial best model saved to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
         else:
-            print(f"✅ {msg} Saved model to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
+            print(f" {msg} Saved model to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
 
 
 # =======================
@@ -598,7 +598,7 @@ def main():
         early_stopping(valid_metrics["macro_f1"], valid_loss, model)
 
         if early_stopping.early_stop:
-            print(f"🛑 Training stopped early at epoch {epoch + 1}.")
+            print(f" Training stopped early at epoch {epoch + 1}.")
             break
 
     print("\nLoading best model and evaluating on test set...")

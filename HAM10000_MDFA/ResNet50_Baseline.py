@@ -61,7 +61,7 @@ class EarlyStopping:
             # 首次调用：直接保存
             self.best_score = score
             torch.save(model.state_dict(), self.save_path)
-            print(f"✅ Initial model saved to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Initial model saved to {self.save_path} (macro_f1={score:.4f})")
 
         # 注意这里的改动：因为是 F1 分数，所以是“大于”才算有提升
         elif score > self.best_score + self.delta:
@@ -69,15 +69,15 @@ class EarlyStopping:
             self.best_score = score
             self.num_bad_epochs = 0
             torch.save(model.state_dict(), self.save_path)
-            print(f"✅ Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
         else:
             # 验证集无改善：计数+1
             self.num_bad_epochs += 1
-            print(f"⚠️ No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+            print(f" No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
-            print("⏹️ Early stopping triggered.")  # 触发早停
+            print("⏹ Early stopping triggered.")  # 触发早停
 
 
 # -----------------------
@@ -399,7 +399,7 @@ def main():
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    data_dir = "ISIC"
+    data_dir = "../ISIC"
     metadata_path = os.path.join(data_dir, "HAM10000_metadata.csv")
     if not os.path.exists(metadata_path):
         print(f"Metadata file not found: {metadata_path}")
@@ -518,7 +518,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss().to(device)
 
-    EPOCHS = 20
+    EPOCHS = 40
     steps_per_epoch = len(train_loader)
     total_steps = EPOCHS * steps_per_epoch
     max_lrs = [g["lr"] for g in optimizer.param_groups]
@@ -529,8 +529,8 @@ def main():
 
     best_valid_macro_f1 = -1.0
     best_path = "isic_resnet50_model_early.pt"
-    # 这里我们把 patience 设为 5，也就是如果连续 5 个 epoch 的 F1 分数都不涨，就提前结束
-    early_stopping = EarlyStopping(patience=5, delta=0.0001, save_path=best_path)
+    # 这里我们把 patience 设为 10，也就是如果连续 10 个 epoch 的 F1 分数都不涨，就提前结束
+    early_stopping = EarlyStopping(patience=10, delta=0.0001, save_path=best_path)
 
     print("Starting training...")
     for epoch in range(EPOCHS):
@@ -559,7 +559,7 @@ def main():
 
         # 如果触发了早停条件，直接跳出 for 循环结束训练
         if early_stopping.early_stop:
-            print(f"🛑 Training stopped early at epoch {epoch + 1} to prevent overfitting.")
+            print(f" Training stopped early at epoch {epoch + 1} to prevent overfitting.")
             break
 
     # Test

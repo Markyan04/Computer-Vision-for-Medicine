@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-ISIC (HAM10000) Baseline using ResNet50
+ISIC (HAM10000) Baseline using ResNet50 + MECS(after layer3)
 - Top-1 / Top-3 accuracy (Top-k auto clipped by num_classes)
 - Additional metrics: balanced accuracy, macro/weighted F1, confusion matrix, classification report
 - Optional: ROC-AUC / PR-AUC (OvR) when feasible
@@ -14,12 +14,12 @@ import random
 from collections import namedtuple
 
 import numpy as np
-
 import pandas as pd
 from PIL import Image
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
@@ -38,9 +38,11 @@ from sklearn.metrics import (
 )
 
 
-# early stop
+# -----------------------
+# Early stopping
+# -----------------------
 class EarlyStopping:
-    def __init__(self, patience=7, delta=0.0, save_path="isic_resnet50_best_model.pt"):
+    def __init__(self, patience=7, delta=0.0, save_path="isic_resnet50_mecs_best_model.pt"):
         """
         :param patience: 容忍多少个 epoch 没有提升就停止训练
         :param delta: 提升的最小阈值
@@ -48,36 +50,31 @@ class EarlyStopping:
         """
         self.patience = patience
         self.delta = delta
-        self.best_score = None  # 注意：这里改成了 score，因为我们要监控 macro_f1
+        self.best_score = None
         self.num_bad_epochs = 0
         self.early_stop = False
         self.save_path = save_path
 
-        # 确保保存目录存在
         os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
 
     def __call__(self, score, model):
         if self.best_score is None:
-            # 首次调用：直接保存
             self.best_score = score
             torch.save(model.state_dict(), self.save_path)
             print(f" Initial model saved to {self.save_path} (macro_f1={score:.4f})")
 
-        # 注意这里的改动：因为是 F1 分数，所以是“大于”才算有提升
         elif score > self.best_score + self.delta:
-            # 验证集有改善：更新并保存
             self.best_score = score
             self.num_bad_epochs = 0
             torch.save(model.state_dict(), self.save_path)
             print(f" Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
         else:
-            # 验证集无改善：计数+1
             self.num_bad_epochs += 1
             print(f" No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
-            print("⏹ Early stopping triggered.")  # 触发早停
+            print("⏹ Early stopping triggered.")
 
 
 # -----------------------
@@ -106,11 +103,9 @@ class ISICDataset(data.Dataset):
         self.df = metadata_df.reset_index(drop=True).copy()
         self.transform = transform
 
-        # stable label mapping (sorted)
         self.labels = sorted(self.df["dx"].unique().tolist())
         self.label_to_idx = {lb: i for i, lb in enumerate(self.labels)}
 
-        # build samples
         self.img_paths = []
         self.targets = []
         for _, row in self.df.iterrows():
@@ -148,7 +143,6 @@ class TransformSubset(data.Dataset):
 
     def __getitem__(self, i):
         base_idx = self.indices[i]
-        # load using base but override transform
         img_path = self.base.img_paths[base_idx]
         y = self.base.targets[base_idx]
 
@@ -159,7 +153,137 @@ class TransformSubset(data.Dataset):
 
 
 # -----------------------
-# ResNet (custom, consistent with your baseline)
+# MECS Module (Updated from MECS_new.py)
+# -----------------------
+def global_median_pooling(x):
+    """全局中位数池化"""
+    # 展平空间维度后取中位数，然后恢复维度为 (B, C, 1, 1)
+    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
+    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
+    return median_pooled
+
+
+class ChannelAttention(nn.Module):
+    """结合平均池化、最大池化和中位数池化的通道注意力机制"""
+
+    def __init__(self, input_channels, internal_neurons):
+        super(ChannelAttention, self).__init__()
+        # 共享的 MLP (多层感知机)
+        self.fc1 = nn.Conv2d(in_channels=input_channels, out_channels=internal_neurons, kernel_size=1, stride=1,
+                             bias=True)
+        self.fc2 = nn.Conv2d(in_channels=internal_neurons, out_channels=input_channels, kernel_size=1, stride=1,
+                             bias=True)
+
+    def forward(self, inputs):
+        # 分别进行三种池化，提取不同维度的全局统计特征
+        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
+        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
+        median_pool = global_median_pooling(inputs)
+
+        # Average Pooling 路径
+        avg_out = self.fc1(avg_pool)
+        avg_out = F.relu(avg_out, inplace=True)
+        avg_out = self.fc2(avg_out)
+
+        # Max Pooling 路径
+        max_out = self.fc1(max_pool)
+        max_out = F.relu(max_out, inplace=True)
+        max_out = self.fc2(max_out)
+
+        # Median Pooling 路径
+        median_out = self.fc1(median_pool)
+        median_out = F.relu(median_out, inplace=True)
+        median_out = self.fc2(median_out)
+
+        # 先将三者相加，再统一通过 Sigmoid 映射到 [0, 1] 区间
+        out = avg_out + max_out + median_out
+        out = torch.sigmoid(out)
+
+        return out
+
+
+class MECS(nn.Module):
+    """中值增强的空间和通道注意力块 (Median-enhanced Spatial and Channel Attention Block)"""
+
+    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
+        super(MECS, self).__init__()
+
+        self.C = in_channels
+        self.O = out_channels
+        assert in_channels == out_channels, "Input and output channels must be the same"
+
+        # 1. 通道注意力模块初始化
+        self.channel_attention = ChannelAttention(
+            input_channels=in_channels,
+            internal_neurons=max(1, in_channels // channel_attention_reduce)
+        )
+
+        # 2. 空间注意力中的初始大核深度卷积 (5x5)
+        self.initial_depth_conv = nn.Conv2d(
+            in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels
+        )
+
+        # 3. 空间注意力中的多尺度条形池化 (Strip Pooling / Multi-scale) 深度卷积
+        self.depth_convs = nn.ModuleList([
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
+        ])
+
+        # 拆分独立的权重
+        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+
+        self.act = nn.GELU()
+
+    def forward(self, inputs):
+        # ----------------------------------------
+        # 阶段一：特征预处理
+        # ----------------------------------------
+        x = self.pre_conv(inputs)
+        x = self.act(x)
+
+        # ----------------------------------------
+        # 阶段二：通道注意力机制 (Channel Attention)
+        # ----------------------------------------
+        channel_att_vec = self.channel_attention(x)
+        # 将 [0, 1] 之间的通道打分权重与特征相乘
+        x_ca = channel_att_vec * x
+
+        # ----------------------------------------
+        # 阶段三：空间注意力机制 (Spatial Attention)
+        # ----------------------------------------
+        # 3.1 初始特征提取
+        initial_out = self.initial_depth_conv(x_ca)
+
+        # 3.2 多尺度深度卷积提取空间特征
+        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
+        spatial_out = sum(spatial_outs)
+
+        # 3.3 补齐残差旁路连接
+        spatial_out = spatial_out + x_ca
+
+        # 3.4 计算空间注意力权重打分并加上缺失的 Sigmoid
+        spatial_att = self.spatial_att_conv(spatial_out)
+        spatial_att = torch.sigmoid(spatial_att)
+
+        # 3.5 将空间权重施加到特征图上
+        out = spatial_att * x_ca
+
+        # ----------------------------------------
+        # 阶段四：特征后处理
+        # ----------------------------------------
+        out = self.post_conv(out)
+
+        return out
+
+
+# -----------------------
+# ResNet (custom)
 # -----------------------
 class Bottleneck(nn.Module):
     expansion = 4
@@ -213,6 +337,10 @@ class ResNet(nn.Module):
         self.layer1 = self._make_layer(block, n_blocks[0], channels[0], stride=1)
         self.layer2 = self._make_layer(block, n_blocks[1], channels[1], stride=2)
         self.layer3 = self._make_layer(block, n_blocks[2], channels[2], stride=2)
+
+        # layer3 后接 MECS
+        self.mecs = MECS(block.expansion * channels[2], block.expansion * channels[2])
+
         self.layer4 = self._make_layer(block, n_blocks[3], channels[3], stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
@@ -234,6 +362,7 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
+        x = self.mecs(x)  # <<< layer3 后接入 MECS
         x = self.layer4(x)
 
         x = self.avgpool(x)
@@ -254,18 +383,14 @@ resnet50_config = ResNetConfig(
 # Metrics
 # -----------------------
 def calculate_topk_accuracy(logits, y, ks=(1, 3)):
-    """
-    Returns dict: {"top1": float, "top3": float, ...}
-    Automatically clips k by num_classes.
-    """
     with torch.no_grad():
         num_classes = logits.size(1)
         ks = tuple(sorted(set(min(k, num_classes) for k in ks)))
 
         max_k = max(ks)
-        _, top_pred = logits.topk(max_k, dim=1)  # [B, max_k]
-        top_pred = top_pred.t()  # [max_k, B]
-        correct = top_pred.eq(y.view(1, -1).expand_as(top_pred))  # [max_k, B]
+        _, top_pred = logits.topk(max_k, dim=1)
+        top_pred = top_pred.t()
+        correct = top_pred.eq(y.view(1, -1).expand_as(top_pred))
 
         out = {}
         batch_size = y.size(0)
@@ -276,11 +401,6 @@ def calculate_topk_accuracy(logits, y, ks=(1, 3)):
 
 
 def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
-    """
-    y_true: [N]
-    y_pred: [N]
-    y_prob: [N, C] probability
-    """
     metrics = {}
     metrics["acc"] = accuracy_score(y_true, y_pred)
     metrics["balanced_acc"] = balanced_accuracy_score(y_true, y_pred)
@@ -291,11 +411,10 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
         y_true, y_pred, target_names=class_names, digits=4, zero_division=0
     )
 
-    # Optional: ROC-AUC / PR-AUC (OvR). Might fail if some class absent in y_true.
     metrics["ovr_roc_auc_macro"] = None
     metrics["ovr_pr_auc_macro"] = None
     try:
-        y_true_oh = np.eye(num_classes)[y_true]  # [N, C]
+        y_true_oh = np.eye(num_classes)[y_true]
         metrics["ovr_roc_auc_macro"] = roc_auc_score(
             y_true_oh, y_prob, average="macro", multi_class="ovr"
         )
@@ -392,14 +511,14 @@ def count_parameters(model):
 # Main
 # -----------------------
 def main():
-    print("Starting ISIC ResNet50 Baseline...")
+    print("Starting ISIC ResNet50 + MECS(layer3) ...")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    data_dir = "ISIC"
+    data_dir = "../ISIC"
     metadata_path = os.path.join(data_dir, "HAM10000_metadata.csv")
     if not os.path.exists(metadata_path):
         print(f"Metadata file not found: {metadata_path}")
@@ -417,7 +536,6 @@ def main():
         return
     print(f"Available image directories: {image_dirs}")
 
-    # attach correct image_dir per row (first match)
     rows = []
     for _, row in metadata_df.iterrows():
         image_id = row["image_id"]
@@ -440,7 +558,6 @@ def main():
     num_classes = len(class_names)
     print(f"Valid samples: {len(valid_df)} | num_classes={num_classes} | classes={class_names}")
 
-    # transforms
     pretrained_size = 224
     pretrained_means = [0.485, 0.456, 0.406]
     pretrained_stds = [0.229, 0.224, 0.225]
@@ -461,7 +578,6 @@ def main():
         transforms.Normalize(mean=pretrained_means, std=pretrained_stds),
     ])
 
-    # build base dataset once (no transform needed here, we override via TransformSubset)
     base_dataset = ISICDataset(valid_df, transform=None)
     targets = np.array(base_dataset.targets)
 
@@ -486,7 +602,6 @@ def main():
 
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
 
-    # Load torchvision pretrained resnet50, then copy weights into your custom ResNet
     print("Loading pre-trained ResNet50 (torchvision) weights...")
     try:
         weights = models.ResNet50_Weights.IMAGENET1K_V2
@@ -497,13 +612,24 @@ def main():
     in_features = tv_model.fc.in_features
     tv_model.fc = nn.Linear(in_features, num_classes)
 
+    # 构建自定义模型
     model = ResNet(resnet50_config, num_classes)
-    model.load_state_dict(tv_model.state_dict(), strict=True)
+
+    # 只把能对上的预训练权重加载进来
+    pretrained_dict = tv_model.state_dict()
+    model_dict = model.state_dict()
+
+    filtered_dict = {
+        k: v for k, v in pretrained_dict.items()
+        if k in model_dict and model_dict[k].shape == v.shape
+    }
+    model_dict.update(filtered_dict)
+    model.load_state_dict(model_dict, strict=False)
+
     model = model.to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
-    # Optimizer: discriminative fine-tuning
     FOUND_LR = 1e-4
     params = [
         {"params": model.conv1.parameters(), "lr": FOUND_LR / 10},
@@ -511,6 +637,7 @@ def main():
         {"params": model.layer1.parameters(), "lr": FOUND_LR / 8},
         {"params": model.layer2.parameters(), "lr": FOUND_LR / 6},
         {"params": model.layer3.parameters(), "lr": FOUND_LR / 4},
+        {"params": model.mecs.parameters(), "lr": FOUND_LR / 2},  # 新增模块给稍大一点 lr
         {"params": model.layer4.parameters(), "lr": FOUND_LR / 2},
         {"params": model.fc.parameters(), "lr": FOUND_LR},
     ]
@@ -518,19 +645,16 @@ def main():
 
     criterion = nn.CrossEntropyLoss().to(device)
 
-    EPOCHS = 20
+    EPOCHS = 40
     steps_per_epoch = len(train_loader)
     total_steps = EPOCHS * steps_per_epoch
     max_lrs = [g["lr"] for g in optimizer.param_groups]
     scheduler = lr_scheduler.OneCycleLR(optimizer, max_lr=max_lrs, total_steps=total_steps)
 
-    # choose topk (mainly Top-1 & Top-3 for 7 classes)
     TOPK = (1, 3)
 
-    best_valid_macro_f1 = -1.0
-    best_path = "isic_resnet50_model_early.pt"
-    # 这里我们把 patience 设为 5，也就是如果连续 5 个 epoch 的 F1 分数都不涨，就提前结束
-    early_stopping = EarlyStopping(patience=5, delta=0.0004, save_path=best_path)
+    best_path = "isic_resnet50_mecs_layer3_best.pt"
+    early_stopping = EarlyStopping(patience=10, delta=0.0001, save_path=best_path)
 
     print("Starting training...")
     for epoch in range(EPOCHS):
@@ -548,21 +672,19 @@ def main():
 
         print(f"\nEpoch {epoch + 1:02}/{EPOCHS} | Time {m}m{s}s")
         print(
-            f"  Train | loss={train_loss:.4f} | top1={train_top['top1'] * 100:.2f}% | top3={train_top['top3'] * 100:.2f}%")
+            f"  Train | loss={train_loss:.4f} | top1={train_top['top1'] * 100:.2f}% | top3={train_top['top3'] * 100:.2f}%"
+        )
         print(
             f"  Valid | loss={valid_loss:.4f} | top1={valid_top['top1'] * 100:.2f}% | top3={valid_top['top3'] * 100:.2f}% "
-            f"| bal_acc={valid_metrics['balanced_acc'] * 100:.2f}% | macro_f1={valid_metrics['macro_f1']:.4f}")
+            f"| bal_acc={valid_metrics['balanced_acc'] * 100:.2f}% | macro_f1={valid_metrics['macro_f1']:.4f}"
+        )
 
-        # === 新增：调用早停机制 ===
-        # 传入当前的 macro_f1 分数和当前模型
         early_stopping(valid_metrics["macro_f1"], model)
 
-        # 如果触发了早停条件，直接跳出 for 循环结束训练
         if early_stopping.early_stop:
             print(f" Training stopped early at epoch {epoch + 1} to prevent overfitting.")
             break
 
-    # Test
     print("\nLoading best model and evaluating on test set...")
     model.load_state_dict(torch.load(best_path, map_location=device))
 
@@ -570,17 +692,22 @@ def main():
         model, test_loader, criterion, device, num_classes, class_names, topk=TOPK
     )
 
-    print(f"\nTest | loss={test_loss:.4f} | top1={test_top['top1'] * 100:.2f}% | top3={test_top['top3'] * 100:.2f}% "
-          f"| acc={test_metrics['acc'] * 100:.2f}% | bal_acc={test_metrics['balanced_acc'] * 100:.2f}% | macro_f1={test_metrics['macro_f1']:.4f} | weighted_f1={test_metrics['weighted_f1']:.4f}")
+    print(
+        f"\nTest | loss={test_loss:.4f} | top1={test_top['top1'] * 100:.2f}% | top3={test_top['top3'] * 100:.2f}% "
+        f"| acc={test_metrics['acc'] * 100:.2f}% | bal_acc={test_metrics['balanced_acc'] * 100:.2f}% "
+        f"| macro_f1={test_metrics['macro_f1']:.4f} | weighted_f1={test_metrics['weighted_f1']:.4f}"
+    )
 
     if test_metrics["ovr_roc_auc_macro"] is not None:
         print(
-            f"     ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f} | ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}")
+            f"     ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f} | "
+            f"ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}"
+        )
 
     print("\nConfusion Matrix:\n", test_metrics["confusion_matrix"])
     print("\nClassification Report:\n", test_metrics["classification_report"])
 
-    print("\nISIC ResNet50 Baseline completed!")
+    print("\nISIC ResNet50 + MECS(layer3) completed!")
 
 
 if __name__ == "__main__":

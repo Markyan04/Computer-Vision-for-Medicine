@@ -2,32 +2,31 @@
 # -*- coding: utf-8 -*-
 
 """
-Brain Tumor MRI Baseline using ResNet50 + GCSA (after layer3)
+Chest X-ray Pneumonia using ResNet50 + MECS (after layer1)
 
-Dataset structure:
+Directory structure:
 dataset_root/
-├── Training/
-│   ├── glioma_tumor/
-│   ├── meningioma_tumor/
-│   ├── no_tumor/
-│   └── pituitary_tumor/
-└── Testing/
-    ├── glioma_tumor/
-    ├── meningioma_tumor/
-    ├── no_tumor/
-    └── pituitary_tumor/
+├── train/
+│   ├── NORMAL/
+│   └── PNEUMONIA/
+├── val/
+│   ├── NORMAL/
+│   └── PNEUMONIA/
+└── test/
+    ├── NORMAL/
+    └── PNEUMONIA/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- GCSA inserted after layer3
-- Split validation set from Training directory
+- Insert MECS after layer1
+- Use official train / val / test split directly
 - Weighted CrossEntropyLoss for class imbalance
 - Top-1 / Top-2 accuracy
 - Accuracy / Balanced Accuracy
 - Macro / Weighted F1
 - Macro Precision / Macro Recall
 - Confusion Matrix / Classification Report
-- Multi-class ROC-AUC / PR-AUC (OvR macro)
+- Binary ROC-AUC / PR-AUC
 - Early Stopping based on validation macro_f1
 """
 
@@ -37,18 +36,16 @@ import random
 import warnings
 
 import numpy as np
-from PIL import Image
-
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.transforms as transforms
 import torchvision.models as models
-from torchvision.datasets import ImageFolder
 
-from sklearn.model_selection import train_test_split
+from torchvision.datasets import ImageFolder
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -65,16 +62,188 @@ warnings.filterwarnings("ignore")
 
 
 # =======================
+# MECS Module
+# =======================
+def global_median_pooling(x):
+    """全局中位数池化"""
+    # 展平空间维度后取中位数，然后恢复维度为 (B, C, 1, 1)
+    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
+    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
+    return median_pooled
+
+
+class ChannelAttention(nn.Module):
+    """结合平均池化、最大池化和中位数池化的通道注意力机制"""
+
+    def __init__(self, input_channels, internal_neurons):
+        super(ChannelAttention, self).__init__()
+        # 共享的 MLP (多层感知机)
+        self.fc1 = nn.Conv2d(in_channels=input_channels, out_channels=internal_neurons, kernel_size=1, stride=1,
+                             bias=True)
+        self.fc2 = nn.Conv2d(in_channels=internal_neurons, out_channels=input_channels, kernel_size=1, stride=1,
+                             bias=True)
+
+    def forward(self, inputs):
+        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
+        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
+        median_pool = global_median_pooling(inputs)
+
+        avg_out = self.fc1(avg_pool)
+        avg_out = F.relu(avg_out, inplace=True)
+        avg_out = self.fc2(avg_out)
+        avg_out = torch.sigmoid(avg_out)
+
+        max_out = self.fc1(max_pool)
+        max_out = F.relu(max_out, inplace=True)
+        max_out = self.fc2(max_out)
+        max_out = torch.sigmoid(max_out)
+
+        median_out = self.fc1(median_pool)
+        median_out = F.relu(median_out, inplace=True)
+        median_out = self.fc2(median_out)
+        median_out = torch.sigmoid(median_out)
+
+        out = avg_out + max_out + median_out
+        return out
+
+
+class MECS(nn.Module):
+    """中值增强的空间和通道注意力块 (Median-enhanced Spatial and Channel Attention Block)"""
+
+    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
+        super(MECS, self).__init__()
+
+        self.C = in_channels
+        self.O = out_channels
+        assert in_channels == out_channels, "Input and output channels must be the same"
+
+        # 1. 通道注意力模块初始化
+        self.channel_attention = ChannelAttention(
+            input_channels=in_channels,
+            internal_neurons=max(1, in_channels // channel_attention_reduce)
+        )
+
+        # 2. 空间注意力中的初始大核深度卷积 (5x5)
+        self.initial_depth_conv = nn.Conv2d(
+            in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels
+        )
+
+        # 3. 空间注意力中的多尺度条形池化 (Strip Pooling / Multi-scale) 深度卷积
+        self.depth_convs = nn.ModuleList([
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
+        ])
+
+        # 拆分原本复用的 self.pointwise_conv，为三个不同阶段赋予独立的权重
+        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+
+        self.act = nn.GELU()
+
+    def forward(self, inputs):
+        # ----------------------------------------
+        # 阶段一：特征预处理
+        # ----------------------------------------
+        x = self.pre_conv(inputs)
+        x = self.act(x)
+
+        # ----------------------------------------
+        # 阶段二：通道注意力机制 (Channel Attention)
+        # ----------------------------------------
+        channel_att_vec = self.channel_attention(x)
+        x_ca = channel_att_vec * x
+
+        # ----------------------------------------
+        # 阶段三：空间注意力机制 (Spatial Attention)
+        # ----------------------------------------
+        # 3.1 初始特征提取
+        initial_out = self.initial_depth_conv(x_ca)
+
+        # 3.2 多尺度深度卷积提取空间特征
+        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
+        spatial_out = sum(spatial_outs)
+
+        # 补齐残差旁路连接
+        spatial_out = spatial_out + x_ca
+
+        # 3.3 计算空间注意力权重打分
+        spatial_att = self.spatial_att_conv(spatial_out)
+        spatial_att = torch.sigmoid(spatial_att)
+
+        # 3.4 将空间权重施加到特征图上
+        out = spatial_att * x_ca
+
+        # ----------------------------------------
+        # 阶段四：特征后处理
+        # ----------------------------------------
+        out = self.post_conv(out)
+
+        return out
+
+
+# =======================
+# ResNet50 + MECS(after layer1)
+# =======================
+class ResNet50_MECS_Layer1(nn.Module):
+    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT):
+        super().__init__()
+
+        backbone = models.resnet50(weights=weights)
+
+        self.conv1 = backbone.conv1
+        self.bn1 = backbone.bn1
+        self.relu = backbone.relu
+        self.maxpool = backbone.maxpool
+
+        self.layer1 = backbone.layer1  # output: 256
+
+        # MECS inserted after layer1
+        self.mecs = MECS(in_channels=256, out_channels=256, channel_attention_reduce=4)
+
+        self.layer2 = backbone.layer2  # output: 512
+        self.layer3 = backbone.layer3  # output: 1024
+        self.layer4 = backbone.layer4  # output: 2048
+
+        self.avgpool = backbone.avgpool
+        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+
+        x = self.mecs(x)  # <- inserted here
+
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x
+
+
+# =======================
 # Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4, save_path="best_resnet50_gcsa_brain_mri.pt"):
+    def __init__(self, patience=7, delta=0.0, loss_delta=1e-4, save_path="best_resnet50_mecs_layer1.pt"):
         self.patience = patience
         self.delta = delta
         self.loss_delta = loss_delta
 
         self.best_score = None
         self.best_loss = None
+
         self.num_bad_epochs = 0
         self.early_stop = False
         self.save_path = save_path
@@ -118,107 +287,6 @@ class EarlyStopping:
 
 
 # =======================
-# GCSA Module
-# =======================
-class GCSA(nn.Module):
-    def __init__(self, in_channels, rate=4, groups=4):
-        super().__init__()
-
-        hidden_channels = max(1, in_channels // rate)
-        self.groups = groups
-
-        # Channel attention
-        self.channel_attention = nn.Sequential(
-            nn.Linear(in_channels, hidden_channels),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_channels, in_channels)
-        )
-
-        # Spatial attention
-        self.spatial_attention = nn.Sequential(
-            nn.Conv2d(in_channels, hidden_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(hidden_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(hidden_channels, in_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(in_channels)
-        )
-
-    def channel_shuffle(self, x, groups):
-        b, c, h, w = x.size()
-
-        if c % groups != 0:
-            return x
-
-        channels_per_group = c // groups
-        x = x.view(b, groups, channels_per_group, h, w)
-        x = x.transpose(1, 2).contiguous()
-        x = x.view(b, c, h, w)
-        return x
-
-    def forward(self, x):
-        b, c, h, w = x.shape
-
-        # channel attention
-        x_permute = x.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
-        x_att_permute = self.channel_attention(x_permute).view(b, h, w, c)
-        x_channel_att = x_att_permute.permute(0, 3, 1, 2).contiguous().sigmoid()
-        x = x * x_channel_att
-
-        # channel shuffle
-        x = self.channel_shuffle(x, groups=self.groups)
-
-        # spatial attention
-        x_spatial_att = self.spatial_attention(x).sigmoid()
-        out = x * x_spatial_att
-
-        return out
-
-
-# =======================
-# ResNet50 + GCSA
-# =======================
-class ResNet50_GCSA_Layer3(nn.Module):
-    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT, gcsa_rate=4, gcsa_groups=4):
-        super().__init__()
-
-        backbone = models.resnet50(weights=weights)
-
-        self.conv1 = backbone.conv1
-        self.bn1 = backbone.bn1
-        self.relu = backbone.relu
-        self.maxpool = backbone.maxpool
-
-        self.layer1 = backbone.layer1
-        self.layer2 = backbone.layer2
-        self.layer3 = backbone.layer3
-
-        # ResNet50 layer3 output channels = 1024
-        self.gcsa = GCSA(in_channels=1024, rate=gcsa_rate, groups=gcsa_groups)
-
-        self.layer4 = backbone.layer4
-        self.avgpool = backbone.avgpool
-        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-
-        x = self.gcsa(x)   # 插在 layer3 后
-
-        x = self.layer4(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-        return x
-
-
-# =======================
 # Reproducibility
 # =======================
 SEED = 1234
@@ -229,19 +297,17 @@ torch.cuda.manual_seed_all(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\MRI"   # 改成你的数据集根目录
-TRAIN_DIR = os.path.join(DATA_ROOT, "Training")
-TEST_DIR = os.path.join(DATA_ROOT, "Testing")
+DATA_ROOT = r"..\Pneumonia"  # 改成你的数据集根目录
+TRAIN_DIR = os.path.join(DATA_ROOT, "train")
+VAL_DIR = os.path.join(DATA_ROOT, "val")
+TEST_DIR = os.path.join(DATA_ROOT, "test")
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
-EPOCHS = 30
-
-VAL_RATIO = 0.15
+EPOCHS = 40
 
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
@@ -268,8 +334,10 @@ def epoch_time(start_time, end_time):
     return int(s // 60), int(s % 60)
 
 
-def get_class_weights_from_targets(targets, num_classes):
+def get_class_weights_from_dataset(dataset, num_classes):
+    targets = [label for _, label in dataset.samples]
     class_counts = np.bincount(targets, minlength=num_classes)
+
     total_samples = class_counts.sum()
     class_weights = total_samples / (num_classes * class_counts.astype(np.float32))
 
@@ -277,32 +345,6 @@ def get_class_weights_from_targets(targets, num_classes):
     print("Class weights:", class_weights.tolist())
 
     return torch.tensor(class_weights, dtype=torch.float32)
-
-
-# =======================
-# Dataset wrapper
-# =======================
-class SubsetImageDataset(data.Dataset):
-    def __init__(self, samples, class_to_idx, transform=None):
-        self.samples = samples
-        self.class_to_idx = class_to_idx
-        self.transform = transform
-        self.targets = [label for _, label in self.samples]
-
-        idx_to_class = {v: k for k, v in class_to_idx.items()}
-        self.classes = [idx_to_class[i] for i in range(len(idx_to_class))]
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, index):
-        path, label = self.samples[index]
-        img = Image.open(path).convert("RGB")
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        return img, label
 
 
 # =======================
@@ -343,13 +385,18 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     metrics["pr_auc"] = None
 
     try:
-        y_true_oh = np.eye(num_classes)[y_true]
-        metrics["roc_auc"] = roc_auc_score(
-            y_true_oh, y_prob, average="macro", multi_class="ovr"
-        )
-        metrics["pr_auc"] = average_precision_score(
-            y_true_oh, y_prob, average="macro"
-        )
+        if num_classes == 2:
+            pos_prob = y_prob[:, 1]
+            metrics["roc_auc"] = roc_auc_score(y_true, pos_prob)
+            metrics["pr_auc"] = average_precision_score(y_true, pos_prob)
+        else:
+            y_true_oh = np.eye(num_classes)[y_true]
+            metrics["roc_auc"] = roc_auc_score(
+                y_true_oh, y_prob, average="macro", multi_class="ovr"
+            )
+            metrics["pr_auc"] = average_precision_score(
+                y_true_oh, y_prob, average="macro"
+            )
     except Exception:
         pass
 
@@ -437,21 +484,21 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
 # Main
 # =======================
 def main():
-    print("Starting Brain Tumor MRI ResNet50 + GCSA (after layer3)...")
+    print("Starting Chest X-ray Pneumonia ResNet50 + MECS(layer1) ...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    for d in [TRAIN_DIR, TEST_DIR]:
+    for d in [TRAIN_DIR, VAL_DIR, TEST_DIR]:
         if not os.path.exists(d):
             print(f"Directory not found: {d}")
             return
 
     train_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1),
+        transforms.RandomRotation(5),
         transforms.ToTensor(),
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -460,6 +507,7 @@ def main():
     ])
 
     eval_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
         transforms.ToTensor(),
         transforms.Normalize(
@@ -468,33 +516,18 @@ def main():
         ),
     ])
 
-    full_train_dataset = ImageFolder(TRAIN_DIR)
-    test_dataset_raw = ImageFolder(TEST_DIR)
+    train_dataset = ImageFolder(TRAIN_DIR, transform=train_transform)
+    valid_dataset = ImageFolder(VAL_DIR, transform=eval_transform)
+    test_dataset = ImageFolder(TEST_DIR, transform=eval_transform)
 
-    class_names = full_train_dataset.classes
-    class_to_idx = full_train_dataset.class_to_idx
+    class_names = train_dataset.classes
     num_classes = len(class_names)
 
     print(f"Classes: {class_names}")
-    print(f"Class-to-index: {class_to_idx}")
-
-    all_samples = full_train_dataset.samples
-    all_targets = [label for _, label in all_samples]
-
-    train_samples, valid_samples = train_test_split(
-        all_samples,
-        test_size=VAL_RATIO,
-        random_state=SEED,
-        stratify=all_targets,
-    )
-
-    train_dataset = SubsetImageDataset(train_samples, class_to_idx, transform=train_transform)
-    valid_dataset = SubsetImageDataset(valid_samples, class_to_idx, transform=eval_transform)
-    test_dataset = SubsetImageDataset(test_dataset_raw.samples, class_to_idx, transform=eval_transform)
-
+    print(f"Class-to-index: {train_dataset.class_to_idx}")
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
 
-    class_weights = get_class_weights_from_targets(train_dataset.targets, num_classes).to(device)
+    class_weights = get_class_weights_from_dataset(train_dataset, num_classes).to(device)
 
     train_loader = data.DataLoader(
         train_dataset,
@@ -518,13 +551,8 @@ def main():
         pin_memory=True,
     )
 
-    print("Loading pretrained ResNet50 + GCSA...")
-    model = ResNet50_GCSA_Layer3(
-        num_classes=num_classes,
-        weights=models.ResNet50_Weights.DEFAULT,
-        gcsa_rate=4,
-        gcsa_groups=4,
-    ).to(device)
+    print("Loading pretrained ResNet50 + MECS(after layer1)...")
+    model = ResNet50_MECS_Layer1(num_classes=num_classes).to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
@@ -534,7 +562,7 @@ def main():
     head_params = []
 
     for name, param in model.named_parameters():
-        if ("fc" in name) or ("gcsa" in name):
+        if name.startswith("fc"):
             head_params.append(param)
         else:
             backbone_params.append(param)
@@ -556,7 +584,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_gcsa_layer3_brain_mri.pt"
+    best_path = "best_resnet50_mecs_layer1_pneumonia.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -637,7 +665,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nBrain Tumor MRI ResNet50 + GCSA completed!")
+    print("\nChest X-ray Pneumonia ResNet50 + MECS(layer1) completed!")
 
 
 if __name__ == "__main__":

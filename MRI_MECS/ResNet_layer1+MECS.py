@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Brain Tumor MRI Baseline using ResNet50 + GCSA (after layer3)
+Brain Tumor MRI Baseline using ResNet50 + MECS (after layer1)
 
 Dataset structure:
 dataset_root/
@@ -19,7 +19,7 @@ dataset_root/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- GCSA inserted after layer3
+- MECS_VersionA inserted after layer1
 - Split validation set from Training directory
 - Weighted CrossEntropyLoss for class imbalance
 - Top-1 / Top-2 accuracy
@@ -41,6 +41,7 @@ from PIL import Image
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
@@ -68,7 +69,7 @@ warnings.filterwarnings("ignore")
 # Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4, save_path="best_resnet50_gcsa_brain_mri.pt"):
+    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4, save_path="best_resnet50_mecs_layer1_brain_mri.pt"):
         self.patience = patience
         self.delta = delta
         self.loss_delta = loss_delta
@@ -118,67 +119,102 @@ class EarlyStopping:
 
 
 # =======================
-# GCSA Module
+# MECS Module (Replaces GCSA)
 # =======================
-class GCSA(nn.Module):
-    def __init__(self, in_channels, rate=4, groups=4):
-        super().__init__()
+def global_median_pooling(x):
+    """全局中位数池化"""
+    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
+    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
+    return median_pooled
 
-        hidden_channels = max(1, in_channels // rate)
-        self.groups = groups
 
-        # Channel attention
-        self.channel_attention = nn.Sequential(
-            nn.Linear(in_channels, hidden_channels),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_channels, in_channels)
+class ChannelAttention_VersionA(nn.Module):
+    """【版本 A：先 Sigmoid，再相加。权重范围 [0, 3]】"""
+
+    def __init__(self, input_channels, internal_neurons):
+        super(ChannelAttention_VersionA, self).__init__()
+        self.fc1 = nn.Conv2d(input_channels, internal_neurons, kernel_size=1, stride=1, bias=True)
+        self.fc2 = nn.Conv2d(internal_neurons, input_channels, kernel_size=1, stride=1, bias=True)
+
+    def forward(self, inputs):
+        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
+        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
+        median_pool = global_median_pooling(inputs)
+
+        # 1. Avg 路径 (包含 Sigmoid)
+        avg_out = self.fc2(F.relu(self.fc1(avg_pool), inplace=True))
+        avg_out = torch.sigmoid(avg_out)
+
+        # 2. Max 路径 (包含 Sigmoid)
+        max_out = self.fc2(F.relu(self.fc1(max_pool), inplace=True))
+        max_out = torch.sigmoid(max_out)
+
+        # 3. Median 路径 (包含 Sigmoid)
+        median_out = self.fc2(F.relu(self.fc1(median_pool), inplace=True))
+        median_out = torch.sigmoid(median_out)
+
+        # 4. 最后相加 (完全符合架构图)
+        out = avg_out + max_out + median_out
+        return out
+
+
+class MECS_VersionA(nn.Module):
+    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
+        super(MECS_VersionA, self).__init__()
+        assert in_channels == out_channels, "Input and output channels must be the same"
+
+        self.channel_attention = ChannelAttention_VersionA(
+            input_channels=in_channels,
+            internal_neurons=max(1, in_channels // channel_attention_reduce)
         )
 
-        # Spatial attention
-        self.spatial_attention = nn.Sequential(
-            nn.Conv2d(in_channels, hidden_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(hidden_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(hidden_channels, in_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(in_channels)
-        )
+        self.initial_depth_conv = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels)
+        self.depth_convs = nn.ModuleList([
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
+        ])
 
-    def channel_shuffle(self, x, groups):
-        b, c, h, w = x.size()
+        # 修复了权重共享问题的三个独立卷积层
+        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.act = nn.GELU()
 
-        if c % groups != 0:
-            return x
+    def forward(self, inputs):
+        # 1. 预处理
+        x = self.pre_conv(inputs)
+        x = self.act(x)
 
-        channels_per_group = c // groups
-        x = x.view(b, groups, channels_per_group, h, w)
-        x = x.transpose(1, 2).contiguous()
-        x = x.view(b, c, h, w)
-        return x
+        # 2. 通道注意力
+        channel_att_vec = self.channel_attention(x)
+        x_ca = channel_att_vec * x
 
-    def forward(self, x):
-        b, c, h, w = x.shape
+        # 3. 空间注意力
+        initial_out = self.initial_depth_conv(x_ca)
+        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
+        spatial_out = sum(spatial_outs)
 
-        # channel attention
-        x_permute = x.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
-        x_att_permute = self.channel_attention(x_permute).view(b, h, w, c)
-        x_channel_att = x_att_permute.permute(0, 3, 1, 2).contiguous().sigmoid()
-        x = x * x_channel_att
+        # 补齐了架构图中的残差连接
+        spatial_out = spatial_out + x_ca
 
-        # channel shuffle
-        x = self.channel_shuffle(x, groups=self.groups)
+        # 补齐了空间 Sigmoid
+        spatial_att = torch.sigmoid(self.spatial_att_conv(spatial_out))
+        out = spatial_att * x_ca
 
-        # spatial attention
-        x_spatial_att = self.spatial_attention(x).sigmoid()
-        out = x * x_spatial_att
-
+        # 4. 后处理
+        out = self.post_conv(out)
         return out
 
 
 # =======================
-# ResNet50 + GCSA
+# ResNet50 + MECS
 # =======================
-class ResNet50_GCSA_Layer3(nn.Module):
-    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT, gcsa_rate=4, gcsa_groups=4):
+class ResNet50_MECS_Layer1(nn.Module):
+    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT, channel_reduce=4):
         super().__init__()
 
         backbone = models.resnet50(weights=weights)
@@ -189,12 +225,16 @@ class ResNet50_GCSA_Layer3(nn.Module):
         self.maxpool = backbone.maxpool
 
         self.layer1 = backbone.layer1
+
+        # ResNet50 layer1 output channels = 256
+        self.mecs = MECS_VersionA(
+            in_channels=256,
+            out_channels=256,
+            channel_attention_reduce=channel_reduce
+        )
+
         self.layer2 = backbone.layer2
         self.layer3 = backbone.layer3
-
-        # ResNet50 layer3 output channels = 1024
-        self.gcsa = GCSA(in_channels=1024, rate=gcsa_rate, groups=gcsa_groups)
-
         self.layer4 = backbone.layer4
         self.avgpool = backbone.avgpool
         self.fc = nn.Linear(backbone.fc.in_features, num_classes)
@@ -206,11 +246,11 @@ class ResNet50_GCSA_Layer3(nn.Module):
         x = self.maxpool(x)
 
         x = self.layer1(x)
+
+        x = self.mecs(x)  # 插在 layer1 后
+
         x = self.layer2(x)
         x = self.layer3(x)
-
-        x = self.gcsa(x)   # 插在 layer3 后
-
         x = self.layer4(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
@@ -229,11 +269,10 @@ torch.cuda.manual_seed_all(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\MRI"   # 改成你的数据集根目录
+DATA_ROOT = r"..\MRI"  # 改成你的数据集根目录
 TRAIN_DIR = os.path.join(DATA_ROOT, "Training")
 TEST_DIR = os.path.join(DATA_ROOT, "Testing")
 
@@ -437,7 +476,7 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
 # Main
 # =======================
 def main():
-    print("Starting Brain Tumor MRI ResNet50 + GCSA (after layer3)...")
+    print("Starting Brain Tumor MRI ResNet50 + MECS (after layer1)...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
@@ -518,12 +557,11 @@ def main():
         pin_memory=True,
     )
 
-    print("Loading pretrained ResNet50 + GCSA...")
-    model = ResNet50_GCSA_Layer3(
+    print("Loading pretrained ResNet50 + MECS...")
+    model = ResNet50_MECS_Layer1(
         num_classes=num_classes,
         weights=models.ResNet50_Weights.DEFAULT,
-        gcsa_rate=4,
-        gcsa_groups=4,
+        channel_reduce=4,
     ).to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
@@ -534,7 +572,7 @@ def main():
     head_params = []
 
     for name, param in model.named_parameters():
-        if ("fc" in name) or ("gcsa" in name):
+        if ("fc" in name) or ("mecs" in name):
             head_params.append(param)
         else:
             backbone_params.append(param)
@@ -556,7 +594,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_gcsa_layer3_brain_mri.pt"
+    best_path = "best_resnet50_mecs_layer1_brain_mri.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -637,7 +675,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nBrain Tumor MRI ResNet50 + GCSA completed!")
+    print("\nBrain Tumor MRI ResNet50 + MECS completed!")
 
 
 if __name__ == "__main__":

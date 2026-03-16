@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Chest X-ray Baseline using ResNet50 + GCSA(after layer2)
+Chest X-ray ResNet50 + MECS (inserted after layer1)
+
 Directory structure:
 dataset_root/
 ├── train/
@@ -16,7 +17,7 @@ dataset_root/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- GCSA inserted after layer2
+- MECS_VersionA inserted after layer1
 - Train/Val/Test split (val split from train)
 - Top-1 / Top-2 / Top-3 accuracy
 - Accuracy / Balanced Accuracy
@@ -35,6 +36,7 @@ import warnings
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
@@ -58,104 +60,10 @@ warnings.filterwarnings("ignore")
 
 
 # =======================
-# GCSA Module
-# =======================
-class GCSA(nn.Module):
-    def __init__(self, in_channels, rate=4, groups=4):
-        super(GCSA, self).__init__()
-        assert in_channels % rate == 0, f"in_channels={in_channels} must be divisible by rate={rate}"
-        assert in_channels % groups == 0, f"in_channels={in_channels} must be divisible by groups={groups}"
-
-        mid_channels = in_channels // rate
-        self.groups = groups
-
-        self.channel_attention = nn.Sequential(
-            nn.Linear(in_channels, mid_channels),
-            nn.ReLU(inplace=True),
-            nn.Linear(mid_channels, in_channels)
-        )
-
-        self.spatial_attention = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(mid_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, in_channels, kernel_size=7, padding=3, bias=False),
-            nn.BatchNorm2d(in_channels)
-        )
-
-    def channel_shuffle(self, x, groups):
-        b, c, h, w = x.size()
-        channels_per_group = c // groups
-        x = x.view(b, groups, channels_per_group, h, w)
-        x = torch.transpose(x, 1, 2).contiguous()
-        x = x.view(b, c, h, w)
-        return x
-
-    def forward(self, x):
-        b, c, h, w = x.shape
-
-        x_permute = x.permute(0, 2, 3, 1).contiguous().view(b, -1, c)
-        x_att_permute = self.channel_attention(x_permute).view(b, h, w, c)
-        x_channel_att = x_att_permute.permute(0, 3, 1, 2).contiguous().sigmoid()
-
-        x = x * x_channel_att
-        x = self.channel_shuffle(x, groups=self.groups)
-
-        x_spatial_att = self.spatial_attention(x).sigmoid()
-        out = x * x_spatial_att
-        return out
-
-
-# =======================
-# ResNet50 + GCSA(after layer2)
-# =======================
-class ResNet50_GCSA_L2(nn.Module):
-    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT):
-        super().__init__()
-
-        backbone = models.resnet50(weights=weights)
-
-        self.conv1 = backbone.conv1
-        self.bn1 = backbone.bn1
-        self.relu = backbone.relu
-        self.maxpool = backbone.maxpool
-
-        self.layer1 = backbone.layer1
-        self.layer2 = backbone.layer2
-
-        # ResNet50 layer2 输出通道 = 512
-        self.gcsa = GCSA(in_channels=512, rate=4, groups=4)
-
-        self.layer3 = backbone.layer3
-        self.layer4 = backbone.layer4
-        self.avgpool = backbone.avgpool
-        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
-
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
-
-        # insert GCSA after layer2
-        x = self.gcsa(x)
-
-        x = self.layer3(x)
-        x = self.layer4(x)
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-        return x
-
-
-# =======================
 # Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=7, delta=0.0, save_path="best_resnet50_gcsa_l2_chest_xray.pt"):
+    def __init__(self, patience=7, delta=0.0, save_path="best_resnet50_mecs_layer1_chest_xray.pt"):
         self.patience = patience
         self.delta = delta
         self.best_score = None
@@ -195,7 +103,6 @@ torch.cuda.manual_seed_all(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
 # =======================
 # Config
 # =======================
@@ -221,6 +128,9 @@ TOPK = (1, 2, 3)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+# =======================
+# Dataset Wrapper for Transform
+# =======================
 class TransformSubset(data.Dataset):
     def __init__(self, subset, transform=None):
         self.subset = subset
@@ -236,6 +146,150 @@ class TransformSubset(data.Dataset):
         return x, y
 
 
+# =======================
+# MECS Module Components
+# =======================
+def global_median_pooling(x):
+    """全局中位数池化"""
+    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
+    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
+    return median_pooled
+
+
+class ChannelAttention_VersionA(nn.Module):
+    """【版本 A：先 Sigmoid，再相加。权重范围 [0, 3]】"""
+
+    def __init__(self, input_channels, internal_neurons):
+        super(ChannelAttention_VersionA, self).__init__()
+        self.fc1 = nn.Conv2d(input_channels, internal_neurons, kernel_size=1, stride=1, bias=True)
+        self.fc2 = nn.Conv2d(internal_neurons, input_channels, kernel_size=1, stride=1, bias=True)
+
+    def forward(self, inputs):
+        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
+        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
+        median_pool = global_median_pooling(inputs)
+
+        # 1. Avg 路径 (包含 Sigmoid)
+        avg_out = self.fc2(F.relu(self.fc1(avg_pool), inplace=True))
+        avg_out = torch.sigmoid(avg_out)
+
+        # 2. Max 路径 (包含 Sigmoid)
+        max_out = self.fc2(F.relu(self.fc1(max_pool), inplace=True))
+        max_out = torch.sigmoid(max_out)
+
+        # 3. Median 路径 (包含 Sigmoid)
+        median_out = self.fc2(F.relu(self.fc1(median_pool), inplace=True))
+        median_out = torch.sigmoid(median_out)
+
+        # 4. 最后相加 (完全符合架构图)
+        out = avg_out + max_out + median_out
+        return out
+
+
+class MECS_VersionA(nn.Module):
+    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
+        super(MECS_VersionA, self).__init__()
+        assert in_channels == out_channels, "Input and output channels must be the same"
+
+        self.channel_attention = ChannelAttention_VersionA(
+            input_channels=in_channels,
+            internal_neurons=max(1, in_channels // channel_attention_reduce)
+        )
+
+        self.initial_depth_conv = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels)
+        self.depth_convs = nn.ModuleList([
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
+        ])
+
+        # 修复了权重共享问题的三个独立卷积层
+        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.act = nn.GELU()
+
+    def forward(self, inputs):
+        # 1. 预处理
+        x = self.pre_conv(inputs)
+        x = self.act(x)
+
+        # 2. 通道注意力
+        channel_att_vec = self.channel_attention(x)
+        x_ca = channel_att_vec * x
+
+        # 3. 空间注意力
+        initial_out = self.initial_depth_conv(x_ca)
+        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
+        spatial_out = sum(spatial_outs)
+
+        # 补齐了架构图中的残差连接
+        spatial_out = spatial_out + x_ca
+
+        # 补齐了空间 Sigmoid
+        spatial_att = torch.sigmoid(self.spatial_att_conv(spatial_out))
+        out = spatial_att * x_ca
+
+        # 4. 后处理
+        out = self.post_conv(out)
+        return out
+
+
+# =======================
+# ResNet50 + MECS (after layer1)
+# =======================
+class ResNet50_MECS_Layer1(nn.Module):
+    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT):
+        super().__init__()
+
+        backbone = models.resnet50(weights=weights)
+
+        # stem
+        self.conv1 = backbone.conv1
+        self.bn1 = backbone.bn1
+        self.relu = backbone.relu
+        self.maxpool = backbone.maxpool
+
+        # res blocks
+        self.layer1 = backbone.layer1
+
+        # 在 layer1 后插入 MECS，layer1的输出通道数是 256
+        self.mecs = MECS_VersionA(in_channels=256, out_channels=256)
+
+        self.layer2 = backbone.layer2
+        self.layer3 = backbone.layer3
+        self.layer4 = backbone.layer4
+
+        # head
+        self.avgpool = backbone.avgpool
+        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)  # [B, 64, 112, 112]
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)  # [B, 64, 56, 56]
+
+        x = self.layer1(x)  # [B, 256, 56, 56]
+
+        x = self.mecs(x)  # [B, 256, 56, 56]
+
+        x = self.layer2(x)  # [B, 512, 28, 28]
+        x = self.layer3(x)  # [B, 1024, 14, 14]
+        x = self.layer4(x)  # [B, 2048, 7, 7]
+
+        x = self.avgpool(x)  # [B, 2048, 1, 1]
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+        return x
+
+
+# =======================
+# Metrics
+# =======================
 def calculate_topk_accuracy(logits, y, ks=(1, 3)):
     with torch.no_grad():
         num_classes = logits.size(1)
@@ -283,6 +337,9 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     return metrics
 
 
+# =======================
+# Train / Eval
+# =======================
 def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk=(1, 2, 3)):
     model.train()
     epoch_loss = 0.0
@@ -363,8 +420,11 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+# =======================
+# Main
+# =======================
 def main():
-    print("Starting Chest X-ray ResNet50 + GCSA(layer2) ...")
+    print("Starting Chest X-ray ResNet50 + MECS(layer1) ...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
@@ -441,15 +501,18 @@ def main():
         pin_memory=True,
     )
 
-    print("Loading pretrained ResNet50 + GCSA(after layer2)...")
-    model = ResNet50_GCSA_L2(num_classes=num_classes).to(device)
+    # Model
+    print("Loading pretrained ResNet50 + MECS...")
+    model = ResNet50_MECS_Layer1(num_classes=num_classes).to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
     criterion = nn.CrossEntropyLoss()
 
+    # 分层学习率
     backbone_params = []
     head_params = []
+
     for name, param in model.named_parameters():
         if "fc" in name:
             head_params.append(param)
@@ -473,7 +536,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_gcsa_layer2_chest_xray.pt"
+    best_path = "best_resnet50_mecs_layer1_chest_xray.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -558,7 +621,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nChest X-ray ResNet50 + GCSA(layer2) completed!")
+    print("\nChest X-ray ResNet50 + MECS(layer1) completed!")
 
 
 if __name__ == "__main__":

@@ -2,32 +2,29 @@
 # -*- coding: utf-8 -*-
 
 """
-Brain Tumor MRI Baseline using ResNet50 + MDFA(after layer3)
+Chest X-ray ResNet50 + MECS (inserted after layer3)
 
-Dataset structure:
+Directory structure:
 dataset_root/
-├── Training/
-│   ├── glioma_tumor/
-│   ├── meningioma_tumor/
-│   ├── no_tumor/
-│   └── pituitary_tumor/
-└── Testing/
-    ├── glioma_tumor/
-    ├── meningioma_tumor/
-    ├── no_tumor/
-    └── pituitary_tumor/
+├── train/
+│   ├── COVID19/
+│   ├── NORMAL/
+│   └── PNEUMONIA/
+└── test/
+    ├── COVID19/
+    ├── NORMAL/
+    └── PNEUMONIA/
 
 Features:
 - ResNet50 pretrained on ImageNet
-- MDFA inserted after layer3
-- Split validation set from Training directory
-- Weighted CrossEntropyLoss for class imbalance
-- Top-1 / Top-2 accuracy
+- MECS_VersionA inserted after layer3
+- Train/Val/Test split (val split from train)
+- Top-1 / Top-2 / Top-3 accuracy
 - Accuracy / Balanced Accuracy
 - Macro / Weighted F1
 - Macro Precision / Macro Recall
 - Confusion Matrix / Classification Report
-- Multi-class ROC-AUC / PR-AUC (OvR macro)
+- Optional ROC-AUC / PR-AUC (OvR macro)
 - Early Stopping based on validation macro_f1
 """
 
@@ -37,8 +34,6 @@ import random
 import warnings
 
 import numpy as np
-from PIL import Image
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,9 +42,8 @@ import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.transforms as transforms
 import torchvision.models as models
-from torchvision.datasets import ImageFolder
 
-from sklearn.model_selection import train_test_split
+from torchvision.datasets import ImageFolder
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -69,54 +63,33 @@ warnings.filterwarnings("ignore")
 # Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=8, delta=0.0, loss_delta=1e-4,
-                 save_path="best_resnet50_mdfa_layer3_brain_mri.pt"):
+    def __init__(self, patience=7, delta=0.0, save_path="best_resnet50_mecs_layer3_chest_xray.pt"):
         self.patience = patience
         self.delta = delta
-        self.loss_delta = loss_delta
-
         self.best_score = None
-        self.best_loss = None
         self.num_bad_epochs = 0
         self.early_stop = False
         self.save_path = save_path
 
-        save_dir = os.path.dirname(save_path)
-        if save_dir:
-            os.makedirs(save_dir, exist_ok=True)
+        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
 
-    def __call__(self, score, val_loss, model):
+    def __call__(self, score, model):
         if self.best_score is None:
             self.best_score = score
-            self.best_loss = val_loss
-            self.save_checkpoint(score, val_loss, model, is_initial=True)
-
+            torch.save(model.state_dict(), self.save_path)
+            print(f" Initial best model saved to {self.save_path} (macro_f1={score:.4f})")
         elif score > self.best_score + self.delta:
             self.best_score = score
-            self.best_loss = val_loss
             self.num_bad_epochs = 0
-            self.save_checkpoint(score, val_loss, model, msg="Validation macro_f1 improved.")
-
-        elif abs(score - self.best_score) <= self.delta and val_loss < self.best_loss - self.loss_delta:
-            self.best_score = score
-            self.best_loss = val_loss
-            self.num_bad_epochs = 0
-            self.save_checkpoint(score, val_loss, model, msg="Validation loss improved at same macro_f1.")
-
+            torch.save(model.state_dict(), self.save_path)
+            print(f" Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
         else:
             self.num_bad_epochs += 1
-            print(f" No improvement in metrics. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+            print(f" No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
             print("⏹ Early stopping triggered.")
-
-    def save_checkpoint(self, score, val_loss, model, is_initial=False, msg=""):
-        torch.save(model.state_dict(), self.save_path)
-        if is_initial:
-            print(f" Initial best model saved to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
-        else:
-            print(f" {msg} Saved model to {self.save_path} (macro_f1={score:.4f}, val_loss={val_loss:.4f})")
 
 
 # =======================
@@ -133,212 +106,164 @@ torch.backends.cudnn.benchmark = False
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\MRI"  # 改成你的数据集根目录
-TRAIN_DIR = os.path.join(DATA_ROOT, "Training")
-TEST_DIR = os.path.join(DATA_ROOT, "Testing")
+DATA_ROOT = r"..\CPN"
+TRAIN_DIR = os.path.join(DATA_ROOT, "train")
+TEST_DIR = os.path.join(DATA_ROOT, "test")
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
-EPOCHS = 30
-
-VAL_RATIO = 0.15
+EPOCHS = 40
+VAL_RATIO = 0.1
 
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
-LR_MDFA = 5e-4
 WEIGHT_DECAY = 1e-4
 
 NUM_WORKERS = 4
-PATIENCE = 8
+PATIENCE = 10
 EARLY_STOP_DELTA = 1e-4
 
-TOPK = (1, 2)
+TOPK = (1, 2, 3)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # =======================
-# Utils
+# Dataset Wrapper for Transform
 # =======================
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-
-def epoch_time(start_time, end_time):
-    s = end_time - start_time
-    return int(s // 60), int(s % 60)
-
-
-def get_class_weights_from_targets(targets, num_classes):
-    class_counts = np.bincount(targets, minlength=num_classes)
-    total_samples = class_counts.sum()
-    class_weights = total_samples / (num_classes * class_counts.astype(np.float32))
-
-    print("Training class counts:", class_counts.tolist())
-    print("Class weights:", class_weights.tolist())
-
-    return torch.tensor(class_weights, dtype=torch.float32)
-
-
-# =======================
-# Dataset wrapper
-# =======================
-class SubsetImageDataset(data.Dataset):
-    def __init__(self, samples, class_to_idx, transform=None):
-        self.samples = samples
-        self.class_to_idx = class_to_idx
+class TransformSubset(data.Dataset):
+    def __init__(self, subset, transform=None):
+        self.subset = subset
         self.transform = transform
-        self.targets = [label for _, label in self.samples]
-
-        idx_to_class = {v: k for k, v in class_to_idx.items()}
-        self.classes = [idx_to_class[i] for i in range(len(idx_to_class))]
 
     def __len__(self):
-        return len(self.samples)
+        return len(self.subset)
 
-    def __getitem__(self, index):
-        path, label = self.samples[index]
-        img = Image.open(path).convert("RGB")
-
+    def __getitem__(self, idx):
+        x, y = self.subset[idx]
         if self.transform is not None:
-            img = self.transform(img)
-
-        return img, label
+            x = self.transform(x)
+        return x, y
 
 
 # =======================
-# MDFA
+# MECS Module Components
 # =======================
-class ChannelAttention(nn.Module):
-    def __init__(self, channels, reduction=2):
-        super().__init__()
-        mid_channels = max(1, channels // reduction)
-
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(channels, mid_channels, kernel_size=1, bias=True)
-        self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(mid_channels, channels, kernel_size=1, bias=True)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        w = self.avg_pool(x)
-        w = self.fc1(w)
-        w = self.relu(w)
-        w = self.fc2(w)
-        w = self.sigmoid(w)
-        return w
+def global_median_pooling(x):
+    """全局中位数池化"""
+    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
+    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
+    return median_pooled
 
 
-class SpatialAttention(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv = nn.Conv2d(1, 1, kernel_size=1, bias=False)
-        self.sigmoid = nn.Sigmoid()
+class ChannelAttention_VersionA(nn.Module):
+    """【版本 A：先 Sigmoid，再相加。权重范围 [0, 3]】"""
 
-    def forward(self, x):
-        avg_map = torch.mean(x, dim=1, keepdim=True)
-        m = self.conv(avg_map)
-        m = self.sigmoid(m)
-        return m
+    def __init__(self, input_channels, internal_neurons):
+        super(ChannelAttention_VersionA, self).__init__()
+        self.fc1 = nn.Conv2d(input_channels, internal_neurons, kernel_size=1, stride=1, bias=True)
+        self.fc2 = nn.Conv2d(internal_neurons, input_channels, kernel_size=1, stride=1, bias=True)
+
+    def forward(self, inputs):
+        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
+        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
+        median_pool = global_median_pooling(inputs)
+
+        # 1. Avg 路径 (包含 Sigmoid)
+        avg_out = self.fc2(F.relu(self.fc1(avg_pool), inplace=True))
+        avg_out = torch.sigmoid(avg_out)
+
+        # 2. Max 路径 (包含 Sigmoid)
+        max_out = self.fc2(F.relu(self.fc1(max_pool), inplace=True))
+        max_out = torch.sigmoid(max_out)
+
+        # 3. Median 路径 (包含 Sigmoid)
+        median_out = self.fc2(F.relu(self.fc1(median_pool), inplace=True))
+        median_out = torch.sigmoid(median_out)
+
+        # 4. 最后相加 (完全符合架构图)
+        out = avg_out + max_out + median_out
+        return out
 
 
-class MDFA(nn.Module):
-    def __init__(self, dim_in, dim_out, rate=1, bn_mom=0.1, reduction=2):
-        super(MDFA, self).__init__()
+class MECS_VersionA(nn.Module):
+    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
+        super(MECS_VersionA, self).__init__()
+        assert in_channels == out_channels, "Input and output channels must be the same"
 
-        self.branch1 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
+        self.channel_attention = ChannelAttention_VersionA(
+            input_channels=in_channels,
+            internal_neurons=max(1, in_channels // channel_attention_reduce)
         )
 
-        self.branch2 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
-                      padding=6 * rate, dilation=6 * rate, bias=False),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
+        self.initial_depth_conv = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels)
+        self.depth_convs = nn.ModuleList([
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
+        ])
 
-        self.branch3 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
-                      padding=12 * rate, dilation=12 * rate, bias=False),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
+        # 修复了权重共享问题的三个独立卷积层
+        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
+        self.act = nn.GELU()
 
-        self.branch4 = nn.Sequential(
-            nn.Conv2d(dim_in, dim_out, kernel_size=3, stride=1,
-                      padding=18 * rate, dilation=18 * rate, bias=False),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
+    def forward(self, inputs):
+        # 1. 预处理
+        x = self.pre_conv(inputs)
+        x = self.act(x)
 
-        self.branch5_conv = nn.Conv2d(dim_in, dim_out, kernel_size=1, stride=1, padding=0, bias=False)
-        self.branch5_bn = nn.BatchNorm2d(dim_out, momentum=bn_mom)
-        self.branch5_relu = nn.ReLU(inplace=True)
+        # 2. 通道注意力
+        channel_att_vec = self.channel_attention(x)
+        x_ca = channel_att_vec * x
 
-        cat_channels = dim_out * 5
+        # 3. 空间注意力
+        initial_out = self.initial_depth_conv(x_ca)
+        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
+        spatial_out = sum(spatial_outs)
 
-        self.channel_att = ChannelAttention(cat_channels, reduction=reduction)
-        self.spatial_att = SpatialAttention()
+        # 补齐了架构图中的残差连接
+        spatial_out = spatial_out + x_ca
 
-        self.conv_out = nn.Sequential(
-            nn.Conv2d(cat_channels, dim_out, kernel_size=1, stride=1, padding=0, bias=False),
-            nn.BatchNorm2d(dim_out, momentum=bn_mom),
-            nn.ReLU(inplace=True),
-        )
+        # 补齐了空间 Sigmoid
+        spatial_att = torch.sigmoid(self.spatial_att_conv(spatial_out))
+        out = spatial_att * x_ca
 
-    def forward(self, x):
-        b, c, h, w = x.size()
-
-        feat1 = self.branch1(x)
-        feat2 = self.branch2(x)
-        feat3 = self.branch3(x)
-        feat4 = self.branch4(x)
-
-        global_feat = F.adaptive_avg_pool2d(x, output_size=1)
-        global_feat = self.branch5_conv(global_feat)
-        global_feat = self.branch5_bn(global_feat)
-        global_feat = self.branch5_relu(global_feat)
-        global_feat = F.interpolate(global_feat, size=(h, w), mode='bilinear', align_corners=True)
-
-        feature_cat = torch.cat([feat1, feat2, feat3, feat4, global_feat], dim=1)
-
-        ca = self.channel_att(feature_cat)
-        sa = self.spatial_att(feature_cat)
-
-        channel_refined = feature_cat * ca
-        spatial_refined = feature_cat * sa
-
-        fused = channel_refined + spatial_refined + feature_cat
-
-        out = self.conv_out(fused)
+        # 4. 后处理
+        out = self.post_conv(out)
         return out
 
 
 # =======================
-# ResNet50 + MDFA(after layer3)
+# ResNet50 + MECS (after layer3)
 # =======================
-class ResNet50_MDFA_Layer3(nn.Module):
-    def __init__(self, num_classes=4, mdfa_reduction=2):
+class ResNet50_MECS_Layer3(nn.Module):
+    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT):
         super().__init__()
 
-        backbone = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+        backbone = models.resnet50(weights=weights)
 
+        # stem
         self.conv1 = backbone.conv1
         self.bn1 = backbone.bn1
         self.relu = backbone.relu
         self.maxpool = backbone.maxpool
 
+        # res blocks
         self.layer1 = backbone.layer1
         self.layer2 = backbone.layer2
         self.layer3 = backbone.layer3
 
-        # CHANGED: layer3 output channels in ResNet50 is 1024 (layer2 was 512)
-        self.mdfa = MDFA(dim_in=1024, dim_out=1024, reduction=mdfa_reduction)
+        # 在 layer3 后插入 MECS，ResNet50 layer3的输出通道数是 1024
+        self.mecs = MECS_VersionA(in_channels=1024, out_channels=1024)
 
         self.layer4 = backbone.layer4
 
+        # head
         self.avgpool = backbone.avgpool
         self.fc = nn.Linear(backbone.fc.in_features, num_classes)
 
@@ -352,21 +277,20 @@ class ResNet50_MDFA_Layer3(nn.Module):
         x = self.layer2(x)  # [B, 512, 28, 28]
         x = self.layer3(x)  # [B, 1024, 14, 14]
 
-        # CHANGED: MDFA is now applied after layer3
-        x = self.mdfa(x)  # [B, 1024, 14, 14]
+        x = self.mecs(x)  # [B, 1024, 14, 14]
 
         x = self.layer4(x)  # [B, 2048, 7, 7]
 
         x = self.avgpool(x)  # [B, 2048, 1, 1]
         x = torch.flatten(x, 1)
-        x = self.fc(x)  # [B, num_classes]
+        x = self.fc(x)
         return x
 
 
 # =======================
 # Metrics
 # =======================
-def calculate_topk_accuracy(logits, y, ks=(1, 2)):
+def calculate_topk_accuracy(logits, y, ks=(1, 3)):
     with torch.no_grad():
         num_classes = logits.size(1)
         ks = tuple(sorted(set(min(k, num_classes) for k in ks)))
@@ -397,15 +321,14 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
         y_true, y_pred, target_names=class_names, digits=4, zero_division=0
     )
 
-    metrics["roc_auc"] = None
-    metrics["pr_auc"] = None
-
+    metrics["ovr_roc_auc_macro"] = None
+    metrics["ovr_pr_auc_macro"] = None
     try:
         y_true_oh = np.eye(num_classes)[y_true]
-        metrics["roc_auc"] = roc_auc_score(
+        metrics["ovr_roc_auc_macro"] = roc_auc_score(
             y_true_oh, y_prob, average="macro", multi_class="ovr"
         )
-        metrics["pr_auc"] = average_precision_score(
+        metrics["ovr_pr_auc_macro"] = average_precision_score(
             y_true_oh, y_prob, average="macro"
         )
     except Exception:
@@ -417,7 +340,7 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
 # =======================
 # Train / Eval
 # =======================
-def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk=(1, 2)):
+def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk=(1, 2, 3)):
     model.train()
     epoch_loss = 0.0
     epoch_top = {f"top{k}": 0.0 for k in topk}
@@ -427,10 +350,8 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk
         y = y.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
-
         logits = model(x)
         loss = criterion(logits, y)
-
         loss.backward()
         optimizer.step()
 
@@ -438,7 +359,6 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk
             scheduler.step()
 
         epoch_loss += loss.item()
-
         batch_top = calculate_topk_accuracy(logits, y, ks=topk)
         for k, v in batch_top.items():
             epoch_top[k] += v
@@ -451,7 +371,7 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk
 
 
 @torch.no_grad()
-def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1, 2)):
+def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1, 2, 3)):
     model.eval()
     epoch_loss = 0.0
     epoch_top = {f"top{k}": 0.0 for k in topk}
@@ -491,68 +411,73 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
     return epoch_loss, epoch_top, metrics
 
 
+def epoch_time(start_time, end_time):
+    s = end_time - start_time
+    return int(s // 60), int(s % 60)
+
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 # =======================
 # Main
 # =======================
 def main():
-    print("Starting Brain Tumor MRI ResNet50 + MDFA(after layer3)...")
+    print("Starting Chest X-ray ResNet50 + MECS(layer3) ...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    for d in [TRAIN_DIR, TEST_DIR]:
-        if not os.path.exists(d):
-            print(f"Directory not found: {d}")
-            return
+    if not os.path.exists(TRAIN_DIR):
+        print(f"Train directory not found: {TRAIN_DIR}")
+        return
+    if not os.path.exists(TEST_DIR):
+        print(f"Test directory not found: {TEST_DIR}")
+        return
 
-    train_transform = transforms.Compose([
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.1, contrast=0.1),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        ),
-    ])
-
-    eval_transform = transforms.Compose([
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        ),
-    ])
-
-    full_train_dataset = ImageFolder(TRAIN_DIR)
-    test_dataset_raw = ImageFolder(TEST_DIR)
-
-    class_names = full_train_dataset.classes
-    class_to_idx = full_train_dataset.class_to_idx
+    base_train_dataset = ImageFolder(TRAIN_DIR)
+    class_names = base_train_dataset.classes
     num_classes = len(class_names)
 
     print(f"Classes: {class_names}")
-    print(f"Class-to-index: {class_to_idx}")
+    print(f"Class-to-index: {base_train_dataset.class_to_idx}")
+    print(f"Train samples total: {len(base_train_dataset)}")
 
-    all_samples = full_train_dataset.samples
-    all_targets = [label for _, label in all_samples]
+    train_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomRotation(8),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+    ])
 
-    train_samples, valid_samples = train_test_split(
-        all_samples,
-        test_size=VAL_RATIO,
-        random_state=SEED,
-        stratify=all_targets,
+    test_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+    ])
+
+    val_size = int(len(base_train_dataset) * VAL_RATIO)
+    train_size = len(base_train_dataset) - val_size
+
+    train_subset, val_subset = data.random_split(
+        base_train_dataset,
+        [train_size, val_size],
+        generator=torch.Generator().manual_seed(SEED)
     )
 
-    train_dataset = SubsetImageDataset(train_samples, class_to_idx, transform=train_transform)
-    valid_dataset = SubsetImageDataset(valid_samples, class_to_idx, transform=eval_transform)
-    test_dataset = SubsetImageDataset(test_dataset_raw.samples, class_to_idx, transform=eval_transform)
+    train_dataset = TransformSubset(train_subset, transform=train_transform)
+    valid_dataset = TransformSubset(val_subset, transform=test_transform)
+
+    base_test_dataset = ImageFolder(TEST_DIR)
+    test_dataset = TransformSubset(base_test_dataset, transform=test_transform)
 
     print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
-
-    class_weights = get_class_weights_from_targets(train_dataset.targets, num_classes).to(device)
 
     train_loader = data.DataLoader(
         train_dataset,
@@ -576,31 +501,27 @@ def main():
         pin_memory=True,
     )
 
-    print("Loading pretrained ResNet50 + inserting MDFA after layer3...")
-
-    # CHANGED: initialize the new Layer3 class
-    model = ResNet50_MDFA_Layer3(num_classes=num_classes).to(device)
+    # Model
+    print("Loading pretrained ResNet50 + MECS(layer3)...")
+    model = ResNet50_MECS_Layer3(num_classes=num_classes).to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
-    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    criterion = nn.CrossEntropyLoss()
 
+    # 分层学习率
     backbone_params = []
-    mdfa_params = []
     head_params = []
 
     for name, param in model.named_parameters():
-        if name.startswith("fc"):
+        if "fc" in name:
             head_params.append(param)
-        elif name.startswith("mdfa"):
-            mdfa_params.append(param)
         else:
             backbone_params.append(param)
 
     optimizer = optim.AdamW(
         [
             {"params": backbone_params, "lr": LR_BACKBONE},
-            {"params": mdfa_params, "lr": LR_MDFA},
             {"params": head_params, "lr": LR_HEAD},
         ],
         weight_decay=WEIGHT_DECAY,
@@ -609,14 +530,13 @@ def main():
     total_steps = EPOCHS * len(train_loader)
     scheduler = lr_scheduler.OneCycleLR(
         optimizer,
-        max_lr=[LR_BACKBONE, LR_MDFA, LR_HEAD],
+        max_lr=[LR_BACKBONE, LR_HEAD],
         total_steps=total_steps,
         pct_start=0.1,
         anneal_strategy="cos",
     )
 
-    # CHANGED: updated best model save path
-    best_path = "best_resnet50_mdfa_layer3_brain_mri.pt"
+    best_path = "best_resnet50_mecs_layer3_chest_xray.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -624,6 +544,7 @@ def main():
     )
 
     print("Starting training...")
+    best_val_f1 = -1.0
 
     for epoch in range(EPOCHS):
         start_time = time.time()
@@ -655,13 +576,16 @@ def main():
             + f" | recall_macro={valid_metrics['recall_macro']:.4f}"
         )
 
-        if valid_metrics["roc_auc"] is not None:
+        if valid_metrics["ovr_roc_auc_macro"] is not None:
             print(
-                f"         roc_auc={valid_metrics['roc_auc']:.4f}"
-                f" | pr_auc={valid_metrics['pr_auc']:.4f}"
+                f"         ovr_roc_auc_macro={valid_metrics['ovr_roc_auc_macro']:.4f}"
+                f" | ovr_pr_auc_macro={valid_metrics['ovr_pr_auc_macro']:.4f}"
             )
 
-        early_stopping(valid_metrics["macro_f1"], valid_loss, model)
+        if valid_metrics["macro_f1"] > best_val_f1:
+            best_val_f1 = valid_metrics["macro_f1"]
+
+        early_stopping(valid_metrics["macro_f1"], model)
 
         if early_stopping.early_stop:
             print(f" Training stopped early at epoch {epoch + 1}.")
@@ -685,10 +609,10 @@ def main():
         + f" | recall_macro={test_metrics['recall_macro']:.4f}"
     )
 
-    if test_metrics["roc_auc"] is not None:
+    if test_metrics["ovr_roc_auc_macro"] is not None:
         print(
-            f"     roc_auc={test_metrics['roc_auc']:.4f}"
-            f" | pr_auc={test_metrics['pr_auc']:.4f}"
+            f"     ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f}"
+            f" | ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}"
         )
 
     print("\nConfusion Matrix:")
@@ -697,7 +621,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nBrain Tumor MRI ResNet50 + MDFA(after layer3) completed!")
+    print("\nChest X-ray ResNet50 + MECS(layer3) completed!")
 
 
 if __name__ == "__main__":

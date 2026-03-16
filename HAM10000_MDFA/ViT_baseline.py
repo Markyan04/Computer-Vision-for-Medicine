@@ -59,20 +59,20 @@ class EarlyStopping:
         if self.best_score is None:
             self.best_score = score
             torch.save(model.state_dict(), self.save_path)
-            print(f"✅ Initial model saved to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Initial model saved to {self.save_path} (macro_f1={score:.4f})")
 
         elif score > self.best_score + self.delta:
             self.best_score = score
             self.num_bad_epochs = 0
             torch.save(model.state_dict(), self.save_path)
-            print(f"✅ Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
         else:
             self.num_bad_epochs += 1
-            print(f"⚠️ No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+            print(f" No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
-            print("⏹️ Early stopping triggered.")
+            print("⏹ Early stopping triggered.")
 
 
 # -----------------------
@@ -466,7 +466,7 @@ def main():
         early_stopping(valid_metrics["macro_f1"], model)
 
         if early_stopping.early_stop:
-            print(f"🛑 Training stopped early at epoch {epoch + 1} to prevent overfitting.")
+            print(f" Training stopped early at epoch {epoch + 1} to prevent overfitting.")
             break
 
     # -----------------------
