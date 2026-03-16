@@ -1,0 +1,13 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [MRI_MECS] -> 脚本 [ResNet_layer1+MECS.py]
+📝 日志保存至: logs\MRI_MECS_ResNet_layer1+MECS.log
+🕒 开始于: 2026-03-16 22:48:56.002101
+------------------------------------------------------------
+Traceback (most recent call last):
+  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 39, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+
+✅ 运行完毕: [ResNet_layer1+MECS.py] | 退出码: 1
+🕒 结束于: 2026-03-16 22:48:56.046360

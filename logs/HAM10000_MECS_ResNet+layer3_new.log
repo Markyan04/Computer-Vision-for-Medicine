@@ -1,0 +1,219 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [HAM10000_MECS] -> 脚本 [ResNet+layer3_new.py]
+📝 日志保存至: logs\HAM10000_MECS_ResNet+layer3_new.log
+🕒 开始于: 2026-03-16 17:38:27.430688
+------------------------------------------------------------
+Starting ISIC ResNet50 + MECS(layer3) ...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Loaded metadata samples: 10015
+Unique diagnoses in metadata: ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+Available image directories: ['../ISIC\\HAM10000_images_part_1', '../ISIC\\HAM10000_images_part_2']
+Valid samples: 10015 | num_classes=7 | classes=['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+Split sizes | train=7210, valid=802, test=2003
+Loading pre-trained ResNet50 (torchvision) weights...
+Trainable parameters: 27,309,383
+Starting training...
+
+Epoch 01/40 | Time 0m34s
+  Train | loss=1.8157 | top1=51.66% | top3=76.13%
+  Valid | loss=1.5827 | top1=66.95% | top3=84.13% | bal_acc=15.62% | macro_f1=0.1396
+✅ Initial model saved to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.1396)
+
+Epoch 02/40 | Time 0m34s
+  Train | loss=1.2177 | top1=68.10% | top3=88.43%
+  Valid | loss=0.9746 | top1=67.07% | top3=88.58% | bal_acc=15.53% | macro_f1=0.1355
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 03/40 | Time 0m33s
+  Train | loss=0.8926 | top1=68.51% | top3=89.68%
+  Valid | loss=0.8571 | top1=69.35% | top3=87.86% | bal_acc=18.60% | macro_f1=0.1789
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.1789)
+
+Epoch 04/40 | Time 0m33s
+  Train | loss=0.7832 | top1=71.49% | top3=89.87%
+  Valid | loss=0.7574 | top1=72.60% | top3=89.18% | bal_acc=23.90% | macro_f1=0.2342
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.2342)
+
+Epoch 05/40 | Time 0m34s
+  Train | loss=0.6724 | top1=74.28% | top3=93.30%
+  Valid | loss=0.6745 | top1=75.12% | top3=93.39% | bal_acc=29.38% | macro_f1=0.2976
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.2976)
+
+Epoch 06/40 | Time 0m34s
+  Train | loss=0.5559 | top1=80.22% | top3=96.10%
+  Valid | loss=0.5331 | top1=81.49% | top3=96.75% | bal_acc=51.27% | macro_f1=0.5531
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.5531)
+
+Epoch 07/40 | Time 0m33s
+  Train | loss=0.4431 | top1=83.89% | top3=98.01%
+  Valid | loss=0.5590 | top1=80.65% | top3=98.20% | bal_acc=58.41% | macro_f1=0.6554
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.6554)
+
+Epoch 08/40 | Time 0m34s
+  Train | loss=0.3695 | top1=86.05% | top3=98.74%
+  Valid | loss=0.5410 | top1=79.33% | top3=98.32% | bal_acc=69.05% | macro_f1=0.7021
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.7021)
+
+Epoch 09/40 | Time 0m34s
+  Train | loss=0.3138 | top1=88.52% | top3=99.21%
+  Valid | loss=0.4739 | top1=85.10% | top3=97.84% | bal_acc=68.29% | macro_f1=0.7287
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.7287)
+
+Epoch 10/40 | Time 0m35s
+  Train | loss=0.2696 | top1=90.22% | top3=99.39%
+  Valid | loss=0.4923 | top1=83.89% | top3=97.96% | bal_acc=70.53% | macro_f1=0.7009
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 11/40 | Time 0m33s
+  Train | loss=0.2309 | top1=91.51% | top3=99.60%
+  Valid | loss=0.5298 | top1=83.29% | top3=97.96% | bal_acc=67.98% | macro_f1=0.7361
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.7361)
+
+Epoch 12/40 | Time 0m33s
+  Train | loss=0.1999 | top1=92.86% | top3=99.75%
+  Valid | loss=0.4564 | top1=84.25% | top3=99.16% | bal_acc=72.50% | macro_f1=0.7512
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.7512)
+
+Epoch 13/40 | Time 0m34s
+  Train | loss=0.1660 | top1=93.98% | top3=99.75%
+  Valid | loss=0.4904 | top1=85.34% | top3=98.56% | bal_acc=73.77% | macro_f1=0.7728
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.7728)
+
+Epoch 14/40 | Time 0m33s
+  Train | loss=0.1387 | top1=94.92% | top3=99.82%
+  Valid | loss=0.5257 | top1=83.65% | top3=98.44% | bal_acc=69.04% | macro_f1=0.7211
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 15/40 | Time 0m34s
+  Train | loss=0.1205 | top1=95.85% | top3=99.94%
+  Valid | loss=0.4988 | top1=84.50% | top3=99.16% | bal_acc=72.25% | macro_f1=0.7365
+⚠️ No improvement in macro_f1. Bad epochs: 2/10
+
+Epoch 16/40 | Time 0m33s
+  Train | loss=0.1087 | top1=96.13% | top3=99.94%
+  Valid | loss=0.4583 | top1=85.22% | top3=99.04% | bal_acc=73.51% | macro_f1=0.7524
+⚠️ No improvement in macro_f1. Bad epochs: 3/10
+
+Epoch 17/40 | Time 0m33s
+  Train | loss=0.0973 | top1=96.52% | top3=99.88%
+  Valid | loss=0.4605 | top1=86.42% | top3=99.04% | bal_acc=79.37% | macro_f1=0.8038
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.8038)
+
+Epoch 18/40 | Time 0m35s
+  Train | loss=0.0822 | top1=97.18% | top3=100.00%
+  Valid | loss=0.4714 | top1=87.62% | top3=98.80% | bal_acc=73.53% | macro_f1=0.7546
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 19/40 | Time 0m34s
+  Train | loss=0.0555 | top1=98.26% | top3=99.97%
+  Valid | loss=0.5437 | top1=86.66% | top3=98.44% | bal_acc=75.30% | macro_f1=0.7562
+⚠️ No improvement in macro_f1. Bad epochs: 2/10
+
+Epoch 20/40 | Time 0m35s
+  Train | loss=0.0546 | top1=98.08% | top3=99.94%
+  Valid | loss=0.5198 | top1=86.78% | top3=99.04% | bal_acc=79.33% | macro_f1=0.8087
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.8087)
+
+Epoch 21/40 | Time 0m33s
+  Train | loss=0.0496 | top1=98.41% | top3=99.99%
+  Valid | loss=0.4745 | top1=87.98% | top3=98.92% | bal_acc=80.88% | macro_f1=0.8015
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 22/40 | Time 0m31s
+  Train | loss=0.0427 | top1=98.49% | top3=100.00%
+  Valid | loss=0.5120 | top1=85.22% | top3=98.92% | bal_acc=78.75% | macro_f1=0.7869
+⚠️ No improvement in macro_f1. Bad epochs: 2/10
+
+Epoch 23/40 | Time 0m33s
+  Train | loss=0.0465 | top1=98.41% | top3=100.00%
+  Valid | loss=0.4839 | top1=87.98% | top3=99.28% | bal_acc=82.75% | macro_f1=0.8172
+✅ Validation improved. Saved best model to isic_resnet50_mecs_layer3_best.pt (macro_f1=0.8172)
+
+Epoch 24/40 | Time 0m33s
+  Train | loss=0.0329 | top1=98.93% | top3=99.99%
+  Valid | loss=0.5376 | top1=87.50% | top3=98.80% | bal_acc=78.08% | macro_f1=0.7950
+⚠️ No improvement in macro_f1. Bad epochs: 1/10
+
+Epoch 25/40 | Time 0m33s
+  Train | loss=0.0321 | top1=98.97% | top3=100.00%
+  Valid | loss=0.5343 | top1=88.46% | top3=98.68% | bal_acc=78.69% | macro_f1=0.7997
+⚠️ No improvement in macro_f1. Bad epochs: 2/10
+
+Epoch 26/40 | Time 0m35s
+  Train | loss=0.0227 | top1=99.28% | top3=100.00%
+  Valid | loss=0.5273 | top1=88.46% | top3=98.92% | bal_acc=77.56% | macro_f1=0.7948
+⚠️ No improvement in macro_f1. Bad epochs: 3/10
+
+Epoch 27/40 | Time 0m34s
+  Train | loss=0.0204 | top1=99.31% | top3=100.00%
+  Valid | loss=0.5514 | top1=88.22% | top3=98.92% | bal_acc=79.46% | macro_f1=0.7985
+⚠️ No improvement in macro_f1. Bad epochs: 4/10
+
+Epoch 28/40 | Time 0m33s
+  Train | loss=0.0190 | top1=99.46% | top3=100.00%
+  Valid | loss=0.5254 | top1=88.10% | top3=98.92% | bal_acc=78.21% | macro_f1=0.7955
+⚠️ No improvement in macro_f1. Bad epochs: 5/10
+
+Epoch 29/40 | Time 0m34s
+  Train | loss=0.0203 | top1=99.38% | top3=100.00%
+  Valid | loss=0.5355 | top1=88.22% | top3=98.92% | bal_acc=78.96% | macro_f1=0.8101
+⚠️ No improvement in macro_f1. Bad epochs: 6/10
+
+Epoch 30/40 | Time 0m33s
+  Train | loss=0.0141 | top1=99.56% | top3=100.00%
+  Valid | loss=0.5422 | top1=88.10% | top3=98.80% | bal_acc=80.02% | macro_f1=0.8056
+⚠️ No improvement in macro_f1. Bad epochs: 7/10
+
+Epoch 31/40 | Time 0m34s
+  Train | loss=0.0119 | top1=99.60% | top3=99.99%
+  Valid | loss=0.5144 | top1=88.10% | top3=98.68% | bal_acc=78.65% | macro_f1=0.7994
+⚠️ No improvement in macro_f1. Bad epochs: 8/10
+
+Epoch 32/40 | Time 0m32s
+  Train | loss=0.0122 | top1=99.68% | top3=100.00%
+  Valid | loss=0.5202 | top1=88.22% | top3=98.80% | bal_acc=78.30% | macro_f1=0.7916
+⚠️ No improvement in macro_f1. Bad epochs: 9/10
+
+Epoch 33/40 | Time 0m33s
+  Train | loss=0.0105 | top1=99.59% | top3=100.00%
+  Valid | loss=0.5555 | top1=88.46% | top3=98.68% | bal_acc=78.10% | macro_f1=0.7968
+⚠️ No improvement in macro_f1. Bad epochs: 10/10
+⏹️ Early stopping triggered.
+🛑 Training stopped early at epoch 33 to prevent overfitting.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.5080 | top1=87.53% | top3=98.86% | acc=87.52% | bal_acc=79.71% | macro_f1=0.7977 | weighted_f1=0.8741
+     ovr_roc_auc_macro=0.9759 | ovr_pr_auc_macro=0.8616
+
+Confusion Matrix:
+ [[  56    0    5    0    1    3    0]
+ [   3   87    3    3    0    6    1]
+ [  12    3  177    2    7   19    0]
+ [   1    2    0   17    1    2    0]
+ [   6    0   22    0  135   58    2]
+ [   1    2   42    0   36 1259    1]
+ [   0    1    1    0    1    3   22]]
+
+Classification Report:
+               precision    recall  f1-score   support
+
+       akiec     0.7089    0.8615    0.7778        65
+         bcc     0.9158    0.8447    0.8788       103
+         bkl     0.7080    0.8045    0.7532       220
+          df     0.7727    0.7391    0.7556        23
+         mel     0.7459    0.6054    0.6683       223
+          nv     0.9326    0.9389    0.9357      1341
+        vasc     0.8462    0.7857    0.8148        28
+
+    accuracy                         0.8752      2003
+   macro avg     0.8043    0.7971    0.7977      2003
+weighted avg     0.8760    0.8752    0.8741      2003
+
+
+ISIC ResNet50 + MECS(layer3) completed!
+
+✅ 运行完毕: [ResNet+layer3_new.py] | 退出码: 0
+🕒 结束于: 2026-03-16 17:57:27.253376
