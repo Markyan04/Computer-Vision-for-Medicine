@@ -13,3 +13,5 @@ ISIC/
 CPN/
 Pneumonia/
 MRI/
+Diabetic_Retinopathy_Detection/
+*.pyc

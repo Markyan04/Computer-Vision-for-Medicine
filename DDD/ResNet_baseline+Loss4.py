@@ -2,48 +2,60 @@
 # -*- coding: utf-8 -*-
 
 """
-Chest X-ray ResNet50 + MECS (inserted after layer1)
+Diabetic Retinopathy Detection Baseline using ResNet50 + Loss4 (DAST)
+Patient-level split version
 
-Directory structure:
-dataset_root/
-├── train/
-│   ├── COVID19/
-│   ├── NORMAL/
-│   └── PNEUMONIA/
-└── test/
-    ├── COVID19/
-    ├── NORMAL/
-    └── PNEUMONIA/
+Dataset structure example:
+Diabetic_Retinopathy_Detection/
+├── colored_images/
+│   ├── Mild/
+│   ├── Moderate/
+│   ├── No_DR/
+│   ├── Proliferate_DR/
+│   └── Severe/
+└── trainLabels.csv
+
+CSV format:
+image,level
+10_left,0
+10_right,0
+15_left,1
+...
 
 Features:
 - ResNet50 pretrained on ImageNet
-- MECS_VersionA inserted after layer1
-- Train/Val/Test split (val split from train)
+- Build dataset from CSV + auto-match image files in colored_images
+- Patient-level split using GroupShuffleSplit (prevents left/right eye leakage)
+- Early stopping based on QWK
+- DistanceAwareSoftTargetLoss (Loss4) applied for ordinal disease grading
 - Top-1 / Top-2 / Top-3 accuracy
 - Accuracy / Balanced Accuracy
 - Macro / Weighted F1
-- Macro Precision / Macro Recall
+- QWK (Quadratic Weighted Kappa)
 - Confusion Matrix / Classification Report
-- Optional ROC-AUC / PR-AUC (OvR macro)
-- Early Stopping based on validation macro_f1
 """
 
 import os
 import time
+import copy
 import random
 import warnings
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
 import torch.optim.lr_scheduler as lr_scheduler
 import torchvision.transforms as transforms
 import torchvision.models as models
 
-from torchvision.datasets import ImageFolder
+from PIL import Image
+
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -54,7 +66,13 @@ from sklearn.metrics import (
     classification_report,
     roc_auc_score,
     average_precision_score,
+    cohen_kappa_score,
 )
+
+# =======================================================
+# 导入医用损失函数库中的 DistanceAwareSoftTargetLoss
+# =======================================================
+from medical_losses import DistanceAwareSoftTargetLoss
 
 warnings.filterwarnings("ignore")
 
@@ -63,7 +81,7 @@ warnings.filterwarnings("ignore")
 # Early Stopping
 # =======================
 class EarlyStopping:
-    def __init__(self, patience=7, delta=0.0, save_path="best_resnet50_mecs_layer1_chest_xray.pt"):
+    def __init__(self, patience=10, delta=0.0, save_path="best_resnet50_dr_loss4.pt"):
         self.patience = patience
         self.delta = delta
         self.best_score = None
@@ -71,21 +89,23 @@ class EarlyStopping:
         self.early_stop = False
         self.save_path = save_path
 
-        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
+        save_dir = os.path.dirname(save_path)
+        if save_dir:
+            os.makedirs(save_dir, exist_ok=True)
 
     def __call__(self, score, model):
         if self.best_score is None:
             self.best_score = score
             torch.save(model.state_dict(), self.save_path)
-            print(f" Initial best model saved to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Initial best model saved to {self.save_path} (score={score:.4f})")
         elif score > self.best_score + self.delta:
             self.best_score = score
             self.num_bad_epochs = 0
             torch.save(model.state_dict(), self.save_path)
-            print(f" Validation improved. Saved best model to {self.save_path} (macro_f1={score:.4f})")
+            print(f" Validation improved. Saved best model to {self.save_path} (score={score:.4f})")
         else:
             self.num_bad_epochs += 1
-            print(f" No improvement in macro_f1. Bad epochs: {self.num_bad_epochs}/{self.patience}")
+            print(f" No improvement. Bad epochs: {self.num_bad_epochs}/{self.patience}")
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
@@ -106,14 +126,16 @@ torch.backends.cudnn.benchmark = False
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"..\CPN"
-TRAIN_DIR = os.path.join(DATA_ROOT, "train")
-TEST_DIR = os.path.join(DATA_ROOT, "test")
+DATA_ROOT = r"../Diabetic_Retinopathy_Detection"  # 改成你的路径
+IMAGE_ROOT = os.path.join(DATA_ROOT, "colored_images")
+CSV_PATH = os.path.join(DATA_ROOT, "trainLabels.csv")
 
 IMG_SIZE = 224
-BATCH_SIZE = 16
-EPOCHS = 40
+BATCH_SIZE = 32
+EPOCHS = 50
+
 VAL_RATIO = 0.1
+TEST_RATIO = 0.1
 
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
@@ -125,171 +147,122 @@ EARLY_STOP_DELTA = 1e-4
 
 TOPK = (1, 2, 3)
 
+CLASS_NAMES = ["No_DR", "Mild", "Moderate", "Severe", "Proliferate_DR"]
+IDX_TO_CLASS = {0: "No_DR", 1: "Mild", 2: "Moderate", 3: "Severe", 4: "Proliferate_DR"}
+CLASS_TO_IDX = {v: k for k, v in IDX_TO_CLASS.items()}
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # =======================
-# Dataset Wrapper for Transform
+# Dataset
 # =======================
-class TransformSubset(data.Dataset):
-    def __init__(self, subset, transform=None):
-        self.subset = subset
+class DRDataset(data.Dataset):
+    def __init__(self, dataframe, transform=None):
+        self.df = dataframe.reset_index(drop=True)
         self.transform = transform
 
     def __len__(self):
-        return len(self.subset)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        x, y = self.subset[idx]
+        row = self.df.iloc[idx]
+        img_path = row["path"]
+        label = int(row["level"])
+
+        image = Image.open(img_path).convert("RGB")
+
         if self.transform is not None:
-            x = self.transform(x)
-        return x, y
+            image = self.transform(image)
+
+        return image, label
 
 
 # =======================
-# MECS Module Components
+# Utils
 # =======================
-def global_median_pooling(x):
-    """全局中位数池化"""
-    median_pooled = torch.median(x.view(x.size(0), x.size(1), -1), dim=2)[0]
-    median_pooled = median_pooled.view(x.size(0), x.size(1), 1, 1)
-    return median_pooled
+def build_image_stem_mapping(image_root):
+    image_root = Path(image_root)
+    exts = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
+
+    stem_to_path = {}
+    duplicates = []
+
+    for path in image_root.rglob("*"):
+        if path.is_file() and path.suffix.lower() in exts:
+            stem = path.stem
+            if stem in stem_to_path:
+                duplicates.append(stem)
+            else:
+                stem_to_path[stem] = str(path)
+
+    if duplicates:
+        print(f"Warning: found duplicate image stems, example: {duplicates[:10]}")
+        print("Using the first matched path for duplicated stems.")
+
+    return stem_to_path
 
 
-class ChannelAttention_VersionA(nn.Module):
-    """【版本 A：先 Sigmoid，再相加。权重范围 [0, 3]】"""
-
-    def __init__(self, input_channels, internal_neurons):
-        super(ChannelAttention_VersionA, self).__init__()
-        self.fc1 = nn.Conv2d(input_channels, internal_neurons, kernel_size=1, stride=1, bias=True)
-        self.fc2 = nn.Conv2d(internal_neurons, input_channels, kernel_size=1, stride=1, bias=True)
-
-    def forward(self, inputs):
-        avg_pool = F.adaptive_avg_pool2d(inputs, output_size=(1, 1))
-        max_pool = F.adaptive_max_pool2d(inputs, output_size=(1, 1))
-        median_pool = global_median_pooling(inputs)
-
-        # 1. Avg 路径 (包含 Sigmoid)
-        avg_out = self.fc2(F.relu(self.fc1(avg_pool), inplace=True))
-        avg_out = torch.sigmoid(avg_out)
-
-        # 2. Max 路径 (包含 Sigmoid)
-        max_out = self.fc2(F.relu(self.fc1(max_pool), inplace=True))
-        max_out = torch.sigmoid(max_out)
-
-        # 3. Median 路径 (包含 Sigmoid)
-        median_out = self.fc2(F.relu(self.fc1(median_pool), inplace=True))
-        median_out = torch.sigmoid(median_out)
-
-        # 4. 最后相加 (完全符合架构图)
-        out = avg_out + max_out + median_out
-        return out
+def extract_patient_id(image_name: str) -> str:
+    """
+    例如:
+    10_left  -> 10
+    10_right -> 10
+    """
+    stem = Path(str(image_name)).stem
+    if "_" in stem:
+        return stem.rsplit("_", 1)[0]
+    return stem
 
 
-class MECS_VersionA(nn.Module):
-    def __init__(self, in_channels, out_channels, channel_attention_reduce=4):
-        super(MECS_VersionA, self).__init__()
-        assert in_channels == out_channels, "Input and output channels must be the same"
+def prepare_dataframe(csv_path, image_root):
+    df = pd.read_csv(csv_path)
 
-        self.channel_attention = ChannelAttention_VersionA(
-            input_channels=in_channels,
-            internal_neurons=max(1, in_channels // channel_attention_reduce)
-        )
+    if "image" not in df.columns or "level" not in df.columns:
+        raise ValueError("CSV must contain columns: image, level")
 
-        self.initial_depth_conv = nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, groups=in_channels)
-        self.depth_convs = nn.ModuleList([
-            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 7), padding=(0, 3), groups=in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=(7, 1), padding=(3, 0), groups=in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 11), padding=(0, 5), groups=in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=(11, 1), padding=(5, 0), groups=in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=(1, 21), padding=(0, 10), groups=in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=(21, 1), padding=(10, 0), groups=in_channels),
-        ])
+    stem_to_path = build_image_stem_mapping(image_root)
+    df["path"] = df["image"].map(stem_to_path)
 
-        # 修复了权重共享问题的三个独立卷积层
-        self.pre_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
-        self.spatial_att_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
-        self.post_conv = nn.Conv2d(in_channels, in_channels, kernel_size=1, padding=0)
-        self.act = nn.GELU()
+    missing = df["path"].isna().sum()
+    if missing > 0:
+        print(f"Warning: {missing} samples in CSV could not be matched to image files.")
+        df = df.dropna(subset=["path"]).copy()
 
-    def forward(self, inputs):
-        # 1. 预处理
-        x = self.pre_conv(inputs)
-        x = self.act(x)
+    df["level"] = df["level"].astype(int)
+    df = df[df["level"].isin([0, 1, 2, 3, 4])].copy()
 
-        # 2. 通道注意力
-        channel_att_vec = self.channel_attention(x)
-        x_ca = channel_att_vec * x
+    df["patient_id"] = df["image"].apply(extract_patient_id)
 
-        # 3. 空间注意力
-        initial_out = self.initial_depth_conv(x_ca)
-        spatial_outs = [conv(initial_out) for conv in self.depth_convs]
-        spatial_out = sum(spatial_outs)
+    def folder_name(p):
+        return Path(p).parent.name
 
-        # 补齐了架构图中的残差连接
-        spatial_out = spatial_out + x_ca
+    df["folder_class"] = df["path"].apply(folder_name)
+    mismatch_df = df[df["folder_class"].map(CLASS_TO_IDX) != df["level"]]
+    if len(mismatch_df) > 0:
+        print(f"Warning: found {len(mismatch_df)} samples where folder class != csv label.")
+        print("Will trust CSV labels for training.")
 
-        # 补齐了空间 Sigmoid
-        spatial_att = torch.sigmoid(self.spatial_att_conv(spatial_out))
-        out = spatial_att * x_ca
-
-        # 4. 后处理
-        out = self.post_conv(out)
-        return out
+    return df[["image", "level", "path", "patient_id"]].reset_index(drop=True)
 
 
-# =======================
-# ResNet50 + MECS (after layer1)
-# =======================
-class ResNet50_MECS_Layer1(nn.Module):
-    def __init__(self, num_classes, weights=models.ResNet50_Weights.DEFAULT):
-        super().__init__()
-
-        backbone = models.resnet50(weights=weights)
-
-        # stem
-        self.conv1 = backbone.conv1
-        self.bn1 = backbone.bn1
-        self.relu = backbone.relu
-        self.maxpool = backbone.maxpool
-
-        # res blocks
-        self.layer1 = backbone.layer1
-
-        # 在 layer1 后插入 MECS，layer1的输出通道数是 256
-        self.mecs = MECS_VersionA(in_channels=256, out_channels=256)
-
-        self.layer2 = backbone.layer2
-        self.layer3 = backbone.layer3
-        self.layer4 = backbone.layer4
-
-        # head
-        self.avgpool = backbone.avgpool
-        self.fc = nn.Linear(backbone.fc.in_features, num_classes)
-
-    def forward(self, x):
-        x = self.conv1(x)  # [B, 64, 112, 112]
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)  # [B, 64, 56, 56]
-
-        x = self.layer1(x)  # [B, 256, 56, 56]
-
-        x = self.mecs(x)  # [B, 256, 56, 56]
-
-        x = self.layer2(x)  # [B, 512, 28, 28]
-        x = self.layer3(x)  # [B, 1024, 14, 14]
-        x = self.layer4(x)  # [B, 2048, 7, 7]
-
-        x = self.avgpool(x)  # [B, 2048, 1, 1]
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-        return x
+def _group_split(df, test_size, random_state):
+    splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+    groups = df["patient_id"].values
+    idx_train, idx_test = next(splitter.split(df, groups=groups))
+    return df.iloc[idx_train].copy(), df.iloc[idx_test].copy()
 
 
-# =======================
-# Metrics
-# =======================
+def verify_patient_disjoint(train_df, val_df, test_df):
+    train_patients = set(train_df["patient_id"].unique())
+    val_patients = set(val_df["patient_id"].unique())
+    test_patients = set(test_df["patient_id"].unique())
+
+    assert train_patients.isdisjoint(val_patients), "Train/Val patient leakage detected!"
+    assert train_patients.isdisjoint(test_patients), "Train/Test patient leakage detected!"
+    assert val_patients.isdisjoint(test_patients), "Val/Test patient leakage detected!"
+
+
 def calculate_topk_accuracy(logits, y, ks=(1, 3)):
     with torch.no_grad():
         num_classes = logits.size(1)
@@ -316,6 +289,7 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     metrics["weighted_f1"] = f1_score(y_true, y_pred, average="weighted", zero_division=0)
     metrics["precision_macro"] = precision_score(y_true, y_pred, average="macro", zero_division=0)
     metrics["recall_macro"] = recall_score(y_true, y_pred, average="macro", zero_division=0)
+    metrics["qwk"] = cohen_kappa_score(y_true, y_pred, weights="quadratic")
     metrics["confusion_matrix"] = confusion_matrix(y_true, y_pred)
     metrics["classification_report"] = classification_report(
         y_true, y_pred, target_names=class_names, digits=4, zero_division=0
@@ -337,6 +311,96 @@ def compute_eval_metrics(y_true, y_pred, y_prob, num_classes, class_names):
     return metrics
 
 
+def epoch_time(start_time, end_time):
+    s = end_time - start_time
+    return int(s // 60), int(s % 60)
+
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def print_split_stats(name, df):
+    print(f"\n{name} samples: {len(df)}")
+    print(f"{name} unique patients: {df['patient_id'].nunique()}")
+    print(f"{name} class distribution:")
+    print(df["level"].value_counts().sort_index())
+
+
+def make_dataloaders():
+    df = prepare_dataframe(CSV_PATH, IMAGE_ROOT)
+
+    print(f"Total matched samples: {len(df)}")
+    print(f"Total unique patients: {df['patient_id'].nunique()}")
+    print("Overall class distribution:")
+    print(df["level"].value_counts().sort_index())
+
+    # 先按患者划分 trainval / test
+    trainval_df, test_df = _group_split(df, test_size=TEST_RATIO, random_state=SEED)
+
+    # 再按患者划分 train / val
+    val_relative_ratio = VAL_RATIO / (1.0 - TEST_RATIO)
+    train_df, val_df = _group_split(trainval_df, test_size=val_relative_ratio, random_state=SEED)
+
+    verify_patient_disjoint(train_df, val_df, test_df)
+
+    print_split_stats("Train", train_df)
+    print_split_stats("Valid", val_df)
+    print_split_stats("Test", test_df)
+
+    print(
+        f"\nUnique patients | train={train_df['patient_id'].nunique()}, "
+        f"valid={val_df['patient_id'].nunique()}, "
+        f"test={test_df['patient_id'].nunique()}"
+    )
+
+    train_transform = transforms.Compose([
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.2),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15, hue=0.02),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+    ])
+
+    test_transform = transforms.Compose([
+        transforms.Resize((IMG_SIZE, IMG_SIZE)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+    ])
+
+    train_dataset = DRDataset(train_df, transform=train_transform)
+    valid_dataset = DRDataset(val_df, transform=test_transform)
+    test_dataset = DRDataset(test_df, transform=test_transform)
+
+    train_loader = data.DataLoader(
+        train_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=NUM_WORKERS,
+        pin_memory=True,
+    )
+    valid_loader = data.DataLoader(
+        valid_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
+        pin_memory=True,
+    )
+    test_loader = data.DataLoader(
+        test_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
+        pin_memory=True,
+    )
+
+    return train_loader, valid_loader, test_loader, train_df, val_df, test_df
+
+
 # =======================
 # Train / Eval
 # =======================
@@ -350,8 +414,10 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, topk
         y = y.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
+
         logits = model(x)
         loss = criterion(logits, y)
+
         loss.backward()
         optimizer.step()
 
@@ -411,108 +477,55 @@ def evaluate(model, loader, criterion, device, num_classes, class_names, topk=(1
     return epoch_loss, epoch_top, metrics
 
 
-def epoch_time(start_time, end_time):
-    s = end_time - start_time
-    return int(s // 60), int(s % 60)
-
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-
 # =======================
 # Main
 # =======================
 def main():
-    print("Starting Chest X-ray ResNet50 + MECS(layer1) ...")
+    print("Starting Diabetic Retinopathy ResNet50 + Loss4 (DAST) Baseline (Patient-level split)...")
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
 
-    if not os.path.exists(TRAIN_DIR):
-        print(f"Train directory not found: {TRAIN_DIR}")
+    if not os.path.exists(DATA_ROOT):
+        print(f"DATA_ROOT not found: {DATA_ROOT}")
         return
-    if not os.path.exists(TEST_DIR):
-        print(f"Test directory not found: {TEST_DIR}")
+    if not os.path.exists(IMAGE_ROOT):
+        print(f"IMAGE_ROOT not found: {IMAGE_ROOT}")
+        return
+    if not os.path.exists(CSV_PATH):
+        print(f"CSV_PATH not found: {CSV_PATH}")
         return
 
-    base_train_dataset = ImageFolder(TRAIN_DIR)
-    class_names = base_train_dataset.classes
-    num_classes = len(class_names)
+    train_loader, valid_loader, test_loader, train_df, val_df, test_df = make_dataloaders()
 
-    print(f"Classes: {class_names}")
-    print(f"Class-to-index: {base_train_dataset.class_to_idx}")
-    print(f"Train samples total: {len(base_train_dataset)}")
+    num_classes = len(CLASS_NAMES)
+    class_names = CLASS_NAMES
 
-    train_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(8),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
-    ])
+    print(f"\nSplit sizes | train={len(train_df)}, valid={len(val_df)}, test={len(test_df)}")
 
-    test_transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=3),
-        transforms.Resize((IMG_SIZE, IMG_SIZE)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
-    ])
+    print("Loading pretrained ResNet50...")
+    weights = models.ResNet50_Weights.DEFAULT
+    model = models.resnet50(weights=weights)
 
-    val_size = int(len(base_train_dataset) * VAL_RATIO)
-    train_size = len(base_train_dataset) - val_size
-
-    train_subset, val_subset = data.random_split(
-        base_train_dataset,
-        [train_size, val_size],
-        generator=torch.Generator().manual_seed(SEED)
-    )
-
-    train_dataset = TransformSubset(train_subset, transform=train_transform)
-    valid_dataset = TransformSubset(val_subset, transform=test_transform)
-
-    base_test_dataset = ImageFolder(TEST_DIR)
-    test_dataset = TransformSubset(base_test_dataset, transform=test_transform)
-
-    print(f"Split sizes | train={len(train_dataset)}, valid={len(valid_dataset)}, test={len(test_dataset)}")
-
-    train_loader = data.DataLoader(
-        train_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        num_workers=NUM_WORKERS,
-        pin_memory=True,
-    )
-    valid_loader = data.DataLoader(
-        valid_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        num_workers=NUM_WORKERS,
-        pin_memory=True,
-    )
-    test_loader = data.DataLoader(
-        test_dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=False,
-        num_workers=NUM_WORKERS,
-        pin_memory=True,
-    )
-
-    # Model
-    print("Loading pretrained ResNet50 + MECS...")
-    model = ResNet50_MECS_Layer1(num_classes=num_classes).to(device)
+    in_features = model.fc.in_features
+    model.fc = nn.Linear(in_features, num_classes)
+    model = model.to(device)
 
     print(f"Trainable parameters: {count_parameters(model):,}")
 
-    criterion = nn.CrossEntropyLoss()
+    # =======================================================
+    # 替换为 Distance-Aware Soft Target Loss
+    # =======================================================
+    print(f"Initializing DistanceAwareSoftTargetLoss for {num_classes} ordinal classes...")
+    criterion = DistanceAwareSoftTargetLoss(
+        num_classes=num_classes,
+        tau=1.0,  # 控制软标签的衰减范围
+        gamma=1.5  # Focal 机制，用于强调困难样本
+    ).to(device)
+    # =======================================================
 
-    # 分层学习率
     backbone_params = []
     head_params = []
-
     for name, param in model.named_parameters():
         if "fc" in name:
             head_params.append(param)
@@ -536,7 +549,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_mecs_layer1_chest_xray.pt"
+    best_path = "best_resnet50_dr_loss4_patient_split.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
@@ -544,8 +557,6 @@ def main():
     )
 
     print("Starting training...")
-    best_val_f1 = -1.0
-
     for epoch in range(EPOCHS):
         start_time = time.time()
 
@@ -571,6 +582,7 @@ def main():
             + f" | acc={valid_metrics['acc'] * 100:.2f}%"
             + f" | bal_acc={valid_metrics['balanced_acc'] * 100:.2f}%"
             + f" | macro_f1={valid_metrics['macro_f1']:.4f}"
+            + f" | qwk={valid_metrics['qwk']:.4f}"
             + f" | weighted_f1={valid_metrics['weighted_f1']:.4f}"
             + f" | precision_macro={valid_metrics['precision_macro']:.4f}"
             + f" | recall_macro={valid_metrics['recall_macro']:.4f}"
@@ -582,10 +594,8 @@ def main():
                 f" | ovr_pr_auc_macro={valid_metrics['ovr_pr_auc_macro']:.4f}"
             )
 
-        if valid_metrics["macro_f1"] > best_val_f1:
-            best_val_f1 = valid_metrics["macro_f1"]
-
-        early_stopping(valid_metrics["macro_f1"], model)
+        # 核心改动：用 QWK 指标进行早停监控
+        early_stopping(valid_metrics["qwk"], model)
 
         if early_stopping.early_stop:
             print(f" Training stopped early at epoch {epoch + 1}.")
@@ -604,6 +614,7 @@ def main():
         + f" | acc={test_metrics['acc'] * 100:.2f}%"
         + f" | bal_acc={test_metrics['balanced_acc'] * 100:.2f}%"
         + f" | macro_f1={test_metrics['macro_f1']:.4f}"
+        + f" | qwk={test_metrics['qwk']:.4f}"
         + f" | weighted_f1={test_metrics['weighted_f1']:.4f}"
         + f" | precision_macro={test_metrics['precision_macro']:.4f}"
         + f" | recall_macro={test_metrics['recall_macro']:.4f}"
@@ -621,7 +632,7 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
-    print("\nChest X-ray ResNet50 + MECS(layer1) completed!")
+    print("\nDiabetic Retinopathy ResNet50 + Loss4 baseline completed!")
 
 
 if __name__ == "__main__":

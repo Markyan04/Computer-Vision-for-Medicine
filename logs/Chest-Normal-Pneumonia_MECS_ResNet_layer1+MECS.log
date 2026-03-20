@@ -2,5 +2,37 @@
 ------------------------------------------------------------
 ▶️ 正在运行: 目录 [Chest-Normal-Pneumonia_MECS] -> 脚本 [ResNet_layer1+MECS.py]
 📝 日志保存至: logs\Chest-Normal-Pneumonia_MECS_ResNet_layer1+MECS.log
-🕒 开始于: 2026-03-16 23:45:39.892513
+🕒 开始于: 2026-03-17 09:00:33.586009
 ------------------------------------------------------------
+Starting Chest X-ray Pneumonia ResNet50 + MECS(layer1) ...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Classes: ['NORMAL', 'PNEUMONIA']
+Class-to-index: {'NORMAL': 0, 'PNEUMONIA': 1}
+Split sizes | train=5216, valid=16, test=624
+Training class counts: [1341, 3875]
+Class weights: [1.9448173005219984, 0.6730322580645162]
+Loading pretrained ResNet50 + MECS(after layer1)...
+Trainable parameters: 23,770,754
+Starting training...
+Traceback (most recent call last):
+  File "E:\Paper\Computer-Vision-for-Medicine\Chest-Normal-Pneumonia_MECS\ResNet_layer1+MECS.py", line 672, in <module>
+    main()
+  File "E:\Paper\Computer-Vision-for-Medicine\Chest-Normal-Pneumonia_MECS\ResNet_layer1+MECS.py", line 599, in main
+    train_loss, train_top = train_one_epoch(
+                            ^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\Chest-Normal-Pneumonia_MECS\ResNet_layer1+MECS.py", line 431, in train_one_epoch
+    batch_top = calculate_topk_accuracy(logits, y, ks=topk)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\Chest-Normal-Pneumonia_MECS\ResNet_layer1+MECS.py", line 359, in calculate_topk_accuracy
+    _, top_pred = logits.topk(max_k, dim=1)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: out of memory
+Search for `cudaErrorMemoryAllocation' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
+
+✅ 运行完毕: [ResNet_layer1+MECS.py] | 退出码: 1
+🕒 结束于: 2026-03-17 09:00:59.589023

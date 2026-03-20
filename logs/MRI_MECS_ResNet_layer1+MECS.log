@@ -2,12 +2,38 @@
 ------------------------------------------------------------
 ▶️ 正在运行: 目录 [MRI_MECS] -> 脚本 [ResNet_layer1+MECS.py]
 📝 日志保存至: logs\MRI_MECS_ResNet_layer1+MECS.log
-🕒 开始于: 2026-03-16 22:48:56.002101
+🕒 开始于: 2026-03-17 09:00:59.604291
 ------------------------------------------------------------
+Starting Brain Tumor MRI ResNet50 + MECS (after layer1)...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Classes: ['glioma_tumor', 'meningioma_tumor', 'no_tumor', 'pituitary_tumor']
+Class-to-index: {'glioma_tumor': 0, 'meningioma_tumor': 1, 'no_tumor': 2, 'pituitary_tumor': 3}
+Split sizes | train=2439, valid=431, test=394
+Training class counts: [702, 698, 336, 703]
+Class weights: [0.8685897435897436, 0.873567335243553, 1.8147321428571428, 0.8673541963015647]
+Loading pretrained ResNet50 + MECS...
+Trainable parameters: 23,774,852
+Starting training...
+fatal   : Memory allocation failure
 Traceback (most recent call last):
-  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 39, in <module>
-    import numpy as np
-ModuleNotFoundError: No module named 'numpy'
+  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 682, in <module>
+    main()
+  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 609, in main
+    train_loss, train_top = train_one_epoch(
+                            ^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 423, in train_one_epoch
+    batch_top = calculate_topk_accuracy(logits, y, ks=topk)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\MRI_MECS\ResNet_layer1+MECS.py", line 356, in calculate_topk_accuracy
+    _, top_pred = logits.topk(max_k, dim=1)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: unknown error
+Search for `cudaErrorUnknown' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+Compile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.
+
 
 ✅ 运行完毕: [ResNet_layer1+MECS.py] | 退出码: 1
-🕒 结束于: 2026-03-16 22:48:56.046360
+🕒 结束于: 2026-03-17 09:01:18.366247

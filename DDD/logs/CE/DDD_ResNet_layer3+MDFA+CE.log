@@ -1,0 +1,249 @@
+
+------------------------------------------------------------
+▶️ 正在运行: 目录 [../DDD] -> 脚本 [ResNet_layer3+MDFA+CE.py]
+📝 日志保存至: ../DDD/logs\../DDD_ResNet_layer3+MDFA+CE.log
+🕒 开始于: 2026-03-20 02:54:10.424814
+------------------------------------------------------------
+Starting Diabetic Retinopathy ResNet50 + MDFA (Layer3) + CrossEntropy Baseline...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Total matched samples: 35126
+Total unique patients: 17563
+Overall class distribution:
+level
+0    25810
+1     2443
+2     5292
+3      873
+4      708
+Name: count, dtype: int64
+
+Train samples: 28098
+Train unique patients: 14049
+Train class distribution:
+level
+0    20645
+1     1938
+2     4251
+3      687
+4      577
+Name: count, dtype: int64
+
+Valid samples: 3514
+Valid unique patients: 1757
+Valid class distribution:
+level
+0    2606
+1     242
+2     515
+3      88
+4      63
+Name: count, dtype: int64
+
+Test samples: 3514
+Test unique patients: 1757
+Test class distribution:
+level
+0    2559
+1     263
+2     526
+3      98
+4      68
+Name: count, dtype: int64
+
+Unique patients | train=14049, valid=1757, test=1757
+
+Split sizes | train=28098, valid=3514, test=3514
+Loading pretrained ResNet50 and injecting MDFA after layer3...
+Trainable parameters: 85,404,230
+Initializing Standard CrossEntropyLoss for 5 classes...
+Starting training...
+
+Epoch 01/50 | Time 2m 6s
+  Train | loss=0.8052 | top1=73.63% | top2=88.62% | top3=96.16%
+  Valid | loss=0.7297 | top1=75.43% | top2=90.17% | top3=98.10% | acc=75.44% | bal_acc=28.54% | macro_f1=0.3017 | qwk=0.3566 | weighted_f1=0.6831 | precision_macro=0.4064 | recall_macro=0.2854
+         ovr_roc_auc_macro=0.7689 | ovr_pr_auc_macro=0.3662
+ Initial best model saved to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.3566)
+
+Epoch 02/50 | Time 2m 6s
+  Train | loss=0.7203 | top1=75.37% | top2=90.29% | top3=97.88%
+  Valid | loss=0.7006 | top1=76.60% | top2=91.69% | top3=98.38% | acc=76.61% | bal_acc=33.71% | macro_f1=0.3690 | qwk=0.3983 | weighted_f1=0.6897 | precision_macro=0.5140 | recall_macro=0.3371
+         ovr_roc_auc_macro=0.8033 | ovr_pr_auc_macro=0.4502
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.3983)
+
+Epoch 03/50 | Time 2m 6s
+  Train | loss=0.6801 | top1=77.07% | top2=91.14% | top3=98.38%
+  Valid | loss=0.6648 | top1=77.99% | top2=92.78% | top3=98.84% | acc=78.00% | bal_acc=40.67% | macro_f1=0.4210 | qwk=0.5525 | weighted_f1=0.7330 | precision_macro=0.4962 | recall_macro=0.4067
+         ovr_roc_auc_macro=0.8184 | ovr_pr_auc_macro=0.4927
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.5525)
+
+Epoch 04/50 | Time 2m 6s
+  Train | loss=0.6502 | top1=78.05% | top2=91.89% | top3=98.52%
+  Valid | loss=0.6368 | top1=79.07% | top2=92.49% | top3=98.78% | acc=79.08% | bal_acc=40.81% | macro_f1=0.4529 | qwk=0.5680 | weighted_f1=0.7419 | precision_macro=0.5672 | recall_macro=0.4081
+         ovr_roc_auc_macro=0.8264 | ovr_pr_auc_macro=0.5021
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.5680)
+
+Epoch 05/50 | Time 2m 6s
+  Train | loss=0.6263 | top1=79.03% | top2=92.32% | top3=98.76%
+  Valid | loss=0.6124 | top1=79.95% | top2=93.27% | top3=98.69% | acc=79.97% | bal_acc=45.22% | macro_f1=0.4876 | qwk=0.5985 | weighted_f1=0.7557 | precision_macro=0.5571 | recall_macro=0.4522
+         ovr_roc_auc_macro=0.8367 | ovr_pr_auc_macro=0.5273
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.5985)
+
+Epoch 06/50 | Time 2m 6s
+  Train | loss=0.6094 | top1=79.42% | top2=92.63% | top3=98.83%
+  Valid | loss=0.6247 | top1=78.84% | top2=92.29% | top3=98.78% | acc=78.86% | bal_acc=48.85% | macro_f1=0.4850 | qwk=0.6348 | weighted_f1=0.7537 | precision_macro=0.4841 | recall_macro=0.4885
+         ovr_roc_auc_macro=0.8373 | ovr_pr_auc_macro=0.5258
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.6348)
+
+Epoch 07/50 | Time 2m 6s
+  Train | loss=0.5872 | top1=80.20% | top2=93.03% | top3=98.97%
+  Valid | loss=0.6189 | top1=79.57% | top2=93.32% | top3=98.69% | acc=79.60% | bal_acc=38.32% | macro_f1=0.4248 | qwk=0.5863 | weighted_f1=0.7541 | precision_macro=0.5939 | recall_macro=0.3832
+         ovr_roc_auc_macro=0.8432 | ovr_pr_auc_macro=0.5053
+ No improvement. Bad epochs: 1/10
+
+Epoch 08/50 | Time 2m 6s
+  Train | loss=0.5747 | top1=80.64% | top2=93.27% | top3=99.00%
+  Valid | loss=0.6116 | top1=79.75% | top2=93.27% | top3=98.81% | acc=79.77% | bal_acc=45.43% | macro_f1=0.4707 | qwk=0.6201 | weighted_f1=0.7497 | precision_macro=0.5163 | recall_macro=0.4543
+         ovr_roc_auc_macro=0.8359 | ovr_pr_auc_macro=0.5290
+ No improvement. Bad epochs: 2/10
+
+Epoch 09/50 | Time 2m 6s
+  Train | loss=0.5633 | top1=81.08% | top2=93.47% | top3=99.04%
+  Valid | loss=0.6048 | top1=79.95% | top2=92.94% | top3=98.92% | acc=79.97% | bal_acc=43.24% | macro_f1=0.4330 | qwk=0.6505 | weighted_f1=0.7574 | precision_macro=0.5199 | recall_macro=0.4324
+         ovr_roc_auc_macro=0.8451 | ovr_pr_auc_macro=0.5211
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.6505)
+
+Epoch 10/50 | Time 2m 6s
+  Train | loss=0.5459 | top1=81.50% | top2=93.77% | top3=99.16%
+  Valid | loss=0.6291 | top1=79.41% | top2=92.37% | top3=98.78% | acc=79.43% | bal_acc=49.28% | macro_f1=0.4880 | qwk=0.6448 | weighted_f1=0.7595 | precision_macro=0.5431 | recall_macro=0.4928
+         ovr_roc_auc_macro=0.8377 | ovr_pr_auc_macro=0.5325
+ No improvement. Bad epochs: 1/10
+
+Epoch 11/50 | Time 2m 6s
+  Train | loss=0.5238 | top1=81.99% | top2=94.12% | top3=99.32%
+  Valid | loss=0.6319 | top1=78.55% | top2=93.41% | top3=98.75% | acc=78.57% | bal_acc=48.09% | macro_f1=0.4891 | qwk=0.6420 | weighted_f1=0.7603 | precision_macro=0.5489 | recall_macro=0.4809
+         ovr_roc_auc_macro=0.8451 | ovr_pr_auc_macro=0.5412
+ No improvement. Bad epochs: 2/10
+
+Epoch 12/50 | Time 2m 6s
+  Train | loss=0.5135 | top1=82.57% | top2=94.43% | top3=99.29%
+  Valid | loss=0.6247 | top1=80.12% | top2=93.10% | top3=99.06% | acc=80.14% | bal_acc=46.29% | macro_f1=0.4943 | qwk=0.6290 | weighted_f1=0.7617 | precision_macro=0.5467 | recall_macro=0.4629
+         ovr_roc_auc_macro=0.8323 | ovr_pr_auc_macro=0.5295
+ No improvement. Bad epochs: 3/10
+
+Epoch 13/50 | Time 2m 6s
+  Train | loss=0.4964 | top1=82.95% | top2=94.76% | top3=99.41%
+  Valid | loss=0.6514 | top1=79.86% | top2=93.06% | top3=98.72% | acc=79.88% | bal_acc=41.42% | macro_f1=0.4552 | qwk=0.5856 | weighted_f1=0.7520 | precision_macro=0.5943 | recall_macro=0.4142
+         ovr_roc_auc_macro=0.8395 | ovr_pr_auc_macro=0.5249
+ No improvement. Bad epochs: 4/10
+
+Epoch 14/50 | Time 2m 7s
+  Train | loss=0.4850 | top1=83.28% | top2=94.86% | top3=99.44%
+  Valid | loss=0.6577 | top1=80.57% | top2=93.03% | top3=98.75% | acc=80.59% | bal_acc=41.79% | macro_f1=0.4617 | qwk=0.6155 | weighted_f1=0.7621 | precision_macro=0.6112 | recall_macro=0.4179
+         ovr_roc_auc_macro=0.8352 | ovr_pr_auc_macro=0.5166
+ No improvement. Bad epochs: 5/10
+
+Epoch 15/50 | Time 2m 7s
+  Train | loss=0.4658 | top1=83.90% | top2=95.24% | top3=99.48%
+  Valid | loss=0.6261 | top1=80.83% | top2=93.05% | top3=98.92% | acc=80.85% | bal_acc=46.70% | macro_f1=0.5001 | qwk=0.6579 | weighted_f1=0.7711 | precision_macro=0.5899 | recall_macro=0.4670
+         ovr_roc_auc_macro=0.8397 | ovr_pr_auc_macro=0.5348
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.6579)
+
+Epoch 16/50 | Time 2m 7s
+  Train | loss=0.4463 | top1=84.46% | top2=95.59% | top3=99.49%
+  Valid | loss=0.6317 | top1=80.32% | top2=93.00% | top3=98.84% | acc=80.34% | bal_acc=47.28% | macro_f1=0.5006 | qwk=0.6659 | weighted_f1=0.7698 | precision_macro=0.5717 | recall_macro=0.4728
+         ovr_roc_auc_macro=0.8399 | ovr_pr_auc_macro=0.5503
+ Validation improved. Saved best model to best_resnet50_dr_mdfa_layer3_ce_patient_split.pt (score=0.6659)
+
+Epoch 17/50 | Time 2m 6s
+  Train | loss=0.4221 | top1=85.19% | top2=95.90% | top3=99.53%
+  Valid | loss=0.6979 | top1=77.96% | top2=92.17% | top3=98.72% | acc=77.97% | bal_acc=43.10% | macro_f1=0.4732 | qwk=0.6236 | weighted_f1=0.7587 | precision_macro=0.5852 | recall_macro=0.4310
+         ovr_roc_auc_macro=0.8305 | ovr_pr_auc_macro=0.5160
+ No improvement. Bad epochs: 1/10
+
+Epoch 18/50 | Time 2m 6s
+  Train | loss=0.4016 | top1=85.89% | top2=96.22% | top3=99.63%
+  Valid | loss=0.7006 | top1=77.51% | top2=92.15% | top3=98.72% | acc=77.52% | bal_acc=47.71% | macro_f1=0.4969 | qwk=0.6422 | weighted_f1=0.7582 | precision_macro=0.5294 | recall_macro=0.4771
+         ovr_roc_auc_macro=0.8290 | ovr_pr_auc_macro=0.5196
+ No improvement. Bad epochs: 2/10
+
+Epoch 19/50 | Time 2m 6s
+  Train | loss=0.3783 | top1=86.49% | top2=96.59% | top3=99.66%
+  Valid | loss=0.7178 | top1=76.69% | top2=91.46% | top3=98.55% | acc=76.69% | bal_acc=47.46% | macro_f1=0.4884 | qwk=0.6606 | weighted_f1=0.7591 | precision_macro=0.5050 | recall_macro=0.4746
+         ovr_roc_auc_macro=0.8310 | ovr_pr_auc_macro=0.4982
+ No improvement. Bad epochs: 3/10
+
+Epoch 20/50 | Time 2m 6s
+  Train | loss=0.3553 | top1=87.33% | top2=97.07% | top3=99.77%
+  Valid | loss=0.8420 | top1=79.10% | top2=91.66% | top3=98.66% | acc=79.11% | bal_acc=42.30% | macro_f1=0.4738 | qwk=0.6075 | weighted_f1=0.7580 | precision_macro=0.5843 | recall_macro=0.4230
+         ovr_roc_auc_macro=0.8276 | ovr_pr_auc_macro=0.5065
+ No improvement. Bad epochs: 4/10
+
+Epoch 21/50 | Time 2m 6s
+  Train | loss=0.3347 | top1=88.18% | top2=97.20% | top3=99.74%
+  Valid | loss=0.7546 | top1=79.58% | top2=92.98% | top3=98.92% | acc=79.60% | bal_acc=46.85% | macro_f1=0.4976 | qwk=0.6480 | weighted_f1=0.7619 | precision_macro=0.5545 | recall_macro=0.4685
+         ovr_roc_auc_macro=0.8386 | ovr_pr_auc_macro=0.5319
+ No improvement. Bad epochs: 5/10
+
+Epoch 22/50 | Time 2m 6s
+  Train | loss=0.3116 | top1=88.90% | top2=97.65% | top3=99.77%
+  Valid | loss=0.8406 | top1=78.08% | top2=92.23% | top3=98.84% | acc=78.09% | bal_acc=42.31% | macro_f1=0.4359 | qwk=0.6536 | weighted_f1=0.7577 | precision_macro=0.4886 | recall_macro=0.4231
+         ovr_roc_auc_macro=0.8212 | ovr_pr_auc_macro=0.4830
+ No improvement. Bad epochs: 6/10
+
+Epoch 23/50 | Time 2m 6s
+  Train | loss=0.2875 | top1=89.80% | top2=97.86% | top3=99.80%
+  Valid | loss=0.8645 | top1=77.33% | top2=92.15% | top3=98.84% | acc=77.35% | bal_acc=43.70% | macro_f1=0.4791 | qwk=0.6298 | weighted_f1=0.7505 | precision_macro=0.5568 | recall_macro=0.4370
+         ovr_roc_auc_macro=0.8220 | ovr_pr_auc_macro=0.5066
+ No improvement. Bad epochs: 7/10
+
+Epoch 24/50 | Time 2m 6s
+  Train | loss=0.2695 | top1=90.36% | top2=98.06% | top3=99.85%
+  Valid | loss=0.8401 | top1=79.24% | top2=92.81% | top3=98.92% | acc=79.25% | bal_acc=46.28% | macro_f1=0.4913 | qwk=0.6437 | weighted_f1=0.7612 | precision_macro=0.5447 | recall_macro=0.4628
+         ovr_roc_auc_macro=0.8307 | ovr_pr_auc_macro=0.5272
+ No improvement. Bad epochs: 8/10
+
+Epoch 25/50 | Time 2m 6s
+  Train | loss=0.2520 | top1=91.11% | top2=98.34% | top3=99.84%
+  Valid | loss=0.8625 | top1=76.08% | top2=91.98% | top3=98.78% | acc=76.10% | bal_acc=45.83% | macro_f1=0.4829 | qwk=0.6330 | weighted_f1=0.7513 | precision_macro=0.5381 | recall_macro=0.4583
+         ovr_roc_auc_macro=0.8335 | ovr_pr_auc_macro=0.5197
+ No improvement. Bad epochs: 9/10
+
+Epoch 26/50 | Time 2m 6s
+  Train | loss=0.2332 | top1=91.74% | top2=98.50% | top3=99.89%
+  Valid | loss=0.8894 | top1=78.28% | top2=92.04% | top3=98.64% | acc=78.29% | bal_acc=45.93% | macro_f1=0.4944 | qwk=0.6401 | weighted_f1=0.7636 | precision_macro=0.5540 | recall_macro=0.4593
+         ovr_roc_auc_macro=0.8201 | ovr_pr_auc_macro=0.5189
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 26.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.6592 | top1=79.74% | top2=92.16% | top3=98.95% | acc=79.74% | bal_acc=49.55% | macro_f1=0.5213 | qwk=0.6813 | weighted_f1=0.7591 | precision_macro=0.5969 | recall_macro=0.4955
+     ovr_roc_auc_macro=0.8384 | ovr_pr_auc_macro=0.5568
+
+Confusion Matrix:
+[[2482   15   56    1    5]
+ [ 230    8   25    0    0]
+ [ 251    8  231   29    7]
+ [  12    1   49   34    2]
+ [   5    0   14    2   47]]
+
+Classification Report:
+                precision    recall  f1-score   support
+
+         No_DR     0.8329    0.9699    0.8962      2559
+          Mild     0.2500    0.0304    0.0542       263
+      Moderate     0.6160    0.4392    0.5128       526
+        Severe     0.5152    0.3469    0.4146        98
+Proliferate_DR     0.7705    0.6912    0.7287        68
+
+      accuracy                         0.7974      3514
+     macro avg     0.5969    0.4955    0.5213      3514
+  weighted avg     0.7467    0.7974    0.7591      3514
+
+
+Diabetic Retinopathy ResNet50 + MDFA (Layer3) + CrossEntropy baseline completed!
+
+✅ 运行完毕: [ResNet_layer3+MDFA+CE.py] | 退出码: 0
+🕒 结束于: 2026-03-20 03:49:24.538139
