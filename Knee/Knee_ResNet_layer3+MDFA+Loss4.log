@@ -1,0 +1,74 @@
+
+------------------------------------------------------------
+正在运行: 目录 [../Knee] -> 脚本 [ResNet_layer3+MDFA+Loss4.py]
+日志保存至: ../Knee/logs\../Knee_ResNet_layer3+MDFA+Loss4.log
+开始于: 2026-03-21 09:34:27.034321
+------------------------------------------------------------
+Starting ResNet(layer3)+MDFA+DAST Knee Osteoarthritis Baseline...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+Class mapping from folders: {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4}
+
+Train samples: 5778
+Train class distribution:
+  0_Normal: 2286
+  1_Doubtful: 1046
+  2_Mild: 1516
+  3_Moderate: 757
+  4_Severe: 173
+
+Valid samples: 826
+Valid class distribution:
+  0_Normal: 328
+  1_Doubtful: 153
+  2_Mild: 212
+  3_Moderate: 106
+  4_Severe: 27
+
+Test samples: 1656
+Test class distribution:
+  0_Normal: 639
+  1_Doubtful: 296
+  2_Mild: 447
+  3_Moderate: 223
+  4_Severe: 51
+
+AutoTest samples: 1526
+AutoTest class distribution:
+  0_Normal: 604
+  1_Doubtful: 275
+  2_Mild: 403
+  3_Moderate: 200
+  4_Severe: 44
+
+Split sizes | train=5778, valid=826, test=1656, auto_test=1526
+Loading ResNet50 with MDFA module at layer3...
+Trainable parameters: 85,404,230
+
+[INFO] Class counts in training set: [2286 1046 1516  757  173]
+[INFO] Using Clinically Distance-Aware Soft Label Loss (DAST).
+Starting training...
+
+Epoch 01/50 | Time 0m 49s
+  Train | loss=0.9731 | top1=41.79% | top2=66.14% | top3=86.22%
+  Valid | loss=0.9007 | top1=50.24% | top2=75.24% | top3=90.93% | acc=50.61% | bal_acc=34.58% | macro_f1=0.3110 | qwk=0.5703 | mae=0.7070 | weighted_f1=0.4421 | precision_macro=0.2904 | recall_macro=0.3458
+         ovr_roc_auc_macro=0.7858 | ovr_pr_auc_macro=0.4386
+ Initial best model saved to best_resnet50_mdfa_layer3_dast_knee_oa.pt (QWK=0.5703)
+
+Epoch 02/50 | Time 0m 46s
+  Train | loss=0.8545 | top1=54.35% | top2=79.02% | top3=95.13%
+  Valid | loss=0.9876 | top1=39.33% | top2=68.75% | top3=86.06% | acc=39.59% | bal_acc=37.46% | macro_f1=0.3118 | qwk=0.5030 | mae=0.8959 | weighted_f1=0.3897 | precision_macro=0.5242 | recall_macro=0.3746
+         ovr_roc_auc_macro=0.8129 | ovr_pr_auc_macro=0.5829
+ No improvement. Bad epochs: 1/10
+
+Epoch 03/50 | Time 0m 48s
+  Train | loss=0.7902 | top1=61.20% | top2=84.86% | top3=97.45%
+  Valid | loss=0.7695 | top1=62.48% | top2=85.79% | top3=97.84% | acc=62.35% | bal_acc=60.59% | macro_f1=0.5916 | qwk=0.7520 | mae=0.5012 | weighted_f1=0.5816 | precision_macro=0.6219 | recall_macro=0.6059
+         ovr_roc_auc_macro=0.8707 | ovr_pr_auc_macro=0.6883
+ Validation improved. Saved best model to best_resnet50_mdfa_layer3_dast_knee_oa.pt (QWK=0.7520)
+
+Epoch 04/50 | Time 0m 48s
+  Train | loss=0.7583 | top1=64.61% | top2=87.84% | top3=98.29%
+  Valid | loss=0.7596 | top1=62.64% | top2=86.09% | top3=98.68% | acc=62.59% | bal_acc=56.35% | macro_f1=0.5745 | qwk=0.7481 | mae=0.4939 | weighted_f1=0.5712 | precision_macro=0.6431 | recall_macro=0.5635
+         ovr_roc_auc_macro=0.8723 | ovr_pr_auc_macro=0.6883
+ No improvement. Bad epochs: 1/10

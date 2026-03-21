@@ -15,3 +15,5 @@ Pneumonia/
 MRI/
 Diabetic_Retinopathy_Detection/
 *.pyc
+.vscode/
+Knee_Osteoarthritis/
