@@ -1,0 +1,1185 @@
+D:\ProgramData\miniconda3\envs\Paper\python.exe E:\Paper\Computer-Vision-for-Medicine\APTOS\aptos2019_dast_grid_search.py
+Starting APTOS2019 ResNet50 DAST Grid Search...
+Using device: cuda
+CUDA device: NVIDIA GeForce RTX 4080 SUPER
+
+Train samples: 2930
+Train class distribution:
+diagnosis
+0    1434
+1     300
+2     808
+3     154
+4     234
+Name: count, dtype: int64
+
+Valid samples: 366
+Valid class distribution:
+diagnosis
+0    172
+1     40
+2    104
+3     22
+4     28
+Name: count, dtype: int64
+
+Test samples: 366
+Test class distribution:
+diagnosis
+0    199
+1     30
+2     87
+3     17
+4     33
+Name: count, dtype: int64
+
+Split sizes | train=2930, valid=366, test=366
+
+Grid search space: tau=[0.5, 0.75, 1.0], gamma=[1.0, 1.5]
+
+========================================================================================
+[RUN] tau=0.5 | gamma=1.0
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=0.5
+       - gamma=1.0
+Starting training...
+
+Epoch 01/40 | Time 1m 3s
+  Train | loss=1.0089 | top1=51.89% | top2=74.75% | top3=85.59%
+  Valid | loss=0.8159 | top1=65.29% | top2=74.29% | top3=85.64% | acc=66.39% | bal_acc=33.73% | macro_f1=0.2899 | qwk=0.5707 | mae=0.5683 | weighted_f1=0.5712 | precision_macro=0.2543 | recall_macro=0.3373
+         ovr_roc_auc_macro=0.8443 | ovr_pr_auc_macro=0.4304
+ Initial best model saved to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.5707)
+
+Epoch 02/40 | Time 1m 3s
+  Train | loss=0.6678 | top1=72.92% | top2=83.98% | top3=92.36%
+  Valid | loss=0.5671 | top1=77.57% | top2=87.61% | top3=96.35% | acc=77.87% | bal_acc=47.04% | macro_f1=0.4488 | qwk=0.7986 | mae=0.3224 | weighted_f1=0.7239 | precision_macro=0.4639 | recall_macro=0.4704
+         ovr_roc_auc_macro=0.8955 | ovr_pr_auc_macro=0.5652
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.7986)
+
+Epoch 03/40 | Time 1m 4s
+  Train | loss=0.5253 | top1=77.57% | top2=90.94% | top3=97.28%
+  Valid | loss=0.5151 | top1=79.02% | top2=90.62% | top3=96.09% | acc=78.69% | bal_acc=53.97% | macro_f1=0.5427 | qwk=0.8441 | mae=0.2978 | weighted_f1=0.7581 | precision_macro=0.5633 | recall_macro=0.5397
+         ovr_roc_auc_macro=0.9196 | ovr_pr_auc_macro=0.6262
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.8441)
+
+Epoch 04/40 | Time 1m 4s
+  Train | loss=0.4639 | top1=81.25% | top2=94.04% | top3=98.51%
+  Valid | loss=0.5041 | top1=79.72% | top2=91.93% | top3=97.14% | acc=79.78% | bal_acc=55.29% | macro_f1=0.5559 | qwk=0.8675 | mae=0.2678 | weighted_f1=0.7640 | precision_macro=0.5890 | recall_macro=0.5529
+         ovr_roc_auc_macro=0.9270 | ovr_pr_auc_macro=0.6737
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.8675)
+
+Epoch 05/40 | Time 1m 2s
+  Train | loss=0.4205 | top1=83.81% | top2=95.41% | top3=98.91%
+  Valid | loss=0.4599 | top1=83.97% | top2=95.31% | top3=97.40% | acc=83.88% | bal_acc=65.16% | macro_f1=0.6705 | qwk=0.9031 | mae=0.2049 | weighted_f1=0.8271 | precision_macro=0.7189 | recall_macro=0.6516
+         ovr_roc_auc_macro=0.9402 | ovr_pr_auc_macro=0.6941
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.9031)
+
+Epoch 06/40 | Time 1m 3s
+  Train | loss=0.3874 | top1=86.33% | top2=96.44% | top3=99.23%
+  Valid | loss=0.5216 | top1=81.10% | top2=94.20% | top3=96.54% | acc=80.87% | bal_acc=62.53% | macro_f1=0.6138 | qwk=0.8861 | mae=0.2377 | weighted_f1=0.7950 | precision_macro=0.6280 | recall_macro=0.6253
+         ovr_roc_auc_macro=0.9367 | ovr_pr_auc_macro=0.6603
+ No improvement. Bad epochs: 1/10
+
+Epoch 07/40 | Time 1m 3s
+  Train | loss=0.3787 | top1=87.01% | top2=96.44% | top3=99.33%
+  Valid | loss=0.4933 | top1=83.78% | top2=92.89% | top3=97.14% | acc=83.33% | bal_acc=69.87% | macro_f1=0.7007 | qwk=0.9101 | mae=0.2077 | weighted_f1=0.8299 | precision_macro=0.7302 | recall_macro=0.6987
+         ovr_roc_auc_macro=0.9296 | ovr_pr_auc_macro=0.7056
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p0.pt (score=0.9101)
+
+Epoch 08/40 | Time 1m 6s
+  Train | loss=0.3457 | top1=88.70% | top2=97.49% | top3=99.46%
+  Valid | loss=0.4834 | top1=81.62% | top2=94.46% | top3=96.80% | acc=81.42% | bal_acc=59.44% | macro_f1=0.5956 | qwk=0.8901 | mae=0.2377 | weighted_f1=0.7925 | precision_macro=0.6382 | recall_macro=0.5944
+         ovr_roc_auc_macro=0.9443 | ovr_pr_auc_macro=0.7012
+ No improvement. Bad epochs: 1/10
+
+Epoch 09/40 | Time 1m 4s
+  Train | loss=0.3190 | top1=90.29% | top2=98.17% | top3=99.59%
+  Valid | loss=0.4911 | top1=84.56% | top2=93.15% | top3=97.32% | acc=84.15% | bal_acc=71.80% | macro_f1=0.7203 | qwk=0.8967 | mae=0.2077 | weighted_f1=0.8422 | precision_macro=0.7331 | recall_macro=0.7180
+         ovr_roc_auc_macro=0.9448 | ovr_pr_auc_macro=0.7171
+ No improvement. Bad epochs: 2/10
+
+Epoch 10/40 | Time 1m 4s
+  Train | loss=0.3176 | top1=90.84% | top2=98.20% | top3=99.59%
+  Valid | loss=0.4689 | top1=85.34% | top2=93.15% | top3=97.92% | acc=84.97% | bal_acc=70.10% | macro_f1=0.7203 | qwk=0.9038 | mae=0.1967 | weighted_f1=0.8455 | precision_macro=0.7548 | recall_macro=0.7010
+         ovr_roc_auc_macro=0.9429 | ovr_pr_auc_macro=0.7175
+ No improvement. Bad epochs: 3/10
+
+Epoch 11/40 | Time 1m 3s
+  Train | loss=0.2890 | top1=93.04% | top2=98.61% | top3=99.76%
+  Valid | loss=0.4966 | top1=82.66% | top2=93.94% | top3=97.84% | acc=82.51% | bal_acc=60.57% | macro_f1=0.6292 | qwk=0.8948 | mae=0.2186 | weighted_f1=0.8087 | precision_macro=0.7047 | recall_macro=0.6057
+         ovr_roc_auc_macro=0.9390 | ovr_pr_auc_macro=0.7164
+ No improvement. Bad epochs: 4/10
+
+Epoch 12/40 | Time 1m 6s
+  Train | loss=0.2840 | top1=93.38% | top2=98.91% | top3=99.69%
+  Valid | loss=0.5123 | top1=83.44% | top2=94.72% | top3=96.54% | acc=83.33% | bal_acc=63.02% | macro_f1=0.6490 | qwk=0.8887 | mae=0.2186 | weighted_f1=0.8181 | precision_macro=0.7215 | recall_macro=0.6302
+         ovr_roc_auc_macro=0.9316 | ovr_pr_auc_macro=0.6976
+ No improvement. Bad epochs: 5/10
+
+Epoch 13/40 | Time 1m 20s
+  Train | loss=0.2541 | top1=94.70% | top2=99.22% | top3=99.93%
+  Valid | loss=0.5157 | top1=84.23% | top2=94.53% | top3=97.66% | acc=84.15% | bal_acc=64.74% | macro_f1=0.6705 | qwk=0.9067 | mae=0.2022 | weighted_f1=0.8290 | precision_macro=0.7327 | recall_macro=0.6474
+         ovr_roc_auc_macro=0.9276 | ovr_pr_auc_macro=0.6920
+ No improvement. Bad epochs: 6/10
+
+Epoch 14/40 | Time 1m 13s
+  Train | loss=0.2490 | top1=95.28% | top2=99.52% | top3=99.86%
+  Valid | loss=0.5143 | top1=82.48% | top2=94.72% | top3=97.92% | acc=81.97% | bal_acc=61.62% | macro_f1=0.6433 | qwk=0.9028 | mae=0.2186 | weighted_f1=0.8097 | precision_macro=0.7012 | recall_macro=0.6162
+         ovr_roc_auc_macro=0.9319 | ovr_pr_auc_macro=0.6880
+ No improvement. Bad epochs: 7/10
+
+Epoch 15/40 | Time 1m 14s
+  Train | loss=0.2379 | top1=96.03% | top2=99.33% | top3=99.80%
+  Valid | loss=0.5016 | top1=83.78% | top2=94.46% | top3=97.66% | acc=83.33% | bal_acc=70.31% | macro_f1=0.7076 | qwk=0.9041 | mae=0.2077 | weighted_f1=0.8335 | precision_macro=0.7170 | recall_macro=0.7031
+         ovr_roc_auc_macro=0.9407 | ovr_pr_auc_macro=0.7112
+ No improvement. Bad epochs: 8/10
+
+Epoch 16/40 | Time 1m 12s
+  Train | loss=0.2394 | top1=95.97% | top2=99.39% | top3=99.97%
+  Valid | loss=0.4881 | top1=83.26% | top2=94.27% | top3=97.66% | acc=82.79% | bal_acc=64.15% | macro_f1=0.6662 | qwk=0.8973 | mae=0.2186 | weighted_f1=0.8177 | precision_macro=0.7164 | recall_macro=0.6415
+         ovr_roc_auc_macro=0.9399 | ovr_pr_auc_macro=0.7133
+ No improvement. Bad epochs: 9/10
+
+Epoch 17/40 | Time 1m 14s
+  Train | loss=0.2231 | top1=97.15% | top2=99.52% | top3=99.90%
+  Valid | loss=0.5382 | top1=82.66% | top2=93.68% | top3=97.32% | acc=82.51% | bal_acc=62.04% | macro_f1=0.6386 | qwk=0.9022 | mae=0.2158 | weighted_f1=0.8097 | precision_macro=0.6979 | recall_macro=0.6204
+         ovr_roc_auc_macro=0.9389 | ovr_pr_auc_macro=0.6938
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 17.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.4353 | top1=81.73% | top2=94.72% | top3=98.18% | acc=82.24% | bal_acc=62.17% | macro_f1=0.6338 | qwk=0.9026 | mae=0.2240 | weighted_f1=0.8207 | precision_macro=0.6770 | recall_macro=0.6217
+     ovr_roc_auc_macro=0.9313 | ovr_pr_auc_macro=0.6907
+
+Confusion Matrix:
+[[193   4   2   0   0]
+ [  1  13  16   0   0]
+ [  0   3  73   8   3]
+ [  0   0   9   7   1]
+ [  0   1  10   7  15]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9948    0.9698    0.9822       199
+           1     0.6190    0.4333    0.5098        30
+           2     0.6636    0.8391    0.7411        87
+           3     0.3182    0.4118    0.3590        17
+           4     0.7895    0.4545    0.5769        33
+
+    accuracy                         0.8224       366
+   macro avg     0.6770    0.6217    0.6338       366
+weighted avg     0.8354    0.8224    0.8207       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+========================================================================================
+[RUN] tau=0.5 | gamma=1.5
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=0.5
+       - gamma=1.5
+Starting training...
+
+Epoch 01/40 | Time 1m 14s
+  Train | loss=0.8845 | top1=52.90% | top2=74.67% | top3=85.29%
+  Valid | loss=0.6957 | top1=68.15% | top2=75.33% | top3=85.64% | acc=69.40% | bal_acc=35.92% | macro_f1=0.3072 | qwk=0.6847 | mae=0.4699 | weighted_f1=0.6044 | precision_macro=0.2704 | recall_macro=0.3592
+         ovr_roc_auc_macro=0.8476 | ovr_pr_auc_macro=0.4498
+ Initial best model saved to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.6847)
+
+Epoch 02/40 | Time 1m 15s
+  Train | loss=0.5573 | top1=73.20% | top2=84.51% | top3=93.36%
+  Valid | loss=0.4760 | top1=75.93% | top2=89.17% | top3=95.31% | acc=76.50% | bal_acc=44.23% | macro_f1=0.4200 | qwk=0.7981 | mae=0.3333 | weighted_f1=0.7043 | precision_macro=0.4868 | recall_macro=0.4423
+         ovr_roc_auc_macro=0.8918 | ovr_pr_auc_macro=0.5754
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.7981)
+
+Epoch 03/40 | Time 1m 11s
+  Train | loss=0.4234 | top1=77.72% | top2=90.70% | top3=97.60%
+  Valid | loss=0.4450 | top1=77.38% | top2=90.10% | top3=96.88% | acc=77.32% | bal_acc=48.09% | macro_f1=0.4554 | qwk=0.8525 | mae=0.3033 | weighted_f1=0.7211 | precision_macro=0.5559 | recall_macro=0.4809
+         ovr_roc_auc_macro=0.9047 | ovr_pr_auc_macro=0.5845
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.8525)
+
+Epoch 04/40 | Time 1m 10s
+  Train | loss=0.3679 | top1=81.50% | top2=93.38% | top3=98.61%
+  Valid | loss=0.3913 | top1=82.40% | top2=93.15% | top3=96.88% | acc=82.24% | bal_acc=61.34% | macro_f1=0.6075 | qwk=0.8692 | mae=0.2486 | weighted_f1=0.8024 | precision_macro=0.6802 | recall_macro=0.6134
+         ovr_roc_auc_macro=0.9257 | ovr_pr_auc_macro=0.6472
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.8692)
+
+Epoch 05/40 | Time 1m 4s
+  Train | loss=0.3298 | top1=83.12% | top2=94.77% | top3=98.89%
+  Valid | loss=0.4128 | top1=79.61% | top2=92.71% | top3=97.14% | acc=78.96% | bal_acc=57.88% | macro_f1=0.5822 | qwk=0.8823 | mae=0.2705 | weighted_f1=0.7705 | precision_macro=0.6984 | recall_macro=0.5788
+         ovr_roc_auc_macro=0.9262 | ovr_pr_auc_macro=0.6714
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.8823)
+
+Epoch 06/40 | Time 1m 4s
+  Train | loss=0.2955 | top1=85.79% | top2=96.18% | top3=99.18%
+  Valid | loss=0.3856 | top1=82.85% | top2=93.15% | top3=96.80% | acc=83.06% | bal_acc=63.92% | macro_f1=0.6568 | qwk=0.8762 | mae=0.2295 | weighted_f1=0.8189 | precision_macro=0.7105 | recall_macro=0.6392
+         ovr_roc_auc_macro=0.9351 | ovr_pr_auc_macro=0.6811
+ No improvement. Bad epochs: 1/10
+
+Epoch 07/40 | Time 1m 8s
+  Train | loss=0.2715 | top1=87.37% | top2=97.01% | top3=99.46%
+  Valid | loss=0.3786 | top1=83.07% | top2=93.49% | top3=97.40% | acc=82.24% | bal_acc=68.52% | macro_f1=0.6886 | qwk=0.9037 | mae=0.2268 | weighted_f1=0.8173 | precision_macro=0.7326 | recall_macro=0.6852
+         ovr_roc_auc_macro=0.9437 | ovr_pr_auc_macro=0.7291
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.9037)
+
+Epoch 08/40 | Time 1m 17s
+  Train | loss=0.2536 | top1=88.51% | top2=97.70% | top3=99.52%
+  Valid | loss=0.3822 | top1=83.18% | top2=94.20% | top3=97.92% | acc=83.06% | bal_acc=64.48% | macro_f1=0.6359 | qwk=0.8895 | mae=0.2240 | weighted_f1=0.8118 | precision_macro=0.7046 | recall_macro=0.6448
+         ovr_roc_auc_macro=0.9451 | ovr_pr_auc_macro=0.7300
+ No improvement. Bad epochs: 1/10
+
+Epoch 09/40 | Time 1m 5s
+  Train | loss=0.2317 | top1=90.33% | top2=97.69% | top3=99.66%
+  Valid | loss=0.3859 | top1=85.01% | top2=94.72% | top3=97.14% | acc=84.97% | bal_acc=67.87% | macro_f1=0.7059 | qwk=0.9107 | mae=0.1913 | weighted_f1=0.8420 | precision_macro=0.7553 | recall_macro=0.6787
+         ovr_roc_auc_macro=0.9473 | ovr_pr_auc_macro=0.7346
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p5_gamma_1p5.pt (score=0.9107)
+
+Epoch 10/40 | Time 1m 4s
+  Train | loss=0.2238 | top1=90.50% | top2=98.37% | top3=99.66%
+  Valid | loss=0.3888 | top1=83.71% | top2=94.46% | top3=98.18% | acc=83.61% | bal_acc=66.31% | macro_f1=0.6664 | qwk=0.8948 | mae=0.2131 | weighted_f1=0.8236 | precision_macro=0.7316 | recall_macro=0.6631
+         ovr_roc_auc_macro=0.9471 | ovr_pr_auc_macro=0.7391
+ No improvement. Bad epochs: 1/10
+
+Epoch 11/40 | Time 1m 4s
+  Train | loss=0.1997 | top1=92.23% | top2=98.81% | top3=99.90%
+  Valid | loss=0.3746 | top1=84.23% | top2=95.57% | top3=98.18% | acc=84.15% | bal_acc=62.57% | macro_f1=0.6461 | qwk=0.8968 | mae=0.2049 | weighted_f1=0.8228 | precision_macro=0.7075 | recall_macro=0.6257
+         ovr_roc_auc_macro=0.9520 | ovr_pr_auc_macro=0.7364
+ No improvement. Bad epochs: 2/10
+
+Epoch 12/40 | Time 1m 4s
+  Train | loss=0.1910 | top1=92.92% | top2=98.88% | top3=99.86%
+  Valid | loss=0.3499 | top1=82.92% | top2=94.53% | top3=97.40% | acc=82.79% | bal_acc=63.26% | macro_f1=0.6505 | qwk=0.9008 | mae=0.2186 | weighted_f1=0.8157 | precision_macro=0.6985 | recall_macro=0.6326
+         ovr_roc_auc_macro=0.9498 | ovr_pr_auc_macro=0.7437
+ No improvement. Bad epochs: 3/10
+
+Epoch 13/40 | Time 1m 4s
+  Train | loss=0.1784 | top1=93.86% | top2=99.08% | top3=99.86%
+  Valid | loss=0.3734 | top1=82.40% | top2=92.63% | top3=97.14% | acc=82.24% | bal_acc=68.10% | macro_f1=0.6876 | qwk=0.8880 | mae=0.2377 | weighted_f1=0.8200 | precision_macro=0.6996 | recall_macro=0.6810
+         ovr_roc_auc_macro=0.9488 | ovr_pr_auc_macro=0.7549
+ No improvement. Bad epochs: 4/10
+
+Epoch 14/40 | Time 1m 4s
+  Train | loss=0.1663 | top1=94.92% | top2=99.03% | top3=99.97%
+  Valid | loss=0.3848 | top1=83.97% | top2=94.53% | top3=97.14% | acc=83.88% | bal_acc=64.42% | macro_f1=0.6769 | qwk=0.8949 | mae=0.2104 | weighted_f1=0.8272 | precision_macro=0.7555 | recall_macro=0.6442
+         ovr_roc_auc_macro=0.9421 | ovr_pr_auc_macro=0.7614
+ No improvement. Bad epochs: 5/10
+
+Epoch 15/40 | Time 1m 4s
+  Train | loss=0.1527 | top1=95.58% | top2=99.46% | top3=99.93%
+  Valid | loss=0.4149 | top1=83.18% | top2=94.20% | top3=97.66% | acc=83.06% | bal_acc=61.28% | macro_f1=0.6259 | qwk=0.8831 | mae=0.2240 | weighted_f1=0.8118 | precision_macro=0.6905 | recall_macro=0.6128
+         ovr_roc_auc_macro=0.9469 | ovr_pr_auc_macro=0.7389
+ No improvement. Bad epochs: 6/10
+
+Epoch 16/40 | Time 1m 6s
+  Train | loss=0.1381 | top1=96.17% | top2=99.76% | top3=99.97%
+  Valid | loss=0.4444 | top1=83.44% | top2=94.27% | top3=96.61% | acc=83.33% | bal_acc=62.31% | macro_f1=0.6436 | qwk=0.8934 | mae=0.2158 | weighted_f1=0.8152 | precision_macro=0.7206 | recall_macro=0.6231
+         ovr_roc_auc_macro=0.9444 | ovr_pr_auc_macro=0.7422
+ No improvement. Bad epochs: 7/10
+
+Epoch 17/40 | Time 1m 14s
+  Train | loss=0.1388 | top1=96.77% | top2=99.56% | top3=99.93%
+  Valid | loss=0.4102 | top1=85.01% | top2=95.05% | top3=97.14% | acc=84.97% | bal_acc=66.72% | macro_f1=0.6920 | qwk=0.8944 | mae=0.2022 | weighted_f1=0.8373 | precision_macro=0.7928 | recall_macro=0.6672
+         ovr_roc_auc_macro=0.9424 | ovr_pr_auc_macro=0.7392
+ No improvement. Bad epochs: 8/10
+
+Epoch 18/40 | Time 1m 15s
+  Train | loss=0.1311 | top1=97.32% | top2=99.74% | top3=99.91%
+  Valid | loss=0.4418 | top1=83.97% | top2=95.05% | top3=97.92% | acc=83.88% | bal_acc=64.34% | macro_f1=0.6489 | qwk=0.8940 | mae=0.2104 | weighted_f1=0.8232 | precision_macro=0.6861 | recall_macro=0.6434
+         ovr_roc_auc_macro=0.9399 | ovr_pr_auc_macro=0.7074
+ No improvement. Bad epochs: 9/10
+
+Epoch 19/40 | Time 1m 7s
+  Train | loss=0.1332 | top1=96.98% | top2=99.66% | top3=99.90%
+  Valid | loss=0.4458 | top1=85.27% | top2=94.98% | top3=97.92% | acc=85.25% | bal_acc=66.84% | macro_f1=0.6937 | qwk=0.9007 | mae=0.1967 | weighted_f1=0.8409 | precision_macro=0.7576 | recall_macro=0.6684
+         ovr_roc_auc_macro=0.9469 | ovr_pr_auc_macro=0.7352
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 19.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.3629 | top1=83.11% | top2=93.23% | top3=98.44% | acc=83.33% | bal_acc=59.81% | macro_f1=0.6227 | qwk=0.8826 | mae=0.2268 | weighted_f1=0.8196 | precision_macro=0.7191 | recall_macro=0.5981
+     ovr_roc_auc_macro=0.9506 | ovr_pr_auc_macro=0.7072
+
+Confusion Matrix:
+[[196   2   1   0   0]
+ [  2  12  16   0   0]
+ [  1   4  80   1   1]
+ [  0   0  11   6   0]
+ [  0   3  13   6  11]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9849    0.9849    0.9849       199
+           1     0.5714    0.4000    0.4706        30
+           2     0.6612    0.9195    0.7692        87
+           3     0.4615    0.3529    0.4000        17
+           4     0.9167    0.3333    0.4889        33
+
+    accuracy                         0.8333       366
+   macro avg     0.7191    0.5981    0.6227       366
+weighted avg     0.8436    0.8333    0.8196       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+========================================================================================
+[RUN] tau=0.75 | gamma=1.0
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=0.75
+       - gamma=1.0
+Starting training...
+
+Epoch 01/40 | Time 1m 7s
+  Train | loss=1.0773 | top1=51.51% | top2=72.52% | top3=84.62%
+  Valid | loss=0.8864 | top1=62.43% | top2=74.55% | top3=85.64% | acc=63.39% | bal_acc=31.61% | macro_f1=0.2728 | qwk=0.5062 | mae=0.6448 | weighted_f1=0.5388 | precision_macro=0.2413 | recall_macro=0.3161
+         ovr_roc_auc_macro=0.8528 | ovr_pr_auc_macro=0.4391
+ Initial best model saved to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.5062)
+
+Epoch 02/40 | Time 1m 14s
+  Train | loss=0.7852 | top1=72.46% | top2=84.91% | top3=91.48%
+  Valid | loss=0.7145 | top1=77.05% | top2=88.21% | top3=97.14% | acc=77.32% | bal_acc=46.35% | macro_f1=0.4420 | qwk=0.8077 | mae=0.3197 | weighted_f1=0.7203 | precision_macro=0.4554 | recall_macro=0.4635
+         ovr_roc_auc_macro=0.8852 | ovr_pr_auc_macro=0.5592
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.8077)
+
+Epoch 03/40 | Time 1m 17s
+  Train | loss=0.6810 | top1=78.35% | top2=90.67% | top3=97.01%
+  Valid | loss=0.6868 | top1=79.02% | top2=90.81% | top3=97.40% | acc=78.69% | bal_acc=55.87% | macro_f1=0.5423 | qwk=0.8627 | mae=0.2951 | weighted_f1=0.7617 | precision_macro=0.5561 | recall_macro=0.5587
+         ovr_roc_auc_macro=0.9015 | ovr_pr_auc_macro=0.5901
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.8627)
+
+Epoch 04/40 | Time 1m 13s
+  Train | loss=0.6367 | top1=81.48% | top2=92.87% | top3=97.93%
+  Valid | loss=0.6422 | top1=82.66% | top2=92.63% | top3=98.18% | acc=82.51% | bal_acc=58.14% | macro_f1=0.5870 | qwk=0.8954 | mae=0.2213 | weighted_f1=0.7945 | precision_macro=0.6277 | recall_macro=0.5814
+         ovr_roc_auc_macro=0.9297 | ovr_pr_auc_macro=0.6523
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.8954)
+
+Epoch 05/40 | Time 1m 16s
+  Train | loss=0.5994 | top1=84.14% | top2=95.28% | top3=98.71%
+  Valid | loss=0.6381 | top1=83.71% | top2=94.46% | top3=97.66% | acc=83.61% | bal_acc=63.03% | macro_f1=0.6339 | qwk=0.8940 | mae=0.2131 | weighted_f1=0.8133 | precision_macro=0.8188 | recall_macro=0.6303
+         ovr_roc_auc_macro=0.9338 | ovr_pr_auc_macro=0.6786
+ No improvement. Bad epochs: 1/10
+
+Epoch 06/40 | Time 1m 17s
+  Train | loss=0.5858 | top1=85.59% | top2=95.75% | top3=98.78%
+  Valid | loss=0.6446 | top1=80.25% | top2=94.46% | top3=97.40% | acc=80.33% | bal_acc=54.85% | macro_f1=0.5564 | qwk=0.8881 | mae=0.2432 | weighted_f1=0.7707 | precision_macro=0.6077 | recall_macro=0.5485
+         ovr_roc_auc_macro=0.9386 | ovr_pr_auc_macro=0.6837
+ No improvement. Bad epochs: 2/10
+
+Epoch 07/40 | Time 1m 12s
+  Train | loss=0.5716 | top1=86.71% | top2=96.24% | top3=98.88%
+  Valid | loss=0.6250 | top1=84.41% | top2=95.05% | top3=98.18% | acc=84.70% | bal_acc=65.85% | macro_f1=0.6785 | qwk=0.9067 | mae=0.1967 | weighted_f1=0.8320 | precision_macro=0.7666 | recall_macro=0.6585
+         ovr_roc_auc_macro=0.9435 | ovr_pr_auc_macro=0.7091
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.9067)
+
+Epoch 08/40 | Time 1m 17s
+  Train | loss=0.5514 | top1=89.32% | top2=97.35% | top3=98.95%
+  Valid | loss=0.6303 | top1=84.56% | top2=95.05% | top3=97.66% | acc=84.15% | bal_acc=67.32% | macro_f1=0.6808 | qwk=0.8971 | mae=0.2104 | weighted_f1=0.8312 | precision_macro=0.7193 | recall_macro=0.6732
+         ovr_roc_auc_macro=0.9399 | ovr_pr_auc_macro=0.7196
+ No improvement. Bad epochs: 1/10
+
+Epoch 09/40 | Time 1m 13s
+  Train | loss=0.5320 | top1=90.82% | top2=97.98% | top3=99.42%
+  Valid | loss=0.6350 | top1=86.12% | top2=94.79% | top3=97.92% | acc=85.79% | bal_acc=69.09% | macro_f1=0.7022 | qwk=0.9071 | mae=0.1885 | weighted_f1=0.8457 | precision_macro=0.7936 | recall_macro=0.6909
+         ovr_roc_auc_macro=0.9462 | ovr_pr_auc_macro=0.7508
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p0.pt (score=0.9071)
+
+Epoch 10/40 | Time 1m 9s
+  Train | loss=0.5289 | top1=91.05% | top2=97.81% | top3=99.29%
+  Valid | loss=0.6255 | top1=83.52% | top2=94.27% | top3=97.66% | acc=83.06% | bal_acc=68.69% | macro_f1=0.7033 | qwk=0.8937 | mae=0.2213 | weighted_f1=0.8273 | precision_macro=0.7244 | recall_macro=0.6869
+         ovr_roc_auc_macro=0.9460 | ovr_pr_auc_macro=0.7249
+ No improvement. Bad epochs: 1/10
+
+Epoch 11/40 | Time 1m 13s
+  Train | loss=0.5183 | top1=91.90% | top2=98.69% | top3=99.73%
+  Valid | loss=0.6236 | top1=84.64% | top2=94.53% | top3=97.92% | acc=83.88% | bal_acc=69.07% | macro_f1=0.7073 | qwk=0.8996 | mae=0.2131 | weighted_f1=0.8341 | precision_macro=0.7326 | recall_macro=0.6907
+         ovr_roc_auc_macro=0.9466 | ovr_pr_auc_macro=0.7363
+ No improvement. Bad epochs: 2/10
+
+Epoch 12/40 | Time 1m 12s
+  Train | loss=0.5085 | top1=92.77% | top2=98.47% | top3=99.76%
+  Valid | loss=0.6300 | top1=85.34% | top2=95.05% | top3=98.18% | acc=84.97% | bal_acc=72.09% | macro_f1=0.7388 | qwk=0.9061 | mae=0.1967 | weighted_f1=0.8474 | precision_macro=0.7628 | recall_macro=0.7209
+         ovr_roc_auc_macro=0.9450 | ovr_pr_auc_macro=0.7347
+ No improvement. Bad epochs: 3/10
+
+Epoch 13/40 | Time 1m 10s
+  Train | loss=0.4959 | top1=94.51% | top2=99.18% | top3=99.83%
+  Valid | loss=0.6413 | top1=84.56% | top2=94.79% | top3=97.66% | acc=84.15% | bal_acc=67.42% | macro_f1=0.6833 | qwk=0.9039 | mae=0.1995 | weighted_f1=0.8316 | precision_macro=0.7274 | recall_macro=0.6742
+         ovr_roc_auc_macro=0.9437 | ovr_pr_auc_macro=0.7205
+ No improvement. Bad epochs: 4/10
+
+Epoch 14/40 | Time 1m 12s
+  Train | loss=0.4899 | top1=95.01% | top2=99.32% | top3=99.76%
+  Valid | loss=0.6392 | top1=83.11% | top2=96.09% | top3=98.70% | acc=83.33% | bal_acc=69.29% | macro_f1=0.6990 | qwk=0.9025 | mae=0.2131 | weighted_f1=0.8311 | precision_macro=0.7066 | recall_macro=0.6929
+         ovr_roc_auc_macro=0.9469 | ovr_pr_auc_macro=0.7265
+ No improvement. Bad epochs: 5/10
+
+Epoch 15/40 | Time 1m 11s
+  Train | loss=0.4810 | top1=95.52% | top2=99.52% | top3=99.93%
+  Valid | loss=0.6563 | top1=81.99% | top2=94.20% | top3=97.66% | acc=82.51% | bal_acc=62.84% | macro_f1=0.6432 | qwk=0.8892 | mae=0.2213 | weighted_f1=0.8123 | precision_macro=0.6989 | recall_macro=0.6284
+         ovr_roc_auc_macro=0.9419 | ovr_pr_auc_macro=0.7116
+ No improvement. Bad epochs: 6/10
+
+Epoch 16/40 | Time 1m 4s
+  Train | loss=0.4797 | top1=95.83% | top2=99.39% | top3=99.83%
+  Valid | loss=0.6427 | top1=82.85% | top2=93.42% | top3=97.32% | acc=83.06% | bal_acc=62.01% | macro_f1=0.6257 | qwk=0.8938 | mae=0.2186 | weighted_f1=0.8124 | precision_macro=0.6529 | recall_macro=0.6201
+         ovr_roc_auc_macro=0.9402 | ovr_pr_auc_macro=0.7136
+ No improvement. Bad epochs: 7/10
+
+Epoch 17/40 | Time 1m 15s
+  Train | loss=0.4659 | top1=97.18% | top2=99.49% | top3=99.86%
+  Valid | loss=0.6654 | top1=82.85% | top2=93.68% | top3=97.32% | acc=83.06% | bal_acc=59.75% | macro_f1=0.6040 | qwk=0.8919 | mae=0.2186 | weighted_f1=0.8035 | precision_macro=0.6330 | recall_macro=0.5975
+         ovr_roc_auc_macro=0.9413 | ovr_pr_auc_macro=0.7070
+ No improvement. Bad epochs: 8/10
+
+Epoch 18/40 | Time 1m 16s
+  Train | loss=0.4632 | top1=97.40% | top2=99.63% | top3=99.93%
+  Valid | loss=0.6263 | top1=83.71% | top2=94.01% | top3=98.44% | acc=83.61% | bal_acc=65.28% | macro_f1=0.6684 | qwk=0.9047 | mae=0.2049 | weighted_f1=0.8249 | precision_macro=0.7107 | recall_macro=0.6528
+         ovr_roc_auc_macro=0.9506 | ovr_pr_auc_macro=0.7348
+ No improvement. Bad epochs: 9/10
+
+Epoch 19/40 | Time 1m 16s
+  Train | loss=0.4629 | top1=97.63% | top2=99.73% | top3=99.97%
+  Valid | loss=0.6335 | top1=84.23% | top2=95.57% | top3=97.92% | acc=84.15% | bal_acc=64.43% | macro_f1=0.6691 | qwk=0.9061 | mae=0.1995 | weighted_f1=0.8269 | precision_macro=0.7388 | recall_macro=0.6443
+         ovr_roc_auc_macro=0.9440 | ovr_pr_auc_macro=0.7222
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 19.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.6255 | top1=82.33% | top2=92.30% | top3=97.66% | acc=82.51% | bal_acc=62.20% | macro_f1=0.6443 | qwk=0.8706 | mae=0.2486 | weighted_f1=0.8187 | precision_macro=0.6924 | recall_macro=0.6220
+     ovr_roc_auc_macro=0.9383 | ovr_pr_auc_macro=0.6844
+
+Confusion Matrix:
+[[194   4   1   0   0]
+ [  5  15   9   0   1]
+ [  1   7  72   3   4]
+ [  0   0  11   6   0]
+ [  0   3  13   2  15]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9700    0.9749    0.9724       199
+           1     0.5172    0.5000    0.5085        30
+           2     0.6792    0.8276    0.7461        87
+           3     0.5455    0.3529    0.4286        17
+           4     0.7500    0.4545    0.5660        33
+
+    accuracy                         0.8251       366
+   macro avg     0.6924    0.6220    0.6443       366
+weighted avg     0.8242    0.8251    0.8187       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+========================================================================================
+[RUN] tau=0.75 | gamma=1.5
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=0.75
+       - gamma=1.5
+Starting training...
+
+Epoch 01/40 | Time 1m 12s
+  Train | loss=0.9482 | top1=47.78% | top2=70.99% | top3=84.66%
+  Valid | loss=0.7739 | top1=64.58% | top2=74.55% | top3=87.20% | acc=65.30% | bal_acc=32.96% | macro_f1=0.2835 | qwk=0.5678 | mae=0.5847 | weighted_f1=0.5605 | precision_macro=0.2488 | recall_macro=0.3296
+         ovr_roc_auc_macro=0.8381 | ovr_pr_auc_macro=0.4445
+ Initial best model saved to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.5678)
+
+Epoch 02/40 | Time 1m 14s
+  Train | loss=0.6510 | top1=72.63% | top2=84.34% | top3=92.97%
+  Valid | loss=0.5724 | top1=76.97% | top2=87.02% | top3=96.61% | acc=77.60% | bal_acc=46.23% | macro_f1=0.4419 | qwk=0.8015 | mae=0.3224 | weighted_f1=0.7184 | precision_macro=0.4737 | recall_macro=0.4623
+         ovr_roc_auc_macro=0.9019 | ovr_pr_auc_macro=0.5714
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8015)
+
+Epoch 03/40 | Time 1m 10s
+  Train | loss=0.5380 | top1=78.01% | top2=91.27% | top3=97.59%
+  Valid | loss=0.5190 | top1=79.65% | top2=91.07% | top3=96.88% | acc=80.05% | bal_acc=54.75% | macro_f1=0.5474 | qwk=0.8694 | mae=0.2678 | weighted_f1=0.7714 | precision_macro=0.5846 | recall_macro=0.5475
+         ovr_roc_auc_macro=0.9232 | ovr_pr_auc_macro=0.6330
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8694)
+
+Epoch 04/40 | Time 1m 11s
+  Train | loss=0.4893 | top1=81.93% | top2=93.63% | top3=98.21%
+  Valid | loss=0.5162 | top1=79.54% | top2=92.89% | top3=97.92% | acc=79.23% | bal_acc=54.74% | macro_f1=0.5673 | qwk=0.8809 | mae=0.2596 | weighted_f1=0.7727 | precision_macro=0.6437 | recall_macro=0.5474
+         ovr_roc_auc_macro=0.9237 | ovr_pr_auc_macro=0.6621
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8809)
+
+Epoch 05/40 | Time 1m 15s
+  Train | loss=0.4628 | top1=84.15% | top2=94.77% | top3=98.85%
+  Valid | loss=0.5191 | top1=82.14% | top2=92.89% | top3=97.14% | acc=81.97% | bal_acc=61.13% | macro_f1=0.6313 | qwk=0.8808 | mae=0.2459 | weighted_f1=0.8034 | precision_macro=0.7130 | recall_macro=0.6113
+         ovr_roc_auc_macro=0.9230 | ovr_pr_auc_macro=0.6616
+ No improvement. Bad epochs: 1/10
+
+Epoch 06/40 | Time 1m 13s
+  Train | loss=0.4355 | top1=86.05% | top2=95.69% | top3=98.74%
+  Valid | loss=0.4971 | top1=81.10% | top2=93.15% | top3=97.06% | acc=80.87% | bal_acc=59.09% | macro_f1=0.6151 | qwk=0.8907 | mae=0.2350 | weighted_f1=0.7970 | precision_macro=0.6718 | recall_macro=0.5909
+         ovr_roc_auc_macro=0.9410 | ovr_pr_auc_macro=0.6844
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8907)
+
+Epoch 07/40 | Time 1m 11s
+  Train | loss=0.4215 | top1=87.10% | top2=96.64% | top3=99.15%
+  Valid | loss=0.4868 | top1=83.44% | top2=93.68% | top3=97.40% | acc=83.33% | bal_acc=61.98% | macro_f1=0.6471 | qwk=0.8896 | mae=0.2213 | weighted_f1=0.8161 | precision_macro=0.7370 | recall_macro=0.6198
+         ovr_roc_auc_macro=0.9457 | ovr_pr_auc_macro=0.7323
+ No improvement. Bad epochs: 1/10
+
+Epoch 08/40 | Time 1m 14s
+  Train | loss=0.4099 | top1=88.12% | top2=96.84% | top3=99.42%
+  Valid | loss=0.5106 | top1=83.71% | top2=93.42% | top3=96.80% | acc=83.61% | bal_acc=67.23% | macro_f1=0.6788 | qwk=0.8896 | mae=0.2158 | weighted_f1=0.8286 | precision_macro=0.7044 | recall_macro=0.6723
+         ovr_roc_auc_macro=0.9403 | ovr_pr_auc_macro=0.7086
+ No improvement. Bad epochs: 2/10
+
+Epoch 09/40 | Time 1m 9s
+  Train | loss=0.3918 | top1=89.99% | top2=97.72% | top3=99.56%
+  Valid | loss=0.4973 | top1=83.11% | top2=94.79% | top3=98.18% | acc=83.33% | bal_acc=63.62% | macro_f1=0.6573 | qwk=0.8908 | mae=0.2213 | weighted_f1=0.8221 | precision_macro=0.7034 | recall_macro=0.6362
+         ovr_roc_auc_macro=0.9467 | ovr_pr_auc_macro=0.7209
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8908)
+
+Epoch 10/40 | Time 1m 13s
+  Train | loss=0.3770 | top1=91.13% | top2=98.20% | top3=99.73%
+  Valid | loss=0.5061 | top1=84.30% | top2=94.79% | top3=98.18% | acc=83.88% | bal_acc=67.20% | macro_f1=0.6985 | qwk=0.8936 | mae=0.2131 | weighted_f1=0.8314 | precision_macro=0.7491 | recall_macro=0.6720
+         ovr_roc_auc_macro=0.9426 | ovr_pr_auc_macro=0.7161
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.8936)
+
+Epoch 11/40 | Time 1m 13s
+  Train | loss=0.3601 | top1=93.10% | top2=98.51% | top3=99.59%
+  Valid | loss=0.5258 | top1=81.99% | top2=92.63% | top3=97.14% | acc=82.51% | bal_acc=64.10% | macro_f1=0.6554 | qwk=0.8904 | mae=0.2322 | weighted_f1=0.8161 | precision_macro=0.6930 | recall_macro=0.6410
+         ovr_roc_auc_macro=0.9358 | ovr_pr_auc_macro=0.7037
+ No improvement. Bad epochs: 1/10
+
+Epoch 12/40 | Time 1m 14s
+  Train | loss=0.3559 | top1=93.79% | top2=98.78% | top3=99.83%
+  Valid | loss=0.4914 | top1=84.49% | top2=93.49% | top3=97.14% | acc=84.43% | bal_acc=72.83% | macro_f1=0.7320 | qwk=0.9029 | mae=0.2077 | weighted_f1=0.8433 | precision_macro=0.7366 | recall_macro=0.7283
+         ovr_roc_auc_macro=0.9493 | ovr_pr_auc_macro=0.7522
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.9029)
+
+Epoch 13/40 | Time 1m 15s
+  Train | loss=0.3498 | top1=93.70% | top2=98.82% | top3=99.70%
+  Valid | loss=0.4888 | top1=83.37% | top2=94.98% | top3=97.84% | acc=83.61% | bal_acc=66.48% | macro_f1=0.6796 | qwk=0.8928 | mae=0.2158 | weighted_f1=0.8297 | precision_macro=0.7067 | recall_macro=0.6648
+         ovr_roc_auc_macro=0.9525 | ovr_pr_auc_macro=0.7462
+ No improvement. Bad epochs: 1/10
+
+Epoch 14/40 | Time 1m 12s
+  Train | loss=0.3398 | top1=94.94% | top2=99.12% | top3=99.80%
+  Valid | loss=0.5054 | top1=84.41% | top2=95.31% | top3=98.18% | acc=84.70% | bal_acc=67.37% | macro_f1=0.7004 | qwk=0.9054 | mae=0.1967 | weighted_f1=0.8390 | precision_macro=0.7492 | recall_macro=0.6737
+         ovr_roc_auc_macro=0.9460 | ovr_pr_auc_macro=0.7322
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.9054)
+
+Epoch 15/40 | Time 1m 15s
+  Train | loss=0.3305 | top1=95.65% | top2=99.46% | top3=99.93%
+  Valid | loss=0.5002 | top1=84.49% | top2=94.79% | top3=97.66% | acc=84.43% | bal_acc=71.90% | macro_f1=0.7276 | qwk=0.9100 | mae=0.1967 | weighted_f1=0.8426 | precision_macro=0.7389 | recall_macro=0.7190
+         ovr_roc_auc_macro=0.9518 | ovr_pr_auc_macro=0.7360
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.9100)
+
+Epoch 16/40 | Time 1m 14s
+  Train | loss=0.3208 | top1=96.47% | top2=99.46% | top3=99.97%
+  Valid | loss=0.5065 | top1=83.44% | top2=94.79% | top3=97.92% | acc=83.33% | bal_acc=64.25% | macro_f1=0.6626 | qwk=0.9086 | mae=0.2049 | weighted_f1=0.8202 | precision_macro=0.7134 | recall_macro=0.6425
+         ovr_roc_auc_macro=0.9418 | ovr_pr_auc_macro=0.7238
+ No improvement. Bad epochs: 1/10
+
+Epoch 17/40 | Time 1m 7s
+  Train | loss=0.3147 | top1=97.25% | top2=99.69% | top3=100.00%
+  Valid | loss=0.5198 | top1=83.63% | top2=94.98% | top3=97.32% | acc=83.88% | bal_acc=64.64% | macro_f1=0.6644 | qwk=0.9031 | mae=0.2049 | weighted_f1=0.8266 | precision_macro=0.7118 | recall_macro=0.6464
+         ovr_roc_auc_macro=0.9457 | ovr_pr_auc_macro=0.7221
+ No improvement. Bad epochs: 2/10
+
+Epoch 18/40 | Time 1m 8s
+  Train | loss=0.3172 | top1=97.19% | top2=99.52% | top3=99.86%
+  Valid | loss=0.5044 | top1=83.97% | top2=93.94% | top3=97.66% | acc=83.88% | bal_acc=66.48% | macro_f1=0.6856 | qwk=0.9024 | mae=0.2077 | weighted_f1=0.8311 | precision_macro=0.7212 | recall_macro=0.6648
+         ovr_roc_auc_macro=0.9482 | ovr_pr_auc_macro=0.7285
+ No improvement. Bad epochs: 3/10
+
+Epoch 19/40 | Time 1m 3s
+  Train | loss=0.3099 | top1=97.24% | top2=99.73% | top3=99.93%
+  Valid | loss=0.5025 | top1=83.11% | top2=93.94% | top3=97.06% | acc=83.33% | bal_acc=66.49% | macro_f1=0.6866 | qwk=0.8939 | mae=0.2158 | weighted_f1=0.8274 | precision_macro=0.7220 | recall_macro=0.6649
+         ovr_roc_auc_macro=0.9473 | ovr_pr_auc_macro=0.7274
+ No improvement. Bad epochs: 4/10
+
+Epoch 20/40 | Time 1m 3s
+  Train | loss=0.3071 | top1=97.83% | top2=99.69% | top3=99.93%
+  Valid | loss=0.5130 | top1=83.71% | top2=95.05% | top3=97.40% | acc=83.61% | bal_acc=64.64% | macro_f1=0.6686 | qwk=0.8963 | mae=0.2104 | weighted_f1=0.8254 | precision_macro=0.7164 | recall_macro=0.6464
+         ovr_roc_auc_macro=0.9473 | ovr_pr_auc_macro=0.7175
+ No improvement. Bad epochs: 5/10
+
+Epoch 21/40 | Time 1m 11s
+  Train | loss=0.3053 | top1=98.03% | top2=99.66% | top3=99.93%
+  Valid | loss=0.5076 | top1=84.49% | top2=94.53% | top3=98.18% | acc=84.43% | bal_acc=66.67% | macro_f1=0.6842 | qwk=0.9026 | mae=0.2022 | weighted_f1=0.8344 | precision_macro=0.7214 | recall_macro=0.6667
+         ovr_roc_auc_macro=0.9458 | ovr_pr_auc_macro=0.7231
+ No improvement. Bad epochs: 6/10
+
+Epoch 22/40 | Time 1m 17s
+  Train | loss=0.3021 | top1=98.00% | top2=99.69% | top3=99.97%
+  Valid | loss=0.4950 | top1=84.23% | top2=94.79% | top3=98.44% | acc=84.15% | bal_acc=66.38% | macro_f1=0.6848 | qwk=0.9141 | mae=0.1940 | weighted_f1=0.8334 | precision_macro=0.7204 | recall_macro=0.6638
+         ovr_roc_auc_macro=0.9447 | ovr_pr_auc_macro=0.7225
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_0p75_gamma_1p5.pt (score=0.9141)
+
+Epoch 23/40 | Time 1m 15s
+  Train | loss=0.2987 | top1=98.69% | top2=99.83% | top3=99.97%
+  Valid | loss=0.5008 | top1=83.71% | top2=94.79% | top3=97.92% | acc=83.61% | bal_acc=63.83% | macro_f1=0.6580 | qwk=0.9077 | mae=0.2049 | weighted_f1=0.8231 | precision_macro=0.7058 | recall_macro=0.6383
+         ovr_roc_auc_macro=0.9445 | ovr_pr_auc_macro=0.7219
+ No improvement. Bad epochs: 1/10
+
+Epoch 24/40 | Time 1m 13s
+  Train | loss=0.2988 | top1=98.17% | top2=99.73% | top3=99.97%
+  Valid | loss=0.5095 | top1=85.71% | top2=94.79% | top3=97.40% | acc=86.07% | bal_acc=68.12% | macro_f1=0.7150 | qwk=0.9106 | mae=0.1803 | weighted_f1=0.8510 | precision_macro=0.7854 | recall_macro=0.6812
+         ovr_roc_auc_macro=0.9411 | ovr_pr_auc_macro=0.7141
+ No improvement. Bad epochs: 2/10
+
+Epoch 25/40 | Time 1m 13s
+  Train | loss=0.2929 | top1=98.68% | top2=99.90% | top3=100.00%
+  Valid | loss=0.5003 | top1=84.49% | top2=94.27% | top3=97.40% | acc=84.43% | bal_acc=65.74% | macro_f1=0.6795 | qwk=0.9076 | mae=0.1967 | weighted_f1=0.8342 | precision_macro=0.7229 | recall_macro=0.6574
+         ovr_roc_auc_macro=0.9464 | ovr_pr_auc_macro=0.7247
+ No improvement. Bad epochs: 3/10
+
+Epoch 26/40 | Time 1m 12s
+  Train | loss=0.2925 | top1=98.61% | top2=99.86% | top3=100.00%
+  Valid | loss=0.4986 | top1=85.27% | top2=95.57% | top3=98.18% | acc=85.25% | bal_acc=67.95% | macro_f1=0.7090 | qwk=0.9114 | mae=0.1858 | weighted_f1=0.8452 | precision_macro=0.7624 | recall_macro=0.6795
+         ovr_roc_auc_macro=0.9484 | ovr_pr_auc_macro=0.7319
+ No improvement. Bad epochs: 4/10
+
+Epoch 27/40 | Time 1m 16s
+  Train | loss=0.2935 | top1=98.51% | top2=99.83% | top3=99.93%
+  Valid | loss=0.5031 | top1=85.53% | top2=95.57% | top3=97.92% | acc=85.52% | bal_acc=67.54% | macro_f1=0.7021 | qwk=0.9105 | mae=0.1858 | weighted_f1=0.8456 | precision_macro=0.7548 | recall_macro=0.6754
+         ovr_roc_auc_macro=0.9450 | ovr_pr_auc_macro=0.7271
+ No improvement. Bad epochs: 5/10
+
+Epoch 28/40 | Time 1m 14s
+  Train | loss=0.2942 | top1=98.68% | top2=99.86% | top3=99.93%
+  Valid | loss=0.5011 | top1=83.97% | top2=94.53% | top3=98.44% | acc=83.88% | bal_acc=66.07% | macro_f1=0.6814 | qwk=0.9065 | mae=0.2022 | weighted_f1=0.8311 | precision_macro=0.7150 | recall_macro=0.6607
+         ovr_roc_auc_macro=0.9476 | ovr_pr_auc_macro=0.7278
+ No improvement. Bad epochs: 6/10
+
+Epoch 29/40 | Time 1m 14s
+  Train | loss=0.2890 | top1=98.68% | top2=99.93% | top3=100.00%
+  Valid | loss=0.4934 | top1=84.75% | top2=95.31% | top3=97.92% | acc=84.70% | bal_acc=66.15% | macro_f1=0.6838 | qwk=0.9115 | mae=0.1913 | weighted_f1=0.8361 | precision_macro=0.7317 | recall_macro=0.6615
+         ovr_roc_auc_macro=0.9485 | ovr_pr_auc_macro=0.7312
+ No improvement. Bad epochs: 7/10
+
+Epoch 30/40 | Time 1m 11s
+  Train | loss=0.2909 | top1=98.71% | top2=99.90% | top3=100.00%
+  Valid | loss=0.5001 | top1=84.49% | top2=95.24% | top3=98.44% | acc=84.43% | bal_acc=65.84% | macro_f1=0.6860 | qwk=0.9072 | mae=0.1967 | weighted_f1=0.8337 | precision_macro=0.7413 | recall_macro=0.6584
+         ovr_roc_auc_macro=0.9468 | ovr_pr_auc_macro=0.7228
+ No improvement. Bad epochs: 8/10
+
+Epoch 31/40 | Time 1m 13s
+  Train | loss=0.2897 | top1=98.71% | top2=99.93% | top3=100.00%
+  Valid | loss=0.5062 | top1=85.01% | top2=94.72% | top3=97.92% | acc=84.97% | bal_acc=66.54% | macro_f1=0.6942 | qwk=0.9109 | mae=0.1885 | weighted_f1=0.8396 | precision_macro=0.7522 | recall_macro=0.6654
+         ovr_roc_auc_macro=0.9460 | ovr_pr_auc_macro=0.7183
+ No improvement. Bad epochs: 9/10
+
+Epoch 32/40 | Time 1m 14s
+  Train | loss=0.2896 | top1=98.68% | top2=99.93% | top3=99.97%
+  Valid | loss=0.4999 | top1=84.75% | top2=94.72% | top3=97.92% | acc=84.70% | bal_acc=65.63% | macro_f1=0.6816 | qwk=0.9104 | mae=0.1913 | weighted_f1=0.8352 | precision_macro=0.7355 | recall_macro=0.6563
+         ovr_roc_auc_macro=0.9458 | ovr_pr_auc_macro=0.7237
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 32.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.4776 | top1=83.89% | top2=94.12% | top3=97.66% | acc=84.15% | bal_acc=62.37% | macro_f1=0.6490 | qwk=0.8918 | mae=0.2158 | weighted_f1=0.8327 | precision_macro=0.7085 | recall_macro=0.6237
+     ovr_roc_auc_macro=0.9352 | ovr_pr_auc_macro=0.6834
+
+Confusion Matrix:
+[[196   2   1   0   0]
+ [  2  15  13   0   0]
+ [  2   4  77   3   1]
+ [  0   0  10   5   2]
+ [  0   3  11   4  15]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9800    0.9849    0.9825       199
+           1     0.6250    0.5000    0.5556        30
+           2     0.6875    0.8851    0.7739        87
+           3     0.4167    0.2941    0.3448        17
+           4     0.8333    0.4545    0.5882        33
+
+    accuracy                         0.8415       366
+   macro avg     0.7085    0.6237    0.6490       366
+weighted avg     0.8420    0.8415    0.8327       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+========================================================================================
+[RUN] tau=1.0 | gamma=1.0
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=1.0
+       - gamma=1.0
+Starting training...
+
+Epoch 01/40 | Time 1m 15s
+  Train | loss=1.1178 | top1=47.79% | top2=70.18% | top3=84.59%
+  Valid | loss=0.9834 | top1=56.88% | top2=72.21% | top3=85.64% | acc=57.92% | bal_acc=28.08% | macro_f1=0.2472 | qwk=0.3789 | mae=0.7896 | weighted_f1=0.4815 | precision_macro=0.2911 | recall_macro=0.2808
+         ovr_roc_auc_macro=0.8512 | ovr_pr_auc_macro=0.4421
+ Initial best model saved to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.3789)
+
+Epoch 02/40 | Time 1m 15s
+  Train | loss=0.8942 | top1=72.36% | top2=84.59% | top3=91.86%
+  Valid | loss=0.8501 | top1=76.00% | top2=86.50% | top3=95.42% | acc=76.23% | bal_acc=45.58% | macro_f1=0.4359 | qwk=0.7680 | mae=0.3525 | weighted_f1=0.7051 | precision_macro=0.4520 | recall_macro=0.4558
+         ovr_roc_auc_macro=0.8920 | ovr_pr_auc_macro=0.5705
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.7680)
+
+Epoch 03/40 | Time 1m 7s
+  Train | loss=0.8174 | top1=77.83% | top2=89.82% | top3=96.81%
+  Valid | loss=0.8103 | top1=77.64% | top2=90.03% | top3=96.80% | acc=77.60% | bal_acc=54.91% | macro_f1=0.5640 | qwk=0.8448 | mae=0.3033 | weighted_f1=0.7539 | precision_macro=0.6288 | recall_macro=0.5491
+         ovr_roc_auc_macro=0.9233 | ovr_pr_auc_macro=0.6621
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.8448)
+
+Epoch 04/40 | Time 1m 13s
+  Train | loss=0.7897 | top1=81.51% | top2=93.15% | top3=97.76%
+  Valid | loss=0.7914 | top1=80.32% | top2=93.15% | top3=97.40% | acc=80.05% | bal_acc=55.03% | macro_f1=0.5562 | qwk=0.8732 | mae=0.2568 | weighted_f1=0.7745 | precision_macro=0.5866 | recall_macro=0.5503
+         ovr_roc_auc_macro=0.9362 | ovr_pr_auc_macro=0.6906
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.8732)
+
+Epoch 05/40 | Time 1m 15s
+  Train | loss=0.7678 | top1=83.51% | top2=94.36% | top3=98.30%
+  Valid | loss=0.7927 | top1=80.77% | top2=92.37% | top3=96.28% | acc=80.87% | bal_acc=55.18% | macro_f1=0.5665 | qwk=0.8702 | mae=0.2514 | weighted_f1=0.7818 | precision_macro=0.6357 | recall_macro=0.5518
+         ovr_roc_auc_macro=0.9356 | ovr_pr_auc_macro=0.6844
+ No improvement. Bad epochs: 1/10
+
+Epoch 06/40 | Time 1m 11s
+  Train | loss=0.7464 | top1=85.69% | top2=95.82% | top3=98.71%
+  Valid | loss=0.7825 | top1=82.92% | top2=93.42% | top3=96.28% | acc=82.79% | bal_acc=60.79% | macro_f1=0.6060 | qwk=0.8922 | mae=0.2213 | weighted_f1=0.8044 | precision_macro=0.6122 | recall_macro=0.6079
+         ovr_roc_auc_macro=0.9376 | ovr_pr_auc_macro=0.7089
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.8922)
+
+Epoch 07/40 | Time 1m 13s
+  Train | loss=0.7417 | top1=86.26% | top2=96.14% | top3=98.82%
+  Valid | loss=0.7888 | top1=82.22% | top2=92.97% | top3=97.40% | acc=81.69% | bal_acc=64.15% | macro_f1=0.6480 | qwk=0.8887 | mae=0.2459 | weighted_f1=0.8094 | precision_macro=0.6814 | recall_macro=0.6415
+         ovr_roc_auc_macro=0.9342 | ovr_pr_auc_macro=0.7111
+ No improvement. Bad epochs: 1/10
+
+Epoch 08/40 | Time 1m 11s
+  Train | loss=0.7284 | top1=88.59% | top2=97.01% | top3=99.25%
+  Valid | loss=0.7914 | top1=82.92% | top2=93.68% | top3=96.54% | acc=82.79% | bal_acc=59.33% | macro_f1=0.5952 | qwk=0.8859 | mae=0.2240 | weighted_f1=0.7998 | precision_macro=0.6181 | recall_macro=0.5933
+         ovr_roc_auc_macro=0.9380 | ovr_pr_auc_macro=0.7105
+ No improvement. Bad epochs: 2/10
+
+Epoch 09/40 | Time 1m 14s
+  Train | loss=0.7212 | top1=88.90% | top2=97.96% | top3=99.32%
+  Valid | loss=0.7777 | top1=83.97% | top2=94.46% | top3=97.66% | acc=83.88% | bal_acc=65.99% | macro_f1=0.6763 | qwk=0.9082 | mae=0.1995 | weighted_f1=0.8275 | precision_macro=0.7195 | recall_macro=0.6599
+         ovr_roc_auc_macro=0.9412 | ovr_pr_auc_macro=0.7198
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9082)
+
+Epoch 10/40 | Time 1m 13s
+  Train | loss=0.7099 | top1=90.67% | top2=98.14% | top3=99.53%
+  Valid | loss=0.7756 | top1=85.86% | top2=94.01% | top3=97.92% | acc=85.52% | bal_acc=68.33% | macro_f1=0.7123 | qwk=0.9091 | mae=0.1858 | weighted_f1=0.8469 | precision_macro=0.7713 | recall_macro=0.6833
+         ovr_roc_auc_macro=0.9466 | ovr_pr_auc_macro=0.7415
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9091)
+
+Epoch 11/40 | Time 1m 14s
+  Train | loss=0.7049 | top1=91.32% | top2=98.27% | top3=99.56%
+  Valid | loss=0.7755 | top1=82.92% | top2=94.53% | top3=97.66% | acc=82.79% | bal_acc=65.43% | macro_f1=0.6661 | qwk=0.9048 | mae=0.2186 | weighted_f1=0.8200 | precision_macro=0.6960 | recall_macro=0.6543
+         ovr_roc_auc_macro=0.9434 | ovr_pr_auc_macro=0.7340
+ No improvement. Bad epochs: 1/10
+
+Epoch 12/40 | Time 1m 13s
+  Train | loss=0.6999 | top1=92.81% | top2=98.48% | top3=99.76%
+  Valid | loss=0.7802 | top1=85.68% | top2=92.97% | top3=96.88% | acc=84.97% | bal_acc=72.60% | macro_f1=0.7268 | qwk=0.9158 | mae=0.1940 | weighted_f1=0.8477 | precision_macro=0.7383 | recall_macro=0.7260
+         ovr_roc_auc_macro=0.9474 | ovr_pr_auc_macro=0.7568
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9158)
+
+Epoch 13/40 | Time 1m 15s
+  Train | loss=0.6917 | top1=93.37% | top2=98.99% | top3=99.83%
+  Valid | loss=0.7689 | top1=85.08% | top2=95.57% | top3=98.44% | acc=84.70% | bal_acc=65.85% | macro_f1=0.6733 | qwk=0.9068 | mae=0.1967 | weighted_f1=0.8336 | precision_macro=0.7183 | recall_macro=0.6585
+         ovr_roc_auc_macro=0.9434 | ovr_pr_auc_macro=0.7315
+ No improvement. Bad epochs: 1/10
+
+Epoch 14/40 | Time 1m 8s
+  Train | loss=0.6882 | top1=94.84% | top2=99.25% | top3=99.73%
+  Valid | loss=0.7749 | top1=84.04% | top2=95.31% | top3=98.44% | acc=83.61% | bal_acc=63.75% | macro_f1=0.6465 | qwk=0.8953 | mae=0.2158 | weighted_f1=0.8193 | precision_macro=0.6842 | recall_macro=0.6375
+         ovr_roc_auc_macro=0.9459 | ovr_pr_auc_macro=0.7353
+ No improvement. Bad epochs: 2/10
+
+Epoch 15/40 | Time 1m 13s
+  Train | loss=0.6831 | top1=95.31% | top2=98.98% | top3=99.80%
+  Valid | loss=0.7683 | top1=86.46% | top2=95.05% | top3=98.44% | acc=85.79% | bal_acc=69.49% | macro_f1=0.7223 | qwk=0.9173 | mae=0.1776 | weighted_f1=0.8512 | precision_macro=0.7676 | recall_macro=0.6949
+         ovr_roc_auc_macro=0.9432 | ovr_pr_auc_macro=0.7480
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9173)
+
+Epoch 16/40 | Time 1m 12s
+  Train | loss=0.6765 | top1=95.83% | top2=99.43% | top3=99.93%
+  Valid | loss=0.7793 | top1=83.89% | top2=95.31% | top3=97.92% | acc=84.15% | bal_acc=63.90% | macro_f1=0.6573 | qwk=0.8943 | mae=0.2104 | weighted_f1=0.8259 | precision_macro=0.7168 | recall_macro=0.6390
+         ovr_roc_auc_macro=0.9446 | ovr_pr_auc_macro=0.7379
+ No improvement. Bad epochs: 1/10
+
+Epoch 17/40 | Time 1m 11s
+  Train | loss=0.6753 | top1=96.57% | top2=99.29% | top3=99.76%
+  Valid | loss=0.7695 | top1=86.12% | top2=95.31% | top3=98.44% | acc=85.79% | bal_acc=69.31% | macro_f1=0.7129 | qwk=0.9190 | mae=0.1803 | weighted_f1=0.8475 | precision_macro=0.7708 | recall_macro=0.6931
+         ovr_roc_auc_macro=0.9423 | ovr_pr_auc_macro=0.7414
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9190)
+
+Epoch 18/40 | Time 1m 11s
+  Train | loss=0.6703 | top1=96.74% | top2=99.49% | top3=99.93%
+  Valid | loss=0.7709 | top1=84.82% | top2=95.31% | top3=97.66% | acc=84.43% | bal_acc=66.99% | macro_f1=0.6673 | qwk=0.9102 | mae=0.1967 | weighted_f1=0.8296 | precision_macro=0.7056 | recall_macro=0.6699
+         ovr_roc_auc_macro=0.9383 | ovr_pr_auc_macro=0.7472
+ No improvement. Bad epochs: 1/10
+
+Epoch 19/40 | Time 1m 11s
+  Train | loss=0.6686 | top1=96.84% | top2=99.73% | top3=99.97%
+  Valid | loss=0.7736 | top1=85.94% | top2=95.05% | top3=98.18% | acc=85.25% | bal_acc=69.12% | macro_f1=0.7014 | qwk=0.9112 | mae=0.1885 | weighted_f1=0.8445 | precision_macro=0.7287 | recall_macro=0.6912
+         ovr_roc_auc_macro=0.9414 | ovr_pr_auc_macro=0.7223
+ No improvement. Bad epochs: 2/10
+
+Epoch 20/40 | Time 1m 15s
+  Train | loss=0.6642 | top1=97.83% | top2=99.66% | top3=99.86%
+  Valid | loss=0.7797 | top1=84.38% | top2=94.27% | top3=98.44% | acc=83.61% | bal_acc=66.42% | macro_f1=0.6771 | qwk=0.9063 | mae=0.2077 | weighted_f1=0.8280 | precision_macro=0.7042 | recall_macro=0.6642
+         ovr_roc_auc_macro=0.9282 | ovr_pr_auc_macro=0.7013
+ No improvement. Bad epochs: 3/10
+
+Epoch 21/40 | Time 1m 14s
+  Train | loss=0.6649 | top1=97.22% | top2=99.60% | top3=99.93%
+  Valid | loss=0.7692 | top1=84.82% | top2=94.01% | top3=97.92% | acc=84.43% | bal_acc=66.89% | macro_f1=0.6931 | qwk=0.9114 | mae=0.1940 | weighted_f1=0.8356 | precision_macro=0.7365 | recall_macro=0.6689
+         ovr_roc_auc_macro=0.9389 | ovr_pr_auc_macro=0.7244
+ No improvement. Bad epochs: 4/10
+
+Epoch 22/40 | Time 1m 14s
+  Train | loss=0.6614 | top1=98.10% | top2=99.73% | top3=99.93%
+  Valid | loss=0.7722 | top1=85.94% | top2=94.79% | top3=97.92% | acc=85.25% | bal_acc=68.29% | macro_f1=0.7049 | qwk=0.9124 | mae=0.1885 | weighted_f1=0.8432 | precision_macro=0.7539 | recall_macro=0.6829
+         ovr_roc_auc_macro=0.9379 | ovr_pr_auc_macro=0.7352
+ No improvement. Bad epochs: 5/10
+
+Epoch 23/40 | Time 1m 13s
+  Train | loss=0.6588 | top1=97.96% | top2=99.76% | top3=99.97%
+  Valid | loss=0.7696 | top1=85.60% | top2=94.79% | top3=97.92% | acc=85.25% | bal_acc=67.58% | macro_f1=0.6999 | qwk=0.9208 | mae=0.1803 | weighted_f1=0.8418 | precision_macro=0.7513 | recall_macro=0.6758
+         ovr_roc_auc_macro=0.9389 | ovr_pr_auc_macro=0.7319
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p0.pt (score=0.9208)
+
+Epoch 24/40 | Time 1m 16s
+  Train | loss=0.6579 | top1=98.20% | top2=99.76% | top3=100.00%
+  Valid | loss=0.7680 | top1=85.86% | top2=94.79% | top3=97.92% | acc=85.52% | bal_acc=67.96% | macro_f1=0.7058 | qwk=0.9056 | mae=0.1913 | weighted_f1=0.8453 | precision_macro=0.7593 | recall_macro=0.6796
+         ovr_roc_auc_macro=0.9343 | ovr_pr_auc_macro=0.7228
+ No improvement. Bad epochs: 1/10
+
+Epoch 25/40 | Time 1m 13s
+  Train | loss=0.6553 | top1=98.06% | top2=99.80% | top3=100.00%
+  Valid | loss=0.7649 | top1=85.68% | top2=95.05% | top3=97.92% | acc=84.97% | bal_acc=67.60% | macro_f1=0.6922 | qwk=0.9182 | mae=0.1858 | weighted_f1=0.8399 | precision_macro=0.7293 | recall_macro=0.6760
+         ovr_roc_auc_macro=0.9369 | ovr_pr_auc_macro=0.7330
+ No improvement. Bad epochs: 2/10
+
+Epoch 26/40 | Time 1m 13s
+  Train | loss=0.6564 | top1=98.28% | top2=99.77% | top3=99.94%
+  Valid | loss=0.7722 | top1=85.34% | top2=94.27% | top3=97.92% | acc=84.97% | bal_acc=66.45% | macro_f1=0.6822 | qwk=0.9083 | mae=0.1940 | weighted_f1=0.8370 | precision_macro=0.7379 | recall_macro=0.6645
+         ovr_roc_auc_macro=0.9294 | ovr_pr_auc_macro=0.7149
+ No improvement. Bad epochs: 3/10
+
+Epoch 27/40 | Time 1m 17s
+  Train | loss=0.6526 | top1=98.71% | top2=99.86% | top3=99.97%
+  Valid | loss=0.7702 | top1=86.38% | top2=95.05% | top3=97.92% | acc=86.07% | bal_acc=68.96% | macro_f1=0.7168 | qwk=0.9133 | mae=0.1803 | weighted_f1=0.8514 | precision_macro=0.7730 | recall_macro=0.6896
+         ovr_roc_auc_macro=0.9384 | ovr_pr_auc_macro=0.7208
+ No improvement. Bad epochs: 4/10
+
+Epoch 28/40 | Time 1m 16s
+  Train | loss=0.6527 | top1=98.47% | top2=99.80% | top3=100.00%
+  Valid | loss=0.7720 | top1=85.34% | top2=94.79% | top3=97.92% | acc=84.97% | bal_acc=66.15% | macro_f1=0.6814 | qwk=0.9104 | mae=0.1913 | weighted_f1=0.8360 | precision_macro=0.7412 | recall_macro=0.6615
+         ovr_roc_auc_macro=0.9408 | ovr_pr_auc_macro=0.7250
+ No improvement. Bad epochs: 5/10
+
+Epoch 29/40 | Time 1m 14s
+  Train | loss=0.6532 | top1=98.40% | top2=99.73% | top3=100.00%
+  Valid | loss=0.7709 | top1=86.12% | top2=95.05% | top3=98.18% | acc=85.79% | bal_acc=68.27% | macro_f1=0.7064 | qwk=0.9203 | mae=0.1776 | weighted_f1=0.8472 | precision_macro=0.7625 | recall_macro=0.6827
+         ovr_roc_auc_macro=0.9385 | ovr_pr_auc_macro=0.7207
+ No improvement. Bad epochs: 6/10
+
+Epoch 30/40 | Time 1m 17s
+  Train | loss=0.6532 | top1=98.68% | top2=99.80% | top3=99.93%
+  Valid | loss=0.7761 | top1=85.34% | top2=94.46% | top3=97.32% | acc=84.97% | bal_acc=66.15% | macro_f1=0.6814 | qwk=0.9104 | mae=0.1913 | weighted_f1=0.8360 | precision_macro=0.7412 | recall_macro=0.6615
+         ovr_roc_auc_macro=0.9352 | ovr_pr_auc_macro=0.7222
+ No improvement. Bad epochs: 7/10
+
+Epoch 31/40 | Time 1m 13s
+  Train | loss=0.6512 | top1=98.55% | top2=99.80% | top3=99.97%
+  Valid | loss=0.7708 | top1=85.34% | top2=94.79% | top3=98.18% | acc=84.97% | bal_acc=66.56% | macro_f1=0.6906 | qwk=0.9101 | mae=0.1913 | weighted_f1=0.8373 | precision_macro=0.7555 | recall_macro=0.6656
+         ovr_roc_auc_macro=0.9333 | ovr_pr_auc_macro=0.7207
+ No improvement. Bad epochs: 8/10
+
+Epoch 32/40 | Time 1m 8s
+  Train | loss=0.6500 | top1=98.74% | top2=99.90% | top3=100.00%
+  Valid | loss=0.7752 | top1=85.34% | top2=94.53% | top3=98.18% | acc=84.97% | bal_acc=65.43% | macro_f1=0.6715 | qwk=0.9102 | mae=0.1913 | weighted_f1=0.8343 | precision_macro=0.7315 | recall_macro=0.6543
+         ovr_roc_auc_macro=0.9293 | ovr_pr_auc_macro=0.7077
+ No improvement. Bad epochs: 9/10
+
+Epoch 33/40 | Time 1m 4s
+  Train | loss=0.6499 | top1=98.78% | top2=99.93% | top3=100.00%
+  Valid | loss=0.7700 | top1=85.60% | top2=94.79% | top3=98.18% | acc=85.25% | bal_acc=66.65% | macro_f1=0.6852 | qwk=0.9092 | mae=0.1913 | weighted_f1=0.8395 | precision_macro=0.7434 | recall_macro=0.6665
+         ovr_roc_auc_macro=0.9328 | ovr_pr_auc_macro=0.7165
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 33.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.7489 | top1=85.19% | top2=93.15% | top3=97.66% | acc=85.52% | bal_acc=64.85% | macro_f1=0.6865 | qwk=0.8972 | mae=0.2022 | weighted_f1=0.8459 | precision_macro=0.7802 | recall_macro=0.6485
+     ovr_roc_auc_macro=0.9400 | ovr_pr_auc_macro=0.7101
+
+Confusion Matrix:
+[[196   2   1   0   0]
+ [  3  15  12   0   0]
+ [  1   3  80   1   2]
+ [  0   0  11   6   0]
+ [  0   2  13   2  16]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9800    0.9849    0.9825       199
+           1     0.6818    0.5000    0.5769        30
+           2     0.6838    0.9195    0.7843        87
+           3     0.6667    0.3529    0.4615        17
+           4     0.8889    0.4848    0.6275        33
+
+    accuracy                         0.8552       366
+   macro avg     0.7802    0.6485    0.6865       366
+weighted avg     0.8624    0.8552    0.8459       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+========================================================================================
+[RUN] tau=1.0 | gamma=1.5
+========================================================================================
+Trainable parameters: 23,518,277
+[INFO] Using Distance-Aware Soft Target Loss (DAST)
+       - tau=1.0
+       - gamma=1.5
+Starting training...
+
+Epoch 01/40 | Time 1m 14s
+  Train | loss=0.9584 | top1=53.22% | top2=71.89% | top3=85.40%
+  Valid | loss=0.8163 | top1=62.61% | top2=71.88% | top3=86.16% | acc=63.93% | bal_acc=32.00% | macro_f1=0.2759 | qwk=0.5636 | mae=0.6066 | weighted_f1=0.5448 | precision_macro=0.2434 | recall_macro=0.3200
+         ovr_roc_auc_macro=0.8428 | ovr_pr_auc_macro=0.4316
+ Initial best model saved to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.5636)
+
+Epoch 02/40 | Time 1m 14s
+  Train | loss=0.7311 | top1=73.57% | top2=85.41% | top3=91.72%
+  Valid | loss=0.6935 | top1=74.11% | top2=86.31% | top3=95.50% | acc=74.59% | bal_acc=42.27% | macro_f1=0.3963 | qwk=0.7732 | mae=0.3634 | weighted_f1=0.6816 | precision_macro=0.4340 | recall_macro=0.4227
+         ovr_roc_auc_macro=0.8875 | ovr_pr_auc_macro=0.5518
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.7732)
+
+Epoch 03/40 | Time 1m 11s
+  Train | loss=0.6583 | top1=78.23% | top2=90.66% | top3=97.66%
+  Valid | loss=0.6557 | top1=77.64% | top2=92.71% | top3=97.14% | acc=77.60% | bal_acc=49.30% | macro_f1=0.4878 | qwk=0.8427 | mae=0.3060 | weighted_f1=0.7321 | precision_macro=0.5724 | recall_macro=0.4930
+         ovr_roc_auc_macro=0.9138 | ovr_pr_auc_macro=0.6056
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.8427)
+
+Epoch 04/40 | Time 1m 12s
+  Train | loss=0.6195 | top1=81.63% | top2=94.00% | top3=98.00%
+  Valid | loss=0.6431 | top1=80.84% | top2=92.97% | top3=97.14% | acc=80.60% | bal_acc=55.35% | macro_f1=0.5558 | qwk=0.8778 | mae=0.2514 | weighted_f1=0.7730 | precision_macro=0.5987 | recall_macro=0.5535
+         ovr_roc_auc_macro=0.9267 | ovr_pr_auc_macro=0.6558
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.8778)
+
+Epoch 05/40 | Time 1m 15s
+  Train | loss=0.5980 | top1=84.36% | top2=94.88% | top3=98.68%
+  Valid | loss=0.6352 | top1=81.36% | top2=93.75% | top3=97.40% | acc=81.15% | bal_acc=56.04% | macro_f1=0.5655 | qwk=0.8848 | mae=0.2404 | weighted_f1=0.7799 | precision_macro=0.6087 | recall_macro=0.5604
+         ovr_roc_auc_macro=0.9245 | ovr_pr_auc_macro=0.6543
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.8848)
+
+Epoch 06/40 | Time 1m 12s
+  Train | loss=0.5805 | top1=86.16% | top2=96.54% | top3=98.91%
+  Valid | loss=0.6288 | top1=82.14% | top2=94.79% | top3=97.66% | acc=81.97% | bal_acc=60.03% | macro_f1=0.5989 | qwk=0.8904 | mae=0.2322 | weighted_f1=0.7974 | precision_macro=0.6090 | recall_macro=0.6003
+         ovr_roc_auc_macro=0.9344 | ovr_pr_auc_macro=0.6794
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.8904)
+
+Epoch 07/40 | Time 1m 12s
+  Train | loss=0.5704 | top1=87.47% | top2=96.47% | top3=99.08%
+  Valid | loss=0.6233 | top1=84.75% | top2=93.68% | top3=97.92% | acc=84.70% | bal_acc=64.00% | macro_f1=0.6550 | qwk=0.9051 | mae=0.1995 | weighted_f1=0.8268 | precision_macro=0.7728 | recall_macro=0.6400
+         ovr_roc_auc_macro=0.9387 | ovr_pr_auc_macro=0.6995
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.9051)
+
+Epoch 08/40 | Time 1m 12s
+  Train | loss=0.5575 | top1=89.10% | top2=97.46% | top3=99.08%
+  Valid | loss=0.6244 | top1=83.18% | top2=93.68% | top3=97.92% | acc=83.06% | bal_acc=63.14% | macro_f1=0.6605 | qwk=0.8931 | mae=0.2213 | weighted_f1=0.8156 | precision_macro=0.7483 | recall_macro=0.6314
+         ovr_roc_auc_macro=0.9359 | ovr_pr_auc_macro=0.6883
+ No improvement. Bad epochs: 1/10
+
+Epoch 09/40 | Time 1m 12s
+  Train | loss=0.5451 | top1=90.95% | top2=97.76% | top3=99.35%
+  Valid | loss=0.6231 | top1=85.68% | top2=94.79% | top3=97.92% | acc=84.97% | bal_acc=65.85% | macro_f1=0.6650 | qwk=0.9111 | mae=0.1913 | weighted_f1=0.8322 | precision_macro=0.7354 | recall_macro=0.6585
+         ovr_roc_auc_macro=0.9317 | ovr_pr_auc_macro=0.6984
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.9111)
+
+Epoch 10/40 | Time 1m 10s
+  Train | loss=0.5397 | top1=91.59% | top2=97.96% | top3=99.46%
+  Valid | loss=0.6284 | top1=84.75% | top2=94.20% | top3=97.14% | acc=84.70% | bal_acc=65.39% | macro_f1=0.6777 | qwk=0.8953 | mae=0.2022 | weighted_f1=0.8348 | precision_macro=0.7426 | recall_macro=0.6539
+         ovr_roc_auc_macro=0.9438 | ovr_pr_auc_macro=0.7284
+ No improvement. Bad epochs: 1/10
+
+Epoch 11/40 | Time 1m 12s
+  Train | loss=0.5344 | top1=91.90% | top2=98.41% | top3=99.66%
+  Valid | loss=0.6245 | top1=84.75% | top2=94.53% | top3=98.18% | acc=84.70% | bal_acc=67.05% | macro_f1=0.6930 | qwk=0.8969 | mae=0.2022 | weighted_f1=0.8381 | precision_macro=0.7432 | recall_macro=0.6705
+         ovr_roc_auc_macro=0.9428 | ovr_pr_auc_macro=0.7229
+ No improvement. Bad epochs: 2/10
+
+Epoch 12/40 | Time 1m 12s
+  Train | loss=0.5230 | top1=93.54% | top2=98.78% | top3=99.80%
+  Valid | loss=0.6271 | top1=85.01% | top2=94.72% | top3=98.44% | acc=84.97% | bal_acc=68.27% | macro_f1=0.7035 | qwk=0.8985 | mae=0.1995 | weighted_f1=0.8429 | precision_macro=0.7413 | recall_macro=0.6827
+         ovr_roc_auc_macro=0.9452 | ovr_pr_auc_macro=0.7191
+ No improvement. Bad epochs: 3/10
+
+Epoch 13/40 | Time 1m 12s
+  Train | loss=0.5144 | top1=94.67% | top2=99.22% | top3=99.86%
+  Valid | loss=0.6350 | top1=83.78% | top2=94.53% | top3=97.92% | acc=83.33% | bal_acc=64.08% | macro_f1=0.6474 | qwk=0.9011 | mae=0.2104 | weighted_f1=0.8183 | precision_macro=0.6791 | recall_macro=0.6408
+         ovr_roc_auc_macro=0.9318 | ovr_pr_auc_macro=0.7134
+ No improvement. Bad epochs: 4/10
+
+Epoch 14/40 | Time 1m 12s
+  Train | loss=0.5126 | top1=94.55% | top2=98.73% | top3=99.77%
+  Valid | loss=0.6562 | top1=81.29% | top2=93.34% | top3=97.66% | acc=81.42% | bal_acc=59.10% | macro_f1=0.5991 | qwk=0.8767 | mae=0.2432 | weighted_f1=0.7929 | precision_macro=0.6474 | recall_macro=0.5910
+         ovr_roc_auc_macro=0.9357 | ovr_pr_auc_macro=0.6979
+ No improvement. Bad epochs: 5/10
+
+Epoch 15/40 | Time 1m 12s
+  Train | loss=0.5085 | top1=95.29% | top2=99.18% | top3=99.80%
+  Valid | loss=0.6356 | top1=83.97% | top2=94.27% | top3=97.40% | acc=83.88% | bal_acc=65.07% | macro_f1=0.6723 | qwk=0.9056 | mae=0.2022 | weighted_f1=0.8261 | precision_macro=0.7332 | recall_macro=0.6507
+         ovr_roc_auc_macro=0.9348 | ovr_pr_auc_macro=0.7028
+ No improvement. Bad epochs: 6/10
+
+Epoch 16/40 | Time 1m 12s
+  Train | loss=0.5011 | top1=96.33% | top2=99.46% | top3=99.93%
+  Valid | loss=0.6366 | top1=83.52% | top2=93.23% | top3=97.92% | acc=83.06% | bal_acc=64.57% | macro_f1=0.6670 | qwk=0.8941 | mae=0.2240 | weighted_f1=0.8207 | precision_macro=0.7237 | recall_macro=0.6457
+         ovr_roc_auc_macro=0.9243 | ovr_pr_auc_macro=0.7031
+ No improvement. Bad epochs: 7/10
+
+Epoch 17/40 | Time 1m 14s
+  Train | loss=0.4988 | top1=96.71% | top2=99.56% | top3=99.90%
+  Valid | loss=0.6282 | top1=84.64% | top2=93.75% | top3=97.66% | acc=83.88% | bal_acc=67.01% | macro_f1=0.6914 | qwk=0.9015 | mae=0.2131 | weighted_f1=0.8309 | precision_macro=0.7480 | recall_macro=0.6701
+         ovr_roc_auc_macro=0.9269 | ovr_pr_auc_macro=0.7152
+ No improvement. Bad epochs: 8/10
+
+Epoch 18/40 | Time 1m 16s
+  Train | loss=0.4927 | top1=97.49% | top2=99.66% | top3=99.90%
+  Valid | loss=0.6357 | top1=83.26% | top2=94.01% | top3=97.14% | acc=82.79% | bal_acc=63.37% | macro_f1=0.6650 | qwk=0.8993 | mae=0.2186 | weighted_f1=0.8146 | precision_macro=0.7475 | recall_macro=0.6337
+         ovr_roc_auc_macro=0.9281 | ovr_pr_auc_macro=0.7013
+ No improvement. Bad epochs: 9/10
+
+Epoch 19/40 | Time 1m 11s
+  Train | loss=0.4953 | top1=96.95% | top2=99.53% | top3=99.93%
+  Valid | loss=0.6287 | top1=85.42% | top2=94.01% | top3=97.40% | acc=84.70% | bal_acc=65.45% | macro_f1=0.6734 | qwk=0.9133 | mae=0.1913 | weighted_f1=0.8302 | precision_macro=0.7631 | recall_macro=0.6545
+         ovr_roc_auc_macro=0.9341 | ovr_pr_auc_macro=0.7165
+ Validation improved. Saved best model to checkpoints_dast_grid\best_tau_1p0_gamma_1p5.pt (score=0.9133)
+
+Epoch 20/40 | Time 1m 13s
+  Train | loss=0.4923 | top1=97.37% | top2=99.46% | top3=99.91%
+  Valid | loss=0.6296 | top1=84.04% | top2=93.23% | top3=97.14% | acc=83.61% | bal_acc=64.75% | macro_f1=0.6776 | qwk=0.8889 | mae=0.2213 | weighted_f1=0.8242 | precision_macro=0.7553 | recall_macro=0.6475
+         ovr_roc_auc_macro=0.9293 | ovr_pr_auc_macro=0.7244
+ No improvement. Bad epochs: 1/10
+
+Epoch 21/40 | Time 1m 9s
+  Train | loss=0.4897 | top1=97.66% | top2=99.69% | top3=99.90%
+  Valid | loss=0.6367 | top1=85.42% | top2=93.75% | top3=97.40% | acc=84.70% | bal_acc=66.67% | macro_f1=0.6918 | qwk=0.9040 | mae=0.1995 | weighted_f1=0.8355 | precision_macro=0.7552 | recall_macro=0.6667
+         ovr_roc_auc_macro=0.9331 | ovr_pr_auc_macro=0.7182
+ No improvement. Bad epochs: 2/10
+
+Epoch 22/40 | Time 1m 13s
+  Train | loss=0.4858 | top1=97.89% | top2=99.66% | top3=99.97%
+  Valid | loss=0.6341 | top1=84.23% | top2=94.20% | top3=97.40% | acc=84.15% | bal_acc=65.66% | macro_f1=0.6798 | qwk=0.9015 | mae=0.2022 | weighted_f1=0.8288 | precision_macro=0.7900 | recall_macro=0.6566
+         ovr_roc_auc_macro=0.9405 | ovr_pr_auc_macro=0.7280
+ No improvement. Bad epochs: 3/10
+
+Epoch 23/40 | Time 1m 14s
+  Train | loss=0.4840 | top1=98.34% | top2=99.83% | top3=99.97%
+  Valid | loss=0.6183 | top1=84.38% | top2=93.23% | top3=97.40% | acc=83.61% | bal_acc=66.61% | macro_f1=0.6911 | qwk=0.9085 | mae=0.2049 | weighted_f1=0.8288 | precision_macro=0.7354 | recall_macro=0.6661
+         ovr_roc_auc_macro=0.9267 | ovr_pr_auc_macro=0.7170
+ No improvement. Bad epochs: 4/10
+
+Epoch 24/40 | Time 1m 12s
+  Train | loss=0.4820 | top1=98.51% | top2=99.83% | top3=99.90%
+  Valid | loss=0.6152 | top1=86.46% | top2=92.97% | top3=97.40% | acc=85.79% | bal_acc=70.21% | macro_f1=0.7281 | qwk=0.9104 | mae=0.1858 | weighted_f1=0.8513 | precision_macro=0.7777 | recall_macro=0.7021
+         ovr_roc_auc_macro=0.9446 | ovr_pr_auc_macro=0.7497
+ No improvement. Bad epochs: 5/10
+
+Epoch 25/40 | Time 1m 16s
+  Train | loss=0.4792 | top1=98.64% | top2=99.76% | top3=99.93%
+  Valid | loss=0.6168 | top1=85.94% | top2=93.23% | top3=97.40% | acc=85.25% | bal_acc=69.51% | macro_f1=0.7212 | qwk=0.9065 | mae=0.1940 | weighted_f1=0.8457 | precision_macro=0.7763 | recall_macro=0.6951
+         ovr_roc_auc_macro=0.9441 | ovr_pr_auc_macro=0.7467
+ No improvement. Bad epochs: 6/10
+
+Epoch 26/40 | Time 1m 15s
+  Train | loss=0.4799 | top1=98.45% | top2=99.83% | top3=100.00%
+  Valid | loss=0.6130 | top1=87.24% | top2=93.23% | top3=97.40% | acc=86.61% | bal_acc=72.52% | macro_f1=0.7509 | qwk=0.9092 | mae=0.1831 | weighted_f1=0.8611 | precision_macro=0.7964 | recall_macro=0.7252
+         ovr_roc_auc_macro=0.9416 | ovr_pr_auc_macro=0.7574
+ No improvement. Bad epochs: 7/10
+
+Epoch 27/40 | Time 1m 14s
+  Train | loss=0.4780 | top1=98.74% | top2=99.93% | top3=99.97%
+  Valid | loss=0.6108 | top1=85.42% | top2=93.49% | top3=97.40% | acc=84.70% | bal_acc=68.82% | macro_f1=0.7100 | qwk=0.9019 | mae=0.2049 | weighted_f1=0.8401 | precision_macro=0.7556 | recall_macro=0.6882
+         ovr_roc_auc_macro=0.9438 | ovr_pr_auc_macro=0.7494
+ No improvement. Bad epochs: 8/10
+
+Epoch 28/40 | Time 1m 10s
+  Train | loss=0.4775 | top1=98.71% | top2=99.86% | top3=100.00%
+  Valid | loss=0.6121 | top1=86.46% | top2=93.23% | top3=97.40% | acc=85.79% | bal_acc=69.90% | macro_f1=0.7233 | qwk=0.9043 | mae=0.1940 | weighted_f1=0.8511 | precision_macro=0.7692 | recall_macro=0.6990
+         ovr_roc_auc_macro=0.9353 | ovr_pr_auc_macro=0.7447
+ No improvement. Bad epochs: 9/10
+
+Epoch 29/40 | Time 1m 12s
+  Train | loss=0.4760 | top1=98.78% | top2=99.90% | top3=100.00%
+  Valid | loss=0.6140 | top1=85.94% | top2=93.49% | top3=97.40% | acc=85.25% | bal_acc=69.51% | macro_f1=0.7184 | qwk=0.9023 | mae=0.1995 | weighted_f1=0.8455 | precision_macro=0.7642 | recall_macro=0.6951
+         ovr_roc_auc_macro=0.9369 | ovr_pr_auc_macro=0.7386
+ No improvement. Bad epochs: 10/10
+⏹ Early stopping triggered.
+ Training stopped early at epoch 29.
+
+Loading best model and evaluating on test set...
+
+Test | loss=0.5994 | top1=84.41% | top2=92.89% | top3=97.06% | acc=84.70% | bal_acc=63.27% | macro_f1=0.6631 | qwk=0.9012 | mae=0.2049 | weighted_f1=0.8379 | precision_macro=0.7382 | recall_macro=0.6327
+     ovr_roc_auc_macro=0.9368 | ovr_pr_auc_macro=0.6804
+
+Confusion Matrix:
+[[196   2   1   0   0]
+ [  3  16  11   0   0]
+ [  1   4  78   3   1]
+ [  0   0  11   5   1]
+ [  0   1  14   3  15]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.9800    0.9849    0.9825       199
+           1     0.6957    0.5333    0.6038        30
+           2     0.6783    0.8966    0.7723        87
+           3     0.4545    0.2941    0.3571        17
+           4     0.8824    0.4545    0.6000        33
+
+    accuracy                         0.8470       366
+   macro avg     0.7382    0.6327    0.6631       366
+weighted avg     0.8518    0.8470    0.8379       366
+
+
+[INFO] Intermediate results saved to: aptos2019_dast_grid_results.csv
+
+####################################################################################################
+FINAL SUMMARY (sorted by test_qwk desc, test_mae asc)
+####################################################################################################
+   tau  gamma  best_epoch  valid_qwk  valid_mae  test_acc  test_balanced_acc  test_macro_f1  test_qwk  test_mae  test_ovr_roc_auc_macro  test_ovr_pr_auc_macro
+0.5000 1.0000           7     0.9101     0.2077    0.8224             0.6217         0.6338    0.9026    0.2240                  0.9313                 0.6907
+1.0000 1.5000          19     0.9133     0.1913    0.8470             0.6327         0.6631    0.9012    0.2049                  0.9368                 0.6804
+1.0000 1.0000          23     0.9208     0.1803    0.8552             0.6485         0.6865    0.8972    0.2022                  0.9400                 0.7101
+0.7500 1.5000          22     0.9141     0.1940    0.8415             0.6237         0.6490    0.8918    0.2158                  0.9352                 0.6834
+0.5000 1.5000           9     0.9107     0.1913    0.8333             0.5981         0.6227    0.8826    0.2268                  0.9506                 0.7072
+0.7500 1.0000           9     0.9071     0.1885    0.8251             0.6220         0.6443    0.8706    0.2486                  0.9383                 0.6844
+
+Best setting by summary rule:
+  tau=0.5, gamma=1.0 | test_qwk=0.9026 | test_mae=0.2240 | test_acc=82.24% | test_macro_f1=0.6338
+
+All grid-search results saved to: aptos2019_dast_grid_results.csv
+APTOS2019 ResNet50 DAST grid search completed!
+
+进程已结束，退出代码为 0

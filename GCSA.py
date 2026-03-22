@@ -39,7 +39,7 @@ class GCSA(nn.Module):
     # 前向传播函数
     def forward(self, x):
         b, c, h, w = x.shape  # 获取输入张量的形状
-        x_permute = x.permute(0, 2, 3, 1).view(b, -1, c)  # 调整形状，便于通道注意力操作
+        x_permute = x.permute(0, 2, 3, 1).contiguous().view(b, -1, c)  # 调整形状，便于通道注意力操作
         x_att_permute = self.channel_attention(x_permute).view(b, h, w, c)  # 应用通道注意力
         x_channel_att = x_att_permute.permute(0, 3, 1, 2).sigmoid()  # 调整回原始形状，并应用Sigmoid激活函数
 
