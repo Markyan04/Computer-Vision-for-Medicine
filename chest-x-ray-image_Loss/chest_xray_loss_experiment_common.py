@@ -646,11 +646,11 @@ def run_chestxray_medical_losses_experiments(
 
     val_ratio = float(os.getenv("CHESTXRAY_VAL_RATIO", "0.1"))
     batch_size = int(os.getenv("CHESTXRAY_BATCH_SIZE", "32"))
-    epochs = int(os.getenv("CHESTXRAY_EPOCHS", "40"))
+    epochs = int(os.getenv("CHESTXRAY_EPOCHS", "50"))
     num_workers = int(os.getenv("CHESTXRAY_NUM_WORKERS", "4"))
     image_size = int(os.getenv("CHESTXRAY_IMAGE_SIZE", "224"))
     base_lr = float(os.getenv("CHESTXRAY_BASE_LR", "1e-4"))
-    patience = int(os.getenv("CHESTXRAY_PATIENCE", "10"))
+    patience = int(os.getenv("CHESTXRAY_PATIENCE", "15"))
     early_delta = float(os.getenv("CHESTXRAY_EARLY_DELTA", "1e-4"))
     topk = DEFAULT_TOPK
 

@@ -711,11 +711,11 @@ def run_ham10000_medical_losses_experiments(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "32"))
-    epochs = int(os.getenv("HAM10000_EPOCHS", "40"))
+    epochs = int(os.getenv("HAM10000_EPOCHS", "60"))
     num_workers = int(os.getenv("HAM10000_NUM_WORKERS", "2"))
     image_size = int(os.getenv("HAM10000_IMAGE_SIZE", "224"))
     base_lr = float(os.getenv("HAM10000_BASE_LR", "1e-4"))
-    patience = int(os.getenv("HAM10000_PATIENCE", "10"))
+    patience = int(os.getenv("HAM10000_PATIENCE", "15"))
     early_delta = float(os.getenv("HAM10000_EARLY_DELTA", "1e-4"))
     topk = DEFAULT_TOPK
     data_dir = Path(os.getenv("HAM10000_DATA_DIR", str(PROJECT_ROOT / "ISIC")))

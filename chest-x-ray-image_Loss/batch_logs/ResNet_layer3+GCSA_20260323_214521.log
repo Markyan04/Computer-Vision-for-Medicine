@@ -1,0 +1,131 @@
+
+====================================================================================================
+RUN SCRIPT: ResNet_layer3+GCSA.py
+LOSSES: pcol
+START TIME: 2026-03-23T21:45:21
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\batch_logs\ResNet_layer3+GCSA_20260323_214521.log
+====================================================================================================
+==========================================================================================
+Script: ResNet_layer3+GCSA
+Module: GCSA | Insert after: layer3
+Device: cuda
+CUDA: NVIDIA GeForce RTX 4080 SUPER
+Train dir: E:\Paper\Computer-Vision-for-Medicine\CPN\train
+Test dir : E:\Paper\Computer-Vision-for-Medicine\CPN\test
+Config | batch_size=32, epochs=40, num_workers=4, image_size=224, base_lr=0.0001, val_ratio=0.1, patience=10
+Losses to run: ['pcol']
+==========================================================================================
+Split sizes | train=4630, valid=514, test=1288
+Classes (3): ['COVID19', 'NORMAL', 'PNEUMONIA']
+Train class counts: [415, 1152, 3063]
+Loading torchvision ResNet50 pretrained weights once...
+Pretrained state keys: 320
+
+##########################################################################################
+Starting loss: pcol
+##########################################################################################
+Model params: 49,733,699 | pretrained loaded: 320/338 | feat_dim=2048
+Criterion: PrototypeConsistencyOrdinalLoss
+Criterion trainable params: 6,144
+Epoch 01/40 | Time 0m48s
+  Train | loss=1.0704 | top1=50.31% | top2=82.54% | top3=100.00%
+  Valid | loss=1.0031 | top1=70.22% | top2=96.32% | top3=100.00% | acc=71.40% | bal_acc=40.08% | macro_f1=0.4009 | weighted_f1=0.6289 | precision_macro=0.7312 | recall_macro=0.4008 | qwk=0.1271 | mae=0.3696
+        ovr_roc_auc_macro=0.8425 | ovr_pr_auc_macro=0.7004
+  -> best macro_f1 updated to 0.4009 (epoch 1)
+Epoch 02/40 | Time 0m49s
+  Train | loss=0.8622 | top1=71.89% | top2=97.65% | top3=100.00%
+  Valid | loss=0.6135 | top1=81.07% | top2=99.45% | top3=100.00% | acc=82.88% | bal_acc=56.43% | macro_f1=0.5912 | weighted_f1=0.7931 | precision_macro=0.9147 | recall_macro=0.5643 | qwk=0.3256 | mae=0.2529
+        ovr_roc_auc_macro=0.9707 | ovr_pr_auc_macro=0.9411
+  -> best macro_f1 updated to 0.5912 (epoch 2)
+Epoch 03/40 | Time 0m49s
+  Train | loss=0.4293 | top1=87.79% | top2=99.48% | top3=100.00%
+  Valid | loss=0.3010 | top1=90.07% | top2=100.00% | top3=100.00% | acc=92.41% | bal_acc=92.66% | macro_f1=0.9140 | weighted_f1=0.9253 | precision_macro=0.9031 | recall_macro=0.9266 | qwk=0.8886 | mae=0.0817
+        ovr_roc_auc_macro=0.9858 | ovr_pr_auc_macro=0.9725
+  -> best macro_f1 updated to 0.9140 (epoch 3)
+[ERROR] loss=pcol failed: Caught RuntimeError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\worker.py", line 358, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 57, in fetch
+    return self.collate_fn(data)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 401, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 214, in collate
+    return [
+           ^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 215, in <listcomp>
+    collate(samples, collate_fn_map=collate_fn_map)
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 155, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 273, in collate_tensor_fn
+    storage = elem._typed_storage()._new_shared(numel, device=elem.device)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\storage.py", line 1201, in _new_shared
+    untyped_storage = torch.UntypedStorage._new_shared(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\storage.py", line 412, in _new_shared
+    return cls._new_using_filename_cpu(size)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Couldn't open shared file mapping: <torch_266200_245482115_34>, error code: <1455>
+
+Traceback (most recent call last):
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 769, in run_chestxray_medical_losses_experiments
+    train_loss, train_top = train_one_epoch(
+                            ^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 468, in train_one_epoch
+    for x, y in loader:
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 741, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 1548, in _next_data
+    return self._process_data(data, worker_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 1586, in _process_data
+    data.reraise()
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\_utils.py", line 775, in reraise
+    raise exception
+RuntimeError: Caught RuntimeError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\worker.py", line 358, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 57, in fetch
+    return self.collate_fn(data)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 401, in default_collate
+    return collate(batch, collate_fn_map=default_collate_fn_map)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 214, in collate
+    return [
+           ^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 215, in <listcomp>
+    collate(samples, collate_fn_map=collate_fn_map)
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 155, in collate
+    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\collate.py", line 273, in collate_tensor_fn
+    storage = elem._typed_storage()._new_shared(numel, device=elem.device)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\storage.py", line 1201, in _new_shared
+    untyped_storage = torch.UntypedStorage._new_shared(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\storage.py", line 412, in _new_shared
+    return cls._new_using_filename_cpu(size)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Couldn't open shared file mapping: <torch_266200_245482115_34>, error code: <1455>
+
+
+
+==========================================================================================
+Summary CSV saved: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\ResNet_layer3+GCSA_20260323_214524_summary.csv
+No successful loss run found.
+Log file saved: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\ResNet_layer3+GCSA_20260323_214524.log
+==========================================================================================
+
+EXIT CODE: 0
+END TIME: 2026-03-23T21:48:38
+====================================================================================================

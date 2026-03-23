@@ -1,0 +1,140 @@
+
+====================================================================================================
+RUN SCRIPT: ResNet_layer3+GCSA.py
+LOSSES: pcol
+START TIME: 2026-03-23T22:17:24
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\batch_logs\ResNet_layer3+GCSA_20260323_221724.log
+====================================================================================================
+==========================================================================================
+Script: ResNet_layer3+GCSA
+Module: GCSA | Insert after: layer3
+Device: cuda
+CUDA: NVIDIA GeForce RTX 4080 SUPER
+Train dir: E:\Paper\Computer-Vision-for-Medicine\CPN\train
+Test dir : E:\Paper\Computer-Vision-for-Medicine\CPN\test
+Config | batch_size=32, epochs=40, num_workers=4, image_size=224, base_lr=0.0001, val_ratio=0.1, patience=10
+Losses to run: ['pcol']
+==========================================================================================
+Split sizes | train=4630, valid=514, test=1288
+Classes (3): ['COVID19', 'NORMAL', 'PNEUMONIA']
+Train class counts: [415, 1152, 3063]
+Loading torchvision ResNet50 pretrained weights once...
+Pretrained state keys: 320
+
+##########################################################################################
+Starting loss: pcol
+##########################################################################################
+Model params: 49,733,699 | pretrained loaded: 320/338 | feat_dim=2048
+Criterion: PrototypeConsistencyOrdinalLoss
+Criterion trainable params: 6,144
+Epoch 01/40 | Time 0m46s
+  Train | loss=1.0704 | top1=50.31% | top2=82.54% | top3=100.00%
+  Valid | loss=1.0031 | top1=70.22% | top2=96.32% | top3=100.00% | acc=71.40% | bal_acc=40.08% | macro_f1=0.4009 | weighted_f1=0.6289 | precision_macro=0.7312 | recall_macro=0.4008 | qwk=0.1271 | mae=0.3696
+        ovr_roc_auc_macro=0.8425 | ovr_pr_auc_macro=0.7004
+  -> best macro_f1 updated to 0.4009 (epoch 1)
+Epoch 02/40 | Time 0m51s
+  Train | loss=0.8622 | top1=71.89% | top2=97.65% | top3=100.00%
+  Valid | loss=0.6135 | top1=81.07% | top2=99.45% | top3=100.00% | acc=82.88% | bal_acc=56.43% | macro_f1=0.5912 | weighted_f1=0.7931 | precision_macro=0.9147 | recall_macro=0.5643 | qwk=0.3256 | mae=0.2529
+        ovr_roc_auc_macro=0.9707 | ovr_pr_auc_macro=0.9411
+  -> best macro_f1 updated to 0.5912 (epoch 2)
+[ERROR] loss=pcol failed: Caught MemoryError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\worker.py", line 358, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 54, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 54, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 148, in __getitem__
+    x = self.transform(x)
+        ^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\transforms.py", line 95, in __call__
+    img = t(img)
+          ^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\nn\modules\module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\nn\modules\module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\transforms.py", line 1581, in forward
+    return F.rgb_to_grayscale(img, num_output_channels=self.num_output_channels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\functional.py", line 1289, in rgb_to_grayscale
+    return F_pil.to_grayscale(img, num_output_channels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\_functional_pil.py", line 346, in to_grayscale
+    np_img = np.dstack([np_img, np_img, np_img])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\numpy\lib\_shape_base_impl.py", line 733, in dstack
+    return _nx.concatenate(arrs, 2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 42.3 MiB for an array with shape (3480, 4248, 3) and data type uint8
+
+Traceback (most recent call last):
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 769, in run_chestxray_medical_losses_experiments
+    train_loss, train_top = train_one_epoch(
+                            ^^^^^^^^^^^^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 468, in train_one_epoch
+    for x, y in loader:
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 741, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 1518, in _next_data
+    return self._process_data(data, worker_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\dataloader.py", line 1586, in _process_data
+    data.reraise()
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\_utils.py", line 774, in reraise
+    raise RuntimeError(msg) from None
+RuntimeError: Caught MemoryError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\worker.py", line 358, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 54, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 54, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\chest_xray_loss_experiment_common.py", line 148, in __getitem__
+    x = self.transform(x)
+        ^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\transforms.py", line 95, in __call__
+    img = t(img)
+          ^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\nn\modules\module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torch\nn\modules\module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\transforms.py", line 1581, in forward
+    return F.rgb_to_grayscale(img, num_output_channels=self.num_output_channels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\functional.py", line 1289, in rgb_to_grayscale
+    return F_pil.to_grayscale(img, num_output_channels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\torchvision\transforms\_functional_pil.py", line 346, in to_grayscale
+    np_img = np.dstack([np_img, np_img, np_img])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ProgramData\miniconda3\envs\Paper\Lib\site-packages\numpy\lib\_shape_base_impl.py", line 733, in dstack
+    return _nx.concatenate(arrs, 2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 42.3 MiB for an array with shape (3480, 4248, 3) and data type uint8
+
+
+
+==========================================================================================
+Summary CSV saved: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\ResNet_layer3+GCSA_20260323_221727_summary.csv
+No successful loss run found.
+Log file saved: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\ResNet_layer3+GCSA_20260323_221727.log
+==========================================================================================
+
+EXIT CODE: 0
+END TIME: 2026-03-23T22:19:33
+====================================================================================================
