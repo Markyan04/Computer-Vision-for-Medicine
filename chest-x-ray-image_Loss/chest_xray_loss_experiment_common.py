@@ -111,12 +111,20 @@ class EarlyStopping:
         self.early_stop = False
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def __call__(self, score: float, model: nn.Module) -> bool:
+    def __call__(
+        self,
+        score: float,
+        model: nn.Module,
+        criterion: Optional[nn.Module] = None,
+    ) -> bool:
         improved = False
         if self.best_score is None or score > self.best_score + self.delta:
             self.best_score = score
             self.num_bad_epochs = 0
-            torch.save(model.state_dict(), self.save_path)
+            payload = {"model_state": model.state_dict()}
+            if criterion is not None and has_trainable_parameters(criterion):
+                payload["criterion_state"] = criterion.state_dict()
+            torch.save(payload, self.save_path)
             improved = True
         else:
             self.num_bad_epochs += 1
@@ -301,6 +309,31 @@ def count_parameters(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def has_trainable_parameters(module: nn.Module) -> bool:
+    return any(p.requires_grad for p in module.parameters())
+
+
+def load_checkpoint_states(
+    checkpoint_path: Path,
+    model: nn.Module,
+    device: torch.device,
+    criterion: Optional[nn.Module] = None,
+) -> None:
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    if isinstance(checkpoint, dict) and "model_state" in checkpoint:
+        model.load_state_dict(checkpoint["model_state"])
+        if (
+            criterion is not None
+            and "criterion_state" in checkpoint
+            and has_trainable_parameters(criterion)
+        ):
+            criterion.load_state_dict(checkpoint["criterion_state"])
+        return
+
+    # Backward compatibility with older checkpoints that stored model.state_dict() directly.
+    model.load_state_dict(checkpoint)
+
+
 def get_pretrained_resnet50_state(num_classes: int) -> Dict[str, torch.Tensor]:
     try:
         weights = models.ResNet50_Weights.IMAGENET1K_V2
@@ -334,18 +367,26 @@ def build_optimizer_with_groups(
     model: nn.Module,
     base_lr: float,
     group_divisors: Sequence[Tuple[str, float]],
+    extra_modules: Optional[Sequence[Tuple[str, nn.Module, float]]] = None,
 ) -> Tuple[optim.Optimizer, List[float]]:
     param_groups = []
     max_lrs: List[float] = []
 
-    for attr_name, divisor in group_divisors:
-        module = getattr(model, attr_name)
-        params = list(module.parameters())
+    def add_param_group(module: nn.Module, divisor: float) -> None:
+        params = [p for p in module.parameters() if p.requires_grad]
         if not params:
-            continue
+            return
         lr = base_lr / float(divisor)
         param_groups.append({"params": params, "lr": lr})
         max_lrs.append(lr)
+
+    for attr_name, divisor in group_divisors:
+        module = getattr(model, attr_name)
+        add_param_group(module, divisor)
+
+    if extra_modules is not None:
+        for _, module, divisor in extra_modules:
+            add_param_group(module, divisor)
 
     optimizer = optim.Adam(param_groups, lr=base_lr)
     return optimizer, max_lrs
@@ -691,11 +732,19 @@ def run_chestxray_medical_losses_experiments(
                     device=device,
                 )
                 log(f"Criterion: {criterion.__class__.__name__}")
+                criterion_trainable_params = count_parameters(criterion)
+                log(f"Criterion trainable params: {criterion_trainable_params:,}")
+
+                extra_modules = None
+                if has_trainable_parameters(criterion):
+                    # Losses such as PCOL own trainable parameters and must be optimized too.
+                    extra_modules = [("criterion", criterion, 1.0)]
 
                 optimizer, max_lrs = build_optimizer_with_groups(
                     model=model,
                     base_lr=base_lr,
                     group_divisors=optimizer_group_divisors,
+                    extra_modules=extra_modules,
                 )
                 total_steps = epochs * len(data_bundle.train_loader)
                 scheduler = lr_scheduler.OneCycleLR(
@@ -760,7 +809,7 @@ def run_chestxray_medical_losses_experiments(
                             f"| ovr_pr_auc_macro={valid_metrics['ovr_pr_auc_macro']:.4f}"
                         )
 
-                    improved = early_stopping(valid_metrics["macro_f1"], model)
+                    improved = early_stopping(valid_metrics["macro_f1"], model, criterion)
                     if improved:
                         best_val_macro = valid_metrics["macro_f1"]
                         best_epoch = epoch + 1
@@ -771,7 +820,7 @@ def run_chestxray_medical_losses_experiments(
                         break
 
                 if best_path.exists():
-                    model.load_state_dict(torch.load(best_path, map_location=device))
+                    load_checkpoint_states(best_path, model, device, criterion)
 
                 test_loss, test_top, test_metrics = evaluate(
                     model=model,

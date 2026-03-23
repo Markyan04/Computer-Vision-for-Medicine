@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -15,6 +15,7 @@ Default scripts:
 
 import os
 import sys
+import argparse
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -22,6 +23,7 @@ from pathlib import Path
 
 THIS_DIR = Path(__file__).resolve().parent
 LOG_DIR = THIS_DIR / "batch_logs"
+LOSS_ENV_NAME = "CHESTXRAY_LOSSES"
 
 DEFAULT_SCRIPTS = [
     "ResNet_layer2+MDFA.py",
@@ -33,7 +35,24 @@ DEFAULT_SCRIPTS = [
 ]
 
 
-def stream_run(script_name: str) -> int:
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run one or more chest-x-ray-image_Loss experiment scripts."
+    )
+    parser.add_argument(
+        "scripts",
+        nargs="*",
+        help="Optional script names to run. Defaults to all built-in scripts.",
+    )
+    parser.add_argument(
+        "--losses",
+        default="",
+        help="Comma-separated loss names to run, e.g. 'pcol' or 'sce,gce,aom'.",
+    )
+    return parser.parse_args()
+
+
+def stream_run(script_name: str, losses: str = "") -> int:
     script_path = THIS_DIR / script_name
     if not script_path.exists():
         print(f"[SKIP] script not found: {script_path}")
@@ -46,6 +65,7 @@ def stream_run(script_name: str) -> int:
     header = (
         f"\n{'=' * 100}\n"
         f"RUN SCRIPT: {script_name}\n"
+        f"LOSSES: {losses or 'default'}\n"
         f"START TIME: {datetime.now().isoformat(timespec='seconds')}\n"
         f"LOG FILE: {log_path}\n"
         f"{'=' * 100}\n"
@@ -53,6 +73,10 @@ def stream_run(script_name: str) -> int:
     print(header, end="")
 
     env = os.environ.copy()
+    if losses:
+        env[LOSS_ENV_NAME] = losses
+    else:
+        env.pop(LOSS_ENV_NAME, None)
     cmd = [sys.executable, script_name]
 
     with open(log_path, "w", encoding="utf-8") as fp:
@@ -91,15 +115,18 @@ def stream_run(script_name: str) -> int:
 
 
 def main() -> None:
-    scripts = sys.argv[1:] if len(sys.argv) > 1 else DEFAULT_SCRIPTS
+    args = parse_args()
+    scripts = args.scripts if args.scripts else DEFAULT_SCRIPTS
+    losses = args.losses.strip()
 
     print(f"Batch start: {datetime.now().isoformat(timespec='seconds')}")
     print(f"Working dir: {THIS_DIR}")
     print(f"Scripts ({len(scripts)}): {scripts}")
+    print(f"Losses: {losses or 'default'}")
 
     results = []
     for script in scripts:
-        code = stream_run(script)
+        code = stream_run(script, losses=losses)
         results.append((script, code))
 
     print("\nBatch summary")
