@@ -1,0 +1,55 @@
+MRI train/test duplicate report
+base_dir: e:\Paper\Computer-Vision-for-Medicine\MRI
+duplicate_hash_groups_across_train_test: 64
+csv: e:\Paper\Computer-Vision-for-Medicine\MRI_Loss\reports\mri_train_test_duplicate_groups.csv
+
+Train class counts involved in cross-split duplicates:
+- no_tumor: 64 groups
+
+Test class counts involved in cross-split duplicates:
+- no_tumor: 64 groups
+
+Train/Test class-pair counts:
+- no_tumor -> no_tumor: 64 groups
+
+First 10 groups:
+Group 1 | md5=04ad12436c5b59dac34ff27b48e8dd9a
+  - [train] no_tumor | MRI\Training\no_tumor\image(14).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(39).jpg
+
+Group 2 | md5=0d2b9aa3b0a846d39841b6df8f72be72
+  - [train] no_tumor | MRI\Training\no_tumor\image(19).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(44).jpg
+
+Group 3 | md5=0f4f52fdf26e4689daa7eff79a2e17ba
+  - [train] no_tumor | MRI\Training\no_tumor\image(262).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(97).jpg
+
+Group 4 | md5=1387112a2ca5824007c964f73761ca75
+  - [train] no_tumor | MRI\Training\no_tumor\image(49).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(74).jpg
+
+Group 5 | md5=13fd32f4b20c92e1f12c974210ec3248
+  - [train] no_tumor | MRI\Training\no_tumor\image(325).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(99).jpg
+
+Group 6 | md5=16ae0ed310da7fb1c9bfdb648544815e
+  - [train] no_tumor | MRI\Training\no_tumor\image(64).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(89).jpg
+
+Group 7 | md5=1f8e24f187a6ccdeb6cf9ff4122f1227
+  - [train] no_tumor | MRI\Training\no_tumor\image(63).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(88).jpg
+
+Group 8 | md5=26c0900bf911e5ed884762f141ab3fcc
+  - [train] no_tumor | MRI\Training\no_tumor\image(70).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(95).jpg
+
+Group 9 | md5=2b6b3b3e38f7708c531f92f22b10c2da
+  - [train] no_tumor | MRI\Training\no_tumor\image(22).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(47).jpg
+
+Group 10 | md5=300e1604b650132eb5b2b28c9888fb5b
+  - [train] no_tumor | MRI\Training\no_tumor\image(13).jpg
+  - [test] no_tumor | MRI\Testing\no_tumor\image(38).jpg
+
