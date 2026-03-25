@@ -6,7 +6,7 @@ Shared training/evaluation utilities for HAM10000 + ResNet50 + attention modules
 
 This runner provides:
 - unified metrics (APTOS-style + HAM10000-friendly)
-- all medical losses in medical_losses.py (excluding plain nn.CrossEntropyLoss baseline)
+- plain CrossEntropyLoss baseline plus all medical losses in medical_losses.py
 - per-loss independent training with early stopping
 - dedicated log file and summary CSV for each script
 """
@@ -67,6 +67,7 @@ from medical_losses import (  # noqa: E402
 SEED = 1234
 DEFAULT_TOPK = (1, 3)
 DEFAULT_LOSS_ORDER = (
+    "ce",
     "cb_focal_ce",
     "ordinal_focal_mse",
     "sce",
@@ -285,6 +286,7 @@ def build_ham10000_dataloaders(
         shuffle=True,
         num_workers=num_workers,
         pin_memory=True,
+        drop_last=True,
     )
     valid_loader = data.DataLoader(
         valid_dataset,
@@ -470,7 +472,9 @@ def create_medical_loss(
     device: torch.device,
 ) -> nn.Module:
     loss_name = loss_name.lower()
-    if loss_name == "cb_focal_ce":
+    if loss_name == "ce":
+        criterion = nn.CrossEntropyLoss()
+    elif loss_name == "cb_focal_ce":
         criterion = ClassBalancedFocalCELoss(
             class_counts=class_counts,
             beta=0.9999,
@@ -688,6 +692,45 @@ class ResNet50WithInsertedModule(nn.Module):
         return logits, h
 
 
+class ResNet50Baseline(nn.Module):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.in_channels = 64
+        self.conv1 = nn.Conv2d(3, self.in_channels, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.in_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.layer1 = self._make_layer(Bottleneck, 3, 64, stride=1)
+        self.layer2 = self._make_layer(Bottleneck, 4, 128, stride=2)
+        self.layer3 = self._make_layer(Bottleneck, 6, 256, stride=2)
+        self.layer4 = self._make_layer(Bottleneck, 3, 512, stride=2)
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(self.in_channels, num_classes)
+
+    def _make_layer(self, block, n_blocks, channels, stride=1):
+        layers = []
+        downsample = (self.in_channels != block.expansion * channels) or (stride != 1)
+        layers.append(block(self.in_channels, channels, stride=stride, downsample=downsample))
+        self.in_channels = block.expansion * channels
+        for _ in range(1, n_blocks):
+            layers.append(block(self.in_channels, channels, stride=1, downsample=False))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        h = x.view(x.size(0), -1)
+        logits = self.fc(h)
+        return logits, h
+
+
 def resolve_losses_to_run() -> List[str]:
     env_losses = os.getenv("HAM10000_LOSSES", "").strip()
     if not env_losses:
@@ -710,7 +753,7 @@ def run_ham10000_medical_losses_experiments(
     set_seed(SEED)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "32"))
+    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "16"))
     epochs = int(os.getenv("HAM10000_EPOCHS", "60"))
     num_workers = int(os.getenv("HAM10000_NUM_WORKERS", "2"))
     image_size = int(os.getenv("HAM10000_IMAGE_SIZE", "224"))

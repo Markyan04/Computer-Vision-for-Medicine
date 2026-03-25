@@ -1,0 +1,37 @@
+
+====================================================================================================
+RUN SCRIPT: ResNet_layer3+MDFA.py
+LOSSES: ce
+START TIME: 2026-03-25T19:29:24
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\batch_logs\ResNet_layer3+MDFA_20260325_192924.log
+====================================================================================================
+==========================================================================================
+Script: ResNet_layer3+MDFA
+Module: MDFA | Insert after: layer3
+Device: cuda
+CUDA: NVIDIA GeForce RTX 4080 SUPER
+Data dir: E:\Paper\Computer-Vision-for-Medicine\ISIC
+Config | batch_size=16, epochs=40, num_workers=2, image_size=224, base_lr=0.0001, patience=10
+Losses to run: ['ce']
+==========================================================================================
+Split sizes | train=7210, valid=802, test=2003
+Classes (7): ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+Train class counts: [262, 411, 879, 92, 890, 5364, 114]
+Loading torchvision ResNet50 pretrained weights once...
+Pretrained state keys: 320
+
+##########################################################################################
+Starting loss: ce
+##########################################################################################
+Model params: 85,408,328 | pretrained loaded: 320/361 | feat_dim=2048
+Criterion: CrossEntropyLoss
+Criterion trainable params: 0
+Epoch 01/40 | Time 0m40s
+  Train | loss=1.6450 | top1=58.14% | top3=80.16%
+  Valid | loss=1.3228 | top1=67.89% | top3=87.13% | acc=68.20% | bal_acc=17.80% | macro_f1=0.1681 | weighted_f1=0.5900 | precision_macro=0.2137 | recall_macro=0.1780 | qwk=0.2294 | mae=0.7718
+        ovr_roc_auc_macro=0.7437 | ovr_pr_auc_macro=0.2481
+  -> best macro_f1 updated to 0.1681 (epoch 1)
+Epoch 02/40 | Time 0m40s
+  Train | loss=1.0036 | top1=67.77% | top3=89.03%
+  Valid | loss=0.8903 | top1=67.40% | top3=88.36% | acc=67.71% | bal_acc=15.40% | macro_f1=0.1351 | weighted_f1=0.5584 | precision_macro=0.1566 | recall_macro=0.1540 | qwk=0.1075 | mae=0.8005
+        ovr_roc_auc_macro=0.8238 | ovr_pr_auc_macro=0.3033

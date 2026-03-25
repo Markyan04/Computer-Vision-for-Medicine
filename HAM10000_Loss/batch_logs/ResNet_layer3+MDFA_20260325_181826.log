@@ -1,0 +1,16 @@
+
+====================================================================================================
+RUN SCRIPT: ResNet_layer3+MDFA.py
+LOSSES: ce
+START TIME: 2026-03-25T18:18:26
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\batch_logs\ResNet_layer3+MDFA_20260325_181826.log
+====================================================================================================
+==========================================================================================
+Script: ResNet_layer3+MDFA
+Module: MDFA | Insert after: layer3
+Device: cuda
+CUDA: NVIDIA GeForce RTX 4080 SUPER
+Data dir: E:\Paper\Computer-Vision-for-Medicine\ISIC
+Config | batch_size=16, epochs=60, num_workers=2, image_size=224, base_lr=0.0001, patience=10
+Losses to run: ['ce']
+==========================================================================================
