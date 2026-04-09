@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -65,6 +65,7 @@ from medical_losses import (  # noqa: E402
 SEED = 1234
 DEFAULT_TOPK = (1, 2, 3)
 DEFAULT_LOSS_ORDER = (
+    "ce",
     "cb_focal_ce",
     "ordinal_focal_mse",
     "sce",
@@ -400,7 +401,9 @@ def create_medical_loss(
     device: torch.device,
 ) -> nn.Module:
     loss_name = loss_name.lower()
-    if loss_name == "cb_focal_ce":
+    if loss_name == "ce":
+        criterion = nn.CrossEntropyLoss()
+    elif loss_name == "cb_focal_ce":
         criterion = ClassBalancedFocalCELoss(
             class_counts=class_counts,
             beta=0.9999,
@@ -647,7 +650,7 @@ def run_chestxray_medical_losses_experiments(
     val_ratio = float(os.getenv("CHESTXRAY_VAL_RATIO", "0.1"))
     batch_size = int(os.getenv("CHESTXRAY_BATCH_SIZE", "32"))
     epochs = int(os.getenv("CHESTXRAY_EPOCHS", "50"))
-    num_workers = int(os.getenv("CHESTXRAY_NUM_WORKERS", "4"))
+    num_workers = int(os.getenv("CHESTXRAY_NUM_WORKERS", "2"))
     image_size = int(os.getenv("CHESTXRAY_IMAGE_SIZE", "224"))
     base_lr = float(os.getenv("CHESTXRAY_BASE_LR", "1e-4"))
     patience = int(os.getenv("CHESTXRAY_PATIENCE", "15"))

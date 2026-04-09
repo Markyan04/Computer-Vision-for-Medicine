@@ -27,8 +27,10 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     classification_report,
+    cohen_kappa_score,
     confusion_matrix,
     f1_score,
+    mean_absolute_error,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -290,6 +292,14 @@ def compute_eval_metrics(
     metrics['weighted_f1'] = f1_score(y_true, y_pred, average='weighted', zero_division=0)
     metrics['precision_macro'] = precision_score(y_true, y_pred, average='macro', zero_division=0)
     metrics['recall_macro'] = recall_score(y_true, y_pred, average='macro', zero_division=0)
+    metrics['mae'] = mean_absolute_error(y_true, y_pred)
+    metrics['qwk'] = None
+    try:
+        qwk = cohen_kappa_score(y_true, y_pred, weights='quadratic')
+        if not np.isnan(qwk):
+            metrics['qwk'] = qwk
+    except Exception:
+        pass
     metrics['confusion_matrix'] = confusion_matrix(y_true, y_pred)
     metrics['classification_report'] = classification_report(
         y_true,
@@ -318,6 +328,12 @@ def compute_eval_metrics(
         pass
 
     return metrics
+
+def format_metric_value(value: Optional[float]) -> str:
+    if value is None or pd.isna(value):
+        return 'n/a'
+    return f'{value:.4f}'
+
 
 
 def build_optimizer_with_groups(
@@ -494,12 +510,12 @@ def run_brain_tumor_mri_medical_losses_experiments(
     test_dir = Path(os.getenv('BRAIN_MRI_TEST_DIR', str(data_root / 'Testing')))
 
     val_ratio = float(os.getenv('BRAIN_MRI_VAL_RATIO', '0.10'))
-    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '16'))
-    epochs = int(os.getenv('BRAIN_MRI_EPOCHS', '50'))
+    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '32'))
+    epochs = int(os.getenv('BRAIN_MRI_EPOCHS', '60'))
     num_workers = int(os.getenv('BRAIN_MRI_NUM_WORKERS', '0'))
     image_size = int(os.getenv('BRAIN_MRI_IMAGE_SIZE', '224'))
     base_lr = float(os.getenv('BRAIN_MRI_BASE_LR', '1e-3'))
-    patience = int(os.getenv('BRAIN_MRI_PATIENCE', '10'))
+    patience = int(os.getenv('BRAIN_MRI_PATIENCE', '15'))
     early_delta = float(os.getenv('BRAIN_MRI_EARLY_DELTA', '1e-4'))
     loss_delta = float(os.getenv('BRAIN_MRI_LOSS_DELTA', '1e-4'))
     topk = DEFAULT_TOPK
@@ -656,7 +672,9 @@ def run_brain_tumor_mri_medical_losses_experiments(
                         f"| macro_f1={valid_metrics['macro_f1']:.4f} "
                         f"| weighted_f1={valid_metrics['weighted_f1']:.4f} "
                         f"| precision_macro={valid_metrics['precision_macro']:.4f} "
-                        f"| recall_macro={valid_metrics['recall_macro']:.4f}"
+                        f"| recall_macro={valid_metrics['recall_macro']:.4f} "
+                        f"| mae={valid_metrics['mae']:.4f} "
+                        f"| qwk={format_metric_value(valid_metrics['qwk'])}"
                     )
                     if valid_metrics['ovr_roc_auc_macro'] is not None:
                         log(
@@ -701,7 +719,9 @@ def run_brain_tumor_mri_medical_losses_experiments(
                     f"| macro_f1={test_metrics['macro_f1']:.4f} "
                     f"| weighted_f1={test_metrics['weighted_f1']:.4f} "
                     f"| precision_macro={test_metrics['precision_macro']:.4f} "
-                    f"| recall_macro={test_metrics['recall_macro']:.4f}"
+                    f"| recall_macro={test_metrics['recall_macro']:.4f} "
+                    f"| mae={test_metrics['mae']:.4f} "
+                    f"| qwk={format_metric_value(test_metrics['qwk'])}"
                 )
                 if test_metrics['ovr_roc_auc_macro'] is not None:
                     log(
@@ -729,6 +749,8 @@ def run_brain_tumor_mri_medical_losses_experiments(
                     'test_weighted_f1': test_metrics['weighted_f1'],
                     'test_precision_macro': test_metrics['precision_macro'],
                     'test_recall_macro': test_metrics['recall_macro'],
+                    'test_mae': test_metrics['mae'],
+                    'test_qwk': test_metrics['qwk'],
                     'test_ovr_roc_auc_macro': test_metrics['ovr_roc_auc_macro'],
                     'test_ovr_pr_auc_macro': test_metrics['ovr_pr_auc_macro'],
                     'checkpoint_path': str(best_path),
@@ -756,6 +778,8 @@ def run_brain_tumor_mri_medical_losses_experiments(
                 for _, row in success_df.iterrows():
                     log(
                         f"  {row['loss_name']}: macro_f1={row['test_macro_f1']:.4f}, "
+                        f"qwk={format_metric_value(row.get('test_qwk'))}, "
+                        f"mae={format_metric_value(row.get('test_mae'))}, "
                         f"acc={row['test_acc']:.4f}, top1={row['test_top1']:.4f}"
                     )
         log('=' * 90)

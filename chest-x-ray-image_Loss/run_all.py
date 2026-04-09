@@ -1,10 +1,11 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
 Batch runner for chest-x-ray-image_Loss experiments.
 
 Default scripts:
+- ResNet_baseline.py
 - ResNet_layer2+MDFA.py
 - ResNet_layer3+MDFA.py
 - ResNet_layer2+GCSA.py
@@ -26,6 +27,7 @@ LOG_DIR = THIS_DIR / "batch_logs"
 LOSS_ENV_NAME = "CHESTXRAY_LOSSES"
 
 DEFAULT_SCRIPTS = [
+    "ResNet_baseline.py",
     "ResNet_layer2+MDFA.py",
     "ResNet_layer3+MDFA.py",
     "ResNet_layer2+GCSA.py",
