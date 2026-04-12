@@ -12,6 +12,7 @@ This runner provides:
 """
 
 import os
+import re
 import sys
 import time
 import random
@@ -464,6 +465,22 @@ def build_optimizer_with_groups(
     return optimizer, max_lrs
 
 
+def sanitize_run_tag(run_tag: str) -> str:
+    cleaned = re.sub(r'[^A-Za-z0-9._-]+', '-', run_tag.strip())
+    return cleaned.strip('-_.')
+
+
+def resolve_run_tag() -> str:
+    return sanitize_run_tag(os.getenv('HAM10000_RUN_TAG', ''))
+
+
+def resolve_dast_hparams() -> Dict[str, float]:
+    return {
+        'tau': float(os.getenv('HAM10000_DAST_TAU', '1.0')),
+        'gamma': float(os.getenv('HAM10000_DAST_GAMMA', '1.5')),
+    }
+
+
 def create_medical_loss(
     loss_name: str,
     num_classes: int,
@@ -493,7 +510,12 @@ def create_medical_loss(
     elif loss_name == "gce":
         criterion = GeneralizedCrossEntropyLoss(q=0.7)
     elif loss_name == "dast":
-        criterion = DistanceAwareSoftTargetLoss(num_classes=num_classes, tau=1.0, gamma=1.5)
+        dast_hparams = resolve_dast_hparams()
+        criterion = DistanceAwareSoftTargetLoss(
+            num_classes=num_classes,
+            tau=dast_hparams['tau'],
+            gamma=dast_hparams['gamma'],
+        )
     elif loss_name == "pcol":
         criterion = PrototypeConsistencyOrdinalLoss(
             num_classes=num_classes,
@@ -753,29 +775,34 @@ def run_ham10000_medical_losses_experiments(
     set_seed(SEED)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "32"))
-    epochs = int(os.getenv("HAM10000_EPOCHS", "60"))
+    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "16"))
+    epochs = int(os.getenv("HAM10000_EPOCHS", "50"))
     num_workers = int(os.getenv("HAM10000_NUM_WORKERS", "2"))
     image_size = int(os.getenv("HAM10000_IMAGE_SIZE", "224"))
     base_lr = float(os.getenv("HAM10000_BASE_LR", "1e-4"))
-    patience = int(os.getenv("HAM10000_PATIENCE", "15"))
+    patience = int(os.getenv("HAM10000_PATIENCE", "10"))
     early_delta = float(os.getenv("HAM10000_EARLY_DELTA", "1e-4"))
     topk = DEFAULT_TOPK
     data_dir = Path(os.getenv("HAM10000_DATA_DIR", str(PROJECT_ROOT / "ISIC")))
 
     losses_to_run = resolve_losses_to_run()
+    run_tag = resolve_run_tag()
+    run_suffix = f"_{run_tag}" if run_tag else ""
+    dast_hparams = resolve_dast_hparams()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logs_dir = THIS_DIR / "logs"
     ckpt_dir = THIS_DIR / "checkpoints"
-    log_path = logs_dir / f"{script_stem}_{timestamp}.log"
-    summary_path = logs_dir / f"{script_stem}_{timestamp}_summary.csv"
+    log_path = logs_dir / f"{script_stem}{run_suffix}_{timestamp}.log"
+    summary_path = logs_dir / f"{script_stem}{run_suffix}_{timestamp}_summary.csv"
     logger = DualLogger(log_path)
     log = logger.log
 
     try:
         log("=" * 90)
         log(f"Script: {script_stem}")
+        if run_tag:
+            log(f"Run tag: {run_tag}")
         log(f"Module: {module_name} | Insert after: {insert_after}")
         log(f"Device: {device}")
         if torch.cuda.is_available():
@@ -818,6 +845,11 @@ def run_ham10000_medical_losses_experiments(
             log("#" * 90)
             log(f"Starting loss: {loss_name}")
             log("#" * 90)
+            if loss_name == "dast":
+                log(
+                    f"DAST config | tau={dast_hparams['tau']:.4f}, "
+                    f"gamma={dast_hparams['gamma']:.4f}"
+                )
 
             try:
                 set_seed(SEED)
@@ -859,7 +891,7 @@ def run_ham10000_medical_losses_experiments(
                     total_steps=total_steps,
                 )
 
-                best_path = ckpt_dir / f"best_{script_stem}_{loss_name}.pt"
+                best_path = ckpt_dir / f"best_{script_stem}_{loss_name}{run_suffix}_special.pt"
                 early_stopping = EarlyStopping(
                     patience=patience,
                     delta=early_delta,
@@ -867,6 +899,7 @@ def run_ham10000_medical_losses_experiments(
                 )
 
                 best_val_macro = -1.0
+                best_val_loss = float("inf")
                 best_epoch = 0
                 trained_epochs = 0
 
@@ -918,8 +951,12 @@ def run_ham10000_medical_losses_experiments(
                     improved = early_stopping(valid_metrics["macro_f1"], model, criterion)
                     if improved:
                         best_val_macro = valid_metrics["macro_f1"]
+                        best_val_loss = valid_loss
                         best_epoch = epoch + 1
-                        log(f"  -> best macro_f1 updated to {best_val_macro:.4f} (epoch {best_epoch})")
+                        log(
+                            f"  -> best macro_f1 updated to {best_val_macro:.4f} "
+                            f"(epoch {best_epoch}, val_loss={best_val_loss:.4f})"
+                        )
 
                     if early_stopping.early_stop:
                         log(f"  -> early stopping triggered at epoch {epoch + 1}")
@@ -960,11 +997,15 @@ def run_ham10000_medical_losses_experiments(
                 log(str(test_metrics["classification_report"]))
 
                 summary_rows.append({
+                    "run_tag": run_tag,
                     "loss_name": loss_name,
                     "status": "success",
+                    "dast_tau": dast_hparams['tau'] if loss_name == "dast" else None,
+                    "dast_gamma": dast_hparams['gamma'] if loss_name == "dast" else None,
                     "trained_epochs": trained_epochs,
                     "best_epoch": best_epoch,
                     "best_valid_macro_f1": best_val_macro,
+                    "best_valid_loss": best_val_loss,
                     "test_loss": test_loss,
                     "test_top1": test_top["top1"],
                     "test_top3": test_top["top3"],
@@ -984,8 +1025,11 @@ def run_ham10000_medical_losses_experiments(
                 log(f"[ERROR] loss={loss_name} failed: {loss_exc}")
                 log(traceback.format_exc())
                 summary_rows.append({
+                    "run_tag": run_tag,
                     "loss_name": loss_name,
                     "status": "failed",
+                    "dast_tau": dast_hparams['tau'] if loss_name == "dast" else None,
+                    "dast_gamma": dast_hparams['gamma'] if loss_name == "dast" else None,
                     "error": str(loss_exc),
                 })
 

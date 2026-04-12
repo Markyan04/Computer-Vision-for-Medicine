@@ -4,6 +4,7 @@
 """Shared training and evaluation utilities for Brain_Tumor_MRI loss experiments."""
 
 import os
+import re
 import sys
 import time
 import traceback
@@ -60,6 +61,7 @@ from chest_xray_loss_experiment_common import (  # noqa: E402
     load_pretrained_resnet50_backbone,
     set_seed,
 )
+from medical_losses import DistanceAwareSoftTargetLoss  # noqa: E402
 
 
 SEED = 1234
@@ -335,6 +337,21 @@ def format_metric_value(value: Optional[float]) -> str:
     return f'{value:.4f}'
 
 
+def sanitize_run_tag(run_tag: str) -> str:
+    cleaned = re.sub(r'[^A-Za-z0-9._-]+', '-', run_tag.strip())
+    return cleaned.strip('-_.')
+
+
+def resolve_run_tag() -> str:
+    return sanitize_run_tag(os.getenv('BRAIN_MRI_RUN_TAG', ''))
+
+
+def resolve_dast_hparams() -> Dict[str, float]:
+    return {
+        'tau': float(os.getenv('BRAIN_MRI_DAST_TAU', '1.0')),
+        'gamma': float(os.getenv('BRAIN_MRI_DAST_GAMMA', '1.5')),
+    }
+
 
 def build_optimizer_with_groups(
     model: nn.Module,
@@ -373,6 +390,13 @@ def create_experiment_loss(
 ) -> nn.Module:
     if loss_name == 'ce':
         return nn.CrossEntropyLoss().to(device)
+    if loss_name == 'dast':
+        dast_hparams = resolve_dast_hparams()
+        return DistanceAwareSoftTargetLoss(
+            num_classes=num_classes,
+            tau=dast_hparams['tau'],
+            gamma=dast_hparams['gamma'],
+        ).to(device)
     return create_medical_loss(
         loss_name=loss_name,
         num_classes=num_classes,
@@ -510,7 +534,7 @@ def run_brain_tumor_mri_medical_losses_experiments(
     test_dir = Path(os.getenv('BRAIN_MRI_TEST_DIR', str(data_root / 'Testing')))
 
     val_ratio = float(os.getenv('BRAIN_MRI_VAL_RATIO', '0.10'))
-    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '32'))
+    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '64'))
     epochs = int(os.getenv('BRAIN_MRI_EPOCHS', '60'))
     num_workers = int(os.getenv('BRAIN_MRI_NUM_WORKERS', '0'))
     image_size = int(os.getenv('BRAIN_MRI_IMAGE_SIZE', '224'))
@@ -521,18 +545,23 @@ def run_brain_tumor_mri_medical_losses_experiments(
     topk = DEFAULT_TOPK
 
     losses_to_run = resolve_losses_to_run()
+    run_tag = resolve_run_tag()
+    run_suffix = f'_{run_tag}' if run_tag else ''
+    dast_hparams = resolve_dast_hparams()
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     logs_dir = THIS_DIR / 'logs'
     ckpt_dir = THIS_DIR / 'checkpoints'
-    log_path = logs_dir / f'{script_stem}_{timestamp}.log'
-    summary_path = logs_dir / f'{script_stem}_{timestamp}_summary.csv'
+    log_path = logs_dir / f'{script_stem}{run_suffix}_{timestamp}.log'
+    summary_path = logs_dir / f'{script_stem}{run_suffix}_{timestamp}_summary.csv'
     logger = DualLogger(log_path)
     log = logger.log
 
     try:
         log('=' * 90)
         log(f'Script: {script_stem}')
+        if run_tag:
+            log(f'Run tag: {run_tag}')
         log(f'Module: {module_name} | Insert after: {insert_after}')
         log(f'Device: {device}')
         if torch.cuda.is_available():
@@ -579,6 +608,11 @@ def run_brain_tumor_mri_medical_losses_experiments(
             log('#' * 90)
             log(f'Starting loss: {loss_name}')
             log('#' * 90)
+            if loss_name == 'dast':
+                log(
+                    f"DAST config | tau={dast_hparams['tau']:.4f}, "
+                    f"gamma={dast_hparams['gamma']:.4f}"
+                )
 
             try:
                 set_seed(SEED)
@@ -621,7 +655,7 @@ def run_brain_tumor_mri_medical_losses_experiments(
                     anneal_strategy='cos',
                 )
 
-                best_path = ckpt_dir / f'best_{script_stem}_{loss_name}.pt'
+                best_path = ckpt_dir / f'best_{script_stem}_{loss_name}{run_suffix}.pt'
                 early_stopping = EarlyStopping(
                     patience=patience,
                     delta=early_delta,
@@ -734,8 +768,11 @@ def run_brain_tumor_mri_medical_losses_experiments(
                 log(str(test_metrics['classification_report']))
 
                 summary_rows.append({
+                    'run_tag': run_tag,
                     'loss_name': loss_name,
                     'status': 'success',
+                    'dast_tau': dast_hparams['tau'] if loss_name == 'dast' else None,
+                    'dast_gamma': dast_hparams['gamma'] if loss_name == 'dast' else None,
                     'trained_epochs': trained_epochs,
                     'best_epoch': best_epoch,
                     'best_valid_macro_f1': best_val_macro,
@@ -759,8 +796,11 @@ def run_brain_tumor_mri_medical_losses_experiments(
                 log(f'[ERROR] loss={loss_name} failed: {loss_exc}')
                 log(traceback.format_exc())
                 summary_rows.append({
+                    'run_tag': run_tag,
                     'loss_name': loss_name,
                     'status': 'failed',
+                    'dast_tau': dast_hparams['tau'] if loss_name == 'dast' else None,
+                    'dast_gamma': dast_hparams['gamma'] if loss_name == 'dast' else None,
                     'error': str(loss_exc),
                 })
 
