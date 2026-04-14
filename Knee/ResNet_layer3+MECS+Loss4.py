@@ -22,6 +22,16 @@ import time
 import random
 import warnings
 
+from pathlib import Path
+import sys
+
+THIS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = THIS_DIR.parent
+for path in (PROJECT_ROOT, THIS_DIR):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+
 import numpy as np
 
 import torch
@@ -122,14 +132,14 @@ DATA_ROOT = r"../Knee_Osteoarthritis"
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
-EPOCHS = 50
+EPOCHS = 60
 
 LR_BACKBONE = 1e-4
 LR_HEAD = 1e-3
 WEIGHT_DECAY = 1e-4
 
 NUM_WORKERS = 4
-PATIENCE = 10
+PATIENCE = 15
 EARLY_STOP_DELTA = 1e-4
 
 TOPK = (1, 2, 3)
@@ -494,7 +504,7 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_mecs_layer3_dast_knee_oa.pt"
+    best_path = "./checkpoints/best_resnet50_mecs_layer3_dast_knee_oa_new.pt"
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,

@@ -534,12 +534,12 @@ def run_brain_tumor_mri_medical_losses_experiments(
     test_dir = Path(os.getenv('BRAIN_MRI_TEST_DIR', str(data_root / 'Testing')))
 
     val_ratio = float(os.getenv('BRAIN_MRI_VAL_RATIO', '0.10'))
-    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '64'))
-    epochs = int(os.getenv('BRAIN_MRI_EPOCHS', '60'))
+    batch_size = int(os.getenv('BRAIN_MRI_BATCH_SIZE', '16'))
+    epochs = int(os.getenv('BRAIN_MRI_EPOCHS', '50'))
     num_workers = int(os.getenv('BRAIN_MRI_NUM_WORKERS', '0'))
     image_size = int(os.getenv('BRAIN_MRI_IMAGE_SIZE', '224'))
     base_lr = float(os.getenv('BRAIN_MRI_BASE_LR', '1e-3'))
-    patience = int(os.getenv('BRAIN_MRI_PATIENCE', '15'))
+    patience = int(os.getenv('BRAIN_MRI_PATIENCE', '10'))
     early_delta = float(os.getenv('BRAIN_MRI_EARLY_DELTA', '1e-4'))
     loss_delta = float(os.getenv('BRAIN_MRI_LOSS_DELTA', '1e-4'))
     topk = DEFAULT_TOPK
@@ -655,7 +655,7 @@ def run_brain_tumor_mri_medical_losses_experiments(
                     anneal_strategy='cos',
                 )
 
-                best_path = ckpt_dir / f'best_{script_stem}_{loss_name}{run_suffix}.pt'
+                best_path = ckpt_dir / f'best_{script_stem}_{loss_name}{run_suffix}_special.pt'
                 early_stopping = EarlyStopping(
                     patience=patience,
                     delta=early_delta,

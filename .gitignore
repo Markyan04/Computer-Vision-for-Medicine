@@ -22,3 +22,8 @@ APTOS-2019/
 uv.lock
 Brain_Tumor_MRI/
 gradcam_comparison_exports/
+gradcam_comparison_exports_pytorch_grad_cam/
+创新模块*
+test.py
+gradcam_class_exports_pytorch_grad_cam/
+gradcam_outputs*
