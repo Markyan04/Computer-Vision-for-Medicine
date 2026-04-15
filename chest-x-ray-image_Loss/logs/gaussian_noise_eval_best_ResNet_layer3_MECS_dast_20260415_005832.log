@@ -1,0 +1,80 @@
+Gaussian Noise Robustness Analysis
+Device: cuda
+Data root: E:\Paper\Computer-Vision-for-Medicine\CPN
+Train dir: E:\Paper\Computer-Vision-for-Medicine\CPN\train
+Test dir: E:\Paper\Computer-Vision-for-Medicine\CPN\test
+Model script: ResNet_layer3+MECS.py
+Checkpoint: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\checkpoints\best_ResNet_layer3+MECS_dast.pt
+Loss: dast
+Noise stds: 0.0000, 0.0100, 0.0200, 0.0300
+Noise seed: 1234
+DAST hparams: tau=1.0, gamma=1.5
+Classes (3): ['COVID19', 'NORMAL', 'PNEUMONIA']
+Split sizes | train=4630, valid=514, test=1288
+Model params: 27,301,187
+Criterion: DistanceAwareSoftTargetLoss | trainable_params=0
+
+[std=0.0000]
+std=0.0000 | loss=0.2952 | top1=96.57% | top2=99.62% | top3=100.00% | acc=96.51% | bal_acc=97.25% | macro_f1=0.9680 | weighted_f1=0.9653 | precision_macro=0.9639 | recall_macro=0.9725 | qwk=0.9589 | mae=0.0349
+ovr_roc_auc_macro=0.9961 | ovr_pr_auc_macro=0.9914
+Classification Report:
+              precision    recall  f1-score   support
+
+     COVID19     1.0000    1.0000    1.0000       116
+      NORMAL     0.9096    0.9527    0.9307       317
+   PNEUMONIA     0.9821    0.9649    0.9735       855
+
+    accuracy                         0.9651      1288
+   macro avg     0.9639    0.9725    0.9680      1288
+weighted avg     0.9659    0.9651    0.9653      1288
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005832_std0_confusion_matrix.csv
+
+[std=0.0100]
+std=0.0100 | loss=0.9709 | top1=21.34% | top2=58.23% | top3=100.00% | acc=21.51% | bal_acc=40.07% | macro_f1=0.1748 | weighted_f1=0.2142 | precision_macro=0.5778 | recall_macro=0.4007 | qwk=0.0123 | mae=1.3292
+ovr_roc_auc_macro=0.7112 | ovr_pr_auc_macro=0.5367
+Classification Report:
+              precision    recall  f1-score   support
+
+     COVID19     0.1123    1.0000    0.2019       116
+      NORMAL     1.0000    0.0221    0.0432       317
+   PNEUMONIA     0.6210    0.1801    0.2792       855
+
+    accuracy                         0.2151      1288
+   macro avg     0.5778    0.4007    0.1748      1288
+weighted avg     0.6684    0.2151    0.2142      1288
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005832_std0p01_confusion_matrix.csv
+
+[std=0.0200]
+std=0.0200 | loss=0.6711 | top1=43.06% | top2=76.75% | top3=100.00% | acc=43.40% | bal_acc=38.93% | macro_f1=0.2869 | weighted_f1=0.4791 | precision_macro=0.3306 | recall_macro=0.3893 | qwk=0.2096 | mae=0.8859
+ovr_roc_auc_macro=0.4536 | ovr_pr_auc_macro=0.3604
+Classification Report:
+              precision    recall  f1-score   support
+
+     COVID19     0.0929    0.5948    0.1607       116
+      NORMAL     0.0000    0.0000    0.0000       317
+   PNEUMONIA     0.8991    0.5731    0.7000       855
+
+    accuracy                         0.4340      1288
+   macro avg     0.3306    0.3893    0.2869      1288
+weighted avg     0.6052    0.4340    0.4791      1288
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005832_std0p02_confusion_matrix.csv
+
+[std=0.0300]
+std=0.0300 | loss=0.5336 | top1=67.00% | top2=80.64% | top3=100.00% | acc=66.38% | bal_acc=33.33% | macro_f1=0.2660 | weighted_f1=0.5297 | precision_macro=0.2213 | recall_macro=0.3333 | qwk=0.0000 | mae=0.4262
+ovr_roc_auc_macro=0.4579 | ovr_pr_auc_macro=0.3320
+Classification Report:
+              precision    recall  f1-score   support
+
+     COVID19     0.0000    0.0000    0.0000       116
+      NORMAL     0.0000    0.0000    0.0000       317
+   PNEUMONIA     0.6638    1.0000    0.7979       855
+
+    accuracy                         0.6638      1288
+   macro avg     0.2213    0.3333    0.2660      1288
+weighted avg     0.4407    0.6638    0.5297      1288
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\chest-x-ray-image_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005832_std0p03_confusion_matrix.csv
+

@@ -8,7 +8,11 @@ import importlib.util
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Iterable, Optional, Sequence, Tuple
+
+
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 def discover_model_scripts(directory: Path, pattern: str = 'ResNet*.py', exclude_suffixes: Sequence[str] = ()):
@@ -117,12 +121,67 @@ def resolve_output_path(raw_output: str, log_dir: Path, checkpoint_path: Path) -
     return (log_dir / f'checkpoint_eval_{stem}_{timestamp}.csv').resolve()
 
 
+def parse_float_list(raw_values: str) -> list[float]:
+    values = []
+    seen = set()
+    for chunk in raw_values.split(','):
+        token = chunk.strip()
+        if not token:
+            continue
+        value = float(token)
+        if value < 0:
+            raise ValueError(f'Noise/std values must be non-negative, got {value}')
+        key = f'{value:.10f}'
+        if key in seen:
+            continue
+        seen.add(key)
+        values.append(value)
+    return values
+
+
+def slugify_float(value: float) -> str:
+    text = f'{float(value):.6f}'.rstrip('0').rstrip('.')
+    if not text:
+        text = '0'
+    return text.replace('-', 'm').replace('.', 'p')
+
+
 def save_summary(row, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w', encoding='utf-8-sig', newline='') as fp:
         writer = csv.DictWriter(fp, fieldnames=list(row.keys()))
         writer.writeheader()
         writer.writerow(row)
+
+
+def save_rows(rows: Iterable[dict], output_path: Path) -> None:
+    rows = list(rows)
+    if not rows:
+        raise ValueError('save_rows() requires at least one row.')
+
+    fieldnames = []
+    seen = set()
+    for row in rows:
+        for key in row.keys():
+            if key in seen:
+                continue
+            seen.add(key)
+            fieldnames.append(key)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8-sig', newline='') as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def save_text_report(lines: Sequence[str], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as fp:
+        fp.write('\n'.join(lines))
+        if lines:
+            fp.write('\n')
+    return output_path
 
 
 def save_confusion_matrix(confusion_matrix, class_names: Sequence[str], output_path: Path) -> Path:
@@ -153,3 +212,110 @@ def format_top_metrics(test_top) -> str:
     for key, value in sorted(test_top.items(), key=sort_key):
         parts.append(f'{key}={value * 100:.2f}%')
     return ' | '.join(parts)
+
+
+class GaussianNoiseDataset:
+    def __init__(
+        self,
+        base_dataset,
+        noise_std: float,
+        seed: int,
+        mean: Sequence[float] = IMAGENET_MEAN,
+        std: Sequence[float] = IMAGENET_STD,
+    ):
+        self.base_dataset = base_dataset
+        self.noise_std = float(noise_std)
+        self.seed = int(seed)
+        self.mean = tuple(float(item) for item in mean)
+        self.std = tuple(float(item) for item in std)
+
+    def __len__(self) -> int:
+        return len(self.base_dataset)
+
+    def __getitem__(self, index: int):
+        import torch
+
+        x, y = self.base_dataset[index]
+        if self.noise_std <= 0:
+            return x, y
+        if not torch.is_tensor(x):
+            raise TypeError('GaussianNoiseDataset expects the base dataset to return tensors.')
+
+        mean = torch.tensor(self.mean, dtype=x.dtype).view(-1, 1, 1)
+        std = torch.tensor(self.std, dtype=x.dtype).view(-1, 1, 1)
+        if mean.size(0) != x.size(0):
+            mean = mean[:1].expand(x.size(0), -1, -1)
+            std = std[:1].expand(x.size(0), -1, -1)
+
+        generator = torch.Generator()
+        generator.manual_seed(self.seed + int(index))
+        noise = torch.randn(x.shape, generator=generator, dtype=x.dtype)
+
+        x_01 = torch.clamp(x * std + mean, 0.0, 1.0)
+        x_01 = torch.clamp(x_01 + noise * self.noise_std, 0.0, 1.0)
+        x = (x_01 - mean) / std
+        return x, y
+
+    def __getattr__(self, name):
+        # On Windows, DataLoader workers use spawn and may look up attributes
+        # while the dataset object is still being unpickled. Guard against
+        # recursive fallback before base_dataset is restored.
+        base_dataset = self.__dict__.get('base_dataset')
+        if base_dataset is None:
+            raise AttributeError(name)
+        return getattr(base_dataset, name)
+
+
+def build_gaussian_noise_loader(
+    loader,
+    noise_std: float,
+    seed: int,
+    mean: Sequence[float] = IMAGENET_MEAN,
+    std: Sequence[float] = IMAGENET_STD,
+):
+    import torch.utils.data as data
+
+    dataset = GaussianNoiseDataset(
+        base_dataset=loader.dataset,
+        noise_std=noise_std,
+        seed=seed,
+        mean=mean,
+        std=std,
+    )
+
+    kwargs = {
+        'batch_size': loader.batch_size,
+        'shuffle': False,
+        'num_workers': loader.num_workers,
+        'collate_fn': loader.collate_fn,
+        'pin_memory': loader.pin_memory,
+        'drop_last': loader.drop_last,
+    }
+
+    worker_init_fn = getattr(loader, 'worker_init_fn', None)
+    if worker_init_fn is not None:
+        kwargs['worker_init_fn'] = worker_init_fn
+
+    timeout = getattr(loader, 'timeout', 0)
+    if timeout:
+        kwargs['timeout'] = timeout
+
+    generator = getattr(loader, 'generator', None)
+    if generator is not None:
+        kwargs['generator'] = generator
+
+    multiprocessing_context = getattr(loader, 'multiprocessing_context', None)
+    if multiprocessing_context is not None:
+        kwargs['multiprocessing_context'] = multiprocessing_context
+
+    if loader.num_workers > 0:
+        kwargs['persistent_workers'] = getattr(loader, 'persistent_workers', False)
+        prefetch_factor = getattr(loader, 'prefetch_factor', None)
+        if prefetch_factor is not None:
+            kwargs['prefetch_factor'] = prefetch_factor
+
+    pin_memory_device = getattr(loader, 'pin_memory_device', '')
+    if pin_memory_device:
+        kwargs['pin_memory_device'] = pin_memory_device
+
+    return data.DataLoader(dataset, **kwargs)

@@ -30,17 +30,22 @@ from chest_xray_loss_experiment_common import (  # noqa: E402
     set_seed,
 )
 from checkpoint_eval_shared import (  # noqa: E402
+    build_gaussian_noise_loader,
     discover_model_scripts,
     format_top_metrics,
     infer_checkpoint_details,
     infer_dast_hparams_from_text,
     load_model_builder,
     normalize_script_path,
+    parse_float_list,
     print_confusion_matrix,
     resolve_device,
     resolve_output_path,
+    save_rows,
     save_confusion_matrix,
     save_summary,
+    save_text_report,
+    slugify_float,
 )
 from medical_losses import DistanceAwareSoftTargetLoss  # noqa: E402
 
@@ -64,6 +69,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--dast-tau', type=float, default=None, help='Optional DAST tau override for loss reconstruction.')
     parser.add_argument('--dast-gamma', type=float, default=None, help='Optional DAST gamma override for loss reconstruction.')
     parser.add_argument('--output', default='', help='Optional CSV output path. Defaults to logs/checkpoint_eval_<timestamp>.csv.')
+    parser.add_argument(
+        '--gaussian-noise-stds',
+        default='',
+        help='Optional comma-separated Gaussian noise std list in pixel space, for example "0,0.05,0.1,0.15,0.2".',
+    )
+    parser.add_argument(
+        '--gaussian-noise-seed',
+        type=int,
+        default=SEED,
+        help='Deterministic seed used for Gaussian noise generation. Default: experiment seed.',
+    )
     parser.add_argument('--list-models', action='store_true', help='List available model scripts and exit.')
     return parser.parse_args()
 
@@ -102,6 +118,8 @@ def build_summary_row(
     dast_tau: Optional[float],
     dast_gamma: Optional[float],
     device,
+    gaussian_noise_std: Optional[float] = None,
+    gaussian_noise_seed: Optional[int] = None,
 ) -> Dict[str, object]:
     row = {
         'checkpoint_path': str(checkpoint_path),
@@ -111,6 +129,8 @@ def build_summary_row(
         'dast_tau': dast_tau,
         'dast_gamma': dast_gamma,
         'device': str(device),
+        'gaussian_noise_std': gaussian_noise_std,
+        'gaussian_noise_seed': gaussian_noise_seed,
         'num_classes': data_bundle.num_classes,
         'test_size': data_bundle.split_sizes['test'],
         'test_loss': test_loss,
@@ -173,6 +193,9 @@ def main() -> None:
     test_dir = Path(args.test_dir or os.getenv('CHESTXRAY_TEST_DIR', str(data_root / 'test'))).resolve()
     device = resolve_device(args.device)
     output_path = resolve_output_path(args.output, LOG_DIR, checkpoint_path)
+    noise_stds = parse_float_list(args.gaussian_noise_stds)
+    if noise_stds and not args.output:
+        output_path = output_path.with_name(output_path.name.replace('checkpoint_eval_', 'gaussian_noise_eval_', 1))
 
     set_seed(SEED)
     data_bundle = build_chestxray_dataloaders(
@@ -200,6 +223,116 @@ def main() -> None:
     )
     load_checkpoint_states(checkpoint_path, model, device, criterion=criterion)
 
+    if noise_stds:
+        rows = []
+        log_lines = [
+            'Gaussian Noise Robustness Analysis',
+            f'Device: {device}',
+            f'Data root: {data_root}',
+            f'Train dir: {train_dir}',
+            f'Test dir: {test_dir}',
+            f'Model script: {model_script_path.name}',
+            f'Checkpoint: {checkpoint_path}',
+            f'Loss: {loss_name}',
+            f'Noise stds: {", ".join(f"{value:.4f}" for value in noise_stds)}',
+            f'Noise seed: {args.gaussian_noise_seed}',
+        ]
+        if run_tag:
+            log_lines.append(f'Run tag: {run_tag}')
+        if loss_name == 'dast':
+            log_lines.append(f'DAST hparams: tau={dast_tau if dast_tau is not None else 1.0}, gamma={dast_gamma if dast_gamma is not None else 1.5}')
+        log_lines.extend([
+            f'Classes ({data_bundle.num_classes}): {data_bundle.class_names}',
+            (
+                f"Split sizes | train={data_bundle.split_sizes['train']}, "
+                f"valid={data_bundle.split_sizes['valid']}, test={data_bundle.split_sizes['test']}"
+            ),
+            f'Model params: {count_parameters(model):,}',
+            f'Criterion: {criterion.__class__.__name__} | trainable_params={count_parameters(criterion):,}',
+            '',
+        ])
+
+        print(f'Device: {device}')
+        if str(device) == 'cuda':
+            import torch
+            print(f'CUDA: {torch.cuda.get_device_name(0)}')
+        print(f'Gaussian noise robustness analysis for stds: {[round(value, 4) for value in noise_stds]}')
+
+        for noise_std in noise_stds:
+            eval_loader = data_bundle.test_loader
+            if noise_std > 0:
+                eval_loader = build_gaussian_noise_loader(
+                    data_bundle.test_loader,
+                    noise_std=noise_std,
+                    seed=args.gaussian_noise_seed,
+                )
+
+            test_loss, test_top, test_metrics = evaluate(
+                model=model,
+                loader=eval_loader,
+                criterion=criterion,
+                device=device,
+                loss_name=loss_name,
+                num_classes=data_bundle.num_classes,
+                class_names=data_bundle.class_names,
+                topk=DEFAULT_TOPK,
+            )
+
+            row = build_summary_row(
+                checkpoint_path=checkpoint_path,
+                model_script=model_script_path,
+                loss_name=loss_name,
+                run_tag=run_tag,
+                data_bundle=data_bundle,
+                test_loss=test_loss,
+                test_top=test_top,
+                test_metrics=test_metrics,
+                dast_tau=dast_tau,
+                dast_gamma=dast_gamma,
+                device=device,
+                gaussian_noise_std=noise_std,
+                gaussian_noise_seed=args.gaussian_noise_seed,
+            )
+            rows.append(row)
+
+            per_std_output = output_path.with_name(
+                f'{output_path.stem}_std{slugify_float(noise_std)}{output_path.suffix}'
+            )
+            matrix_path = save_confusion_matrix(test_metrics['confusion_matrix'], data_bundle.class_names, per_std_output)
+
+            summary_line = (
+                f'std={noise_std:.4f} | loss={test_loss:.4f} | {format_top_metrics(test_top)} | '
+                f"acc={test_metrics['acc'] * 100:.2f}% | bal_acc={test_metrics['balanced_acc'] * 100:.2f}% | "
+                f"macro_f1={test_metrics['macro_f1']:.4f} | weighted_f1={test_metrics['weighted_f1']:.4f} | "
+                f"precision_macro={test_metrics['precision_macro']:.4f} | recall_macro={test_metrics['recall_macro']:.4f} | "
+                f"qwk={test_metrics['qwk']:.4f} | mae={test_metrics['mae']:.4f}"
+            )
+            print(summary_line)
+            log_lines.extend([
+                f'[std={noise_std:.4f}]',
+                summary_line,
+            ])
+            if test_metrics['ovr_roc_auc_macro'] is not None:
+                auc_line = (
+                    f"ovr_roc_auc_macro={test_metrics['ovr_roc_auc_macro']:.4f} | "
+                    f"ovr_pr_auc_macro={test_metrics['ovr_pr_auc_macro']:.4f}"
+                )
+                print(f'  {auc_line}')
+                log_lines.append(auc_line)
+            log_lines.extend([
+                'Classification Report:',
+                str(test_metrics['classification_report']),
+                f'Confusion matrix CSV: {matrix_path}',
+                '',
+            ])
+
+        # save_rows(rows, output_path)
+        log_path = save_text_report(log_lines, output_path.with_suffix('.log'))
+        print('')
+        # print(f'Saved robustness CSV: {output_path}')
+        print(f'Saved robustness log: {log_path}')
+        return
+
     test_loss, test_top, test_metrics = evaluate(
         model=model,
         loader=data_bundle.test_loader,
@@ -223,6 +356,8 @@ def main() -> None:
         dast_tau=dast_tau,
         dast_gamma=dast_gamma,
         device=device,
+        gaussian_noise_std=0.0,
+        gaussian_noise_seed=None,
     )
     save_summary(row, output_path)
     matrix_path = save_confusion_matrix(test_metrics['confusion_matrix'], data_bundle.class_names, output_path)

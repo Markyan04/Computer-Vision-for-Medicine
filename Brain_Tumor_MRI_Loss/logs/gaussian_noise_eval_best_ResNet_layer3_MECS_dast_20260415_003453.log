@@ -1,0 +1,101 @@
+Gaussian Noise Robustness Analysis
+Device: cuda
+Data root: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI
+Train dir: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI\Training
+Test dir: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI\Testing
+Model script: ResNet_layer3+MECS.py
+Checkpoint: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\special\best_ResNet_layer3+MECS_dast.pt
+Loss: dast
+Noise stds: 0.0000, 0.0500, 0.1000, 0.1500, 0.2000
+Noise seed: 1234
+DAST hparams: tau=default, gamma=default
+Classes (4): ['glioma', 'meningioma', 'notumor', 'pituitary']
+Split sizes | train=5040, valid=560, test=1600
+Model params: 27,303,236
+Criterion: DistanceAwareSoftTargetLoss | trainable_params=0
+
+[std=0.0000]
+std=0.0000 | loss=0.4772 | top1=95.62% | top2=96.81% | acc=95.62% | bal_acc=95.62% | macro_f1=0.9554 | weighted_f1=0.9554 | precision_macro=0.9589 | recall_macro=0.9563 | qwk=0.9580 | mae=0.0631
+ovr_roc_auc_macro=0.9890 | ovr_pr_auc_macro=0.9750
+Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     0.9941    0.8425    0.9120       400
+  meningioma     0.9144    0.9875    0.9495       400
+     notumor     0.9346    1.0000    0.9662       400
+   pituitary     0.9925    0.9950    0.9938       400
+
+    accuracy                         0.9563      1600
+   macro avg     0.9589    0.9563    0.9554      1600
+weighted avg     0.9589    0.9563    0.9554      1600
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_003453_std0_confusion_matrix.csv
+
+[std=0.0500]
+std=0.0500 | loss=0.8317 | top1=40.00% | top2=61.62% | acc=40.00% | bal_acc=40.00% | macro_f1=0.3046 | weighted_f1=0.3046 | precision_macro=0.7169 | recall_macro=0.4000 | qwk=0.2881 | mae=0.7681
+ovr_roc_auc_macro=0.8680 | ovr_pr_auc_macro=0.7127
+Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     1.0000    0.0275    0.0535       400
+  meningioma     0.5698    0.5000    0.5326       400
+     notumor     0.3311    1.0000    0.4975       400
+   pituitary     0.9667    0.0725    0.1349       400
+
+    accuracy                         0.4000      1600
+   macro avg     0.7169    0.4000    0.3046      1600
+weighted avg     0.7169    0.4000    0.3046      1600
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_003453_std0p05_confusion_matrix.csv
+
+[std=0.1000]
+std=0.1000 | loss=2.2583 | top1=25.00% | top2=50.25% | acc=25.00% | bal_acc=25.00% | macro_f1=0.1000 | weighted_f1=0.1000 | precision_macro=0.0625 | recall_macro=0.2500 | qwk=0.0000 | mae=1.0000
+ovr_roc_auc_macro=0.5490 | ovr_pr_auc_macro=0.2936
+Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     0.0000    0.0000    0.0000       400
+  meningioma     0.0000    0.0000    0.0000       400
+     notumor     0.2500    1.0000    0.4000       400
+   pituitary     0.0000    0.0000    0.0000       400
+
+    accuracy                         0.2500      1600
+   macro avg     0.0625    0.2500    0.1000      1600
+weighted avg     0.0625    0.2500    0.1000      1600
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_003453_std0p1_confusion_matrix.csv
+
+[std=0.1500]
+std=0.1500 | loss=5.6827 | top1=25.00% | top2=52.19% | acc=25.00% | bal_acc=25.00% | macro_f1=0.1000 | weighted_f1=0.1000 | precision_macro=0.0625 | recall_macro=0.2500 | qwk=0.0000 | mae=1.0000
+ovr_roc_auc_macro=0.5591 | ovr_pr_auc_macro=0.3008
+Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     0.0000    0.0000    0.0000       400
+  meningioma     0.0000    0.0000    0.0000       400
+     notumor     0.2500    1.0000    0.4000       400
+   pituitary     0.0000    0.0000    0.0000       400
+
+    accuracy                         0.2500      1600
+   macro avg     0.0625    0.2500    0.1000      1600
+weighted avg     0.0625    0.2500    0.1000      1600
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_003453_std0p15_confusion_matrix.csv
+
+[std=0.2000]
+std=0.2000 | loss=8.3520 | top1=25.06% | top2=49.38% | acc=25.06% | bal_acc=25.06% | macro_f1=0.1014 | weighted_f1=0.1014 | precision_macro=0.1252 | recall_macro=0.2506 | qwk=0.0017 | mae=1.0000
+ovr_roc_auc_macro=0.5401 | ovr_pr_auc_macro=0.2856
+Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     0.2500    0.0025    0.0050       400
+  meningioma     0.0000    0.0000    0.0000       400
+     notumor     0.2506    1.0000    0.4008       400
+   pituitary     0.0000    0.0000    0.0000       400
+
+    accuracy                         0.2506      1600
+   macro avg     0.1252    0.2506    0.1014      1600
+weighted avg     0.1252    0.2506    0.1014      1600
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Brain_Tumor_MRI_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_003453_std0p2_confusion_matrix.csv
+

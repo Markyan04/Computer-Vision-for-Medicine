@@ -1,0 +1,94 @@
+Gaussian Noise Robustness Analysis
+Device: cuda
+Data dir: E:\Paper\Computer-Vision-for-Medicine\ISIC
+Model script: ResNet_layer3+MECS.py
+Checkpoint: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\checkpoints\best_ResNet_layer3+MECS_dast.pt
+Loss: dast
+Noise stds: 0.0000, 0.0100, 0.0200, 0.0300
+Noise seed: 1234
+DAST hparams: tau=default, gamma=default
+Classes (7): ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
+Split sizes | train=7210, valid=802, test=2003
+Model params: 27,309,383
+Criterion: DistanceAwareSoftTargetLoss | trainable_params=0
+
+[std=0.0000]
+std=0.0000 | loss=0.8104 | top1=88.21% | top3=96.54% | acc=88.17% | bal_acc=77.80% | macro_f1=0.8127 | weighted_f1=0.8794 | precision_macro=0.8604 | recall_macro=0.7780 | qwk=0.8781 | mae=0.2132
+ovr_roc_auc_macro=0.9575 | ovr_pr_auc_macro=0.8465
+Classification Report:
+              precision    recall  f1-score   support
+
+       akiec     0.7619    0.7385    0.7500        65
+         bcc     0.8381    0.8544    0.8462       103
+         bkl     0.8564    0.7318    0.7892       220
+          df     1.0000    0.6522    0.7895        23
+         mel     0.6854    0.6547    0.6697       223
+          nv     0.9211    0.9575    0.9389      1341
+        vasc     0.9600    0.8571    0.9057        28
+
+    accuracy                         0.8817      2003
+   macro avg     0.8604    0.7780    0.8127      2003
+weighted avg     0.8798    0.8817    0.8794      2003
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005640_std0_confusion_matrix.csv
+
+[std=0.0100]
+std=0.0100 | loss=0.8845 | top1=83.20% | top3=94.15% | acc=83.13% | bal_acc=68.36% | macro_f1=0.7206 | weighted_f1=0.8334 | precision_macro=0.8062 | recall_macro=0.6836 | qwk=0.7893 | mae=0.3170
+ovr_roc_auc_macro=0.9463 | ovr_pr_auc_macro=0.7542
+Classification Report:
+              precision    recall  f1-score   support
+
+       akiec     0.9259    0.3846    0.5435        65
+         bcc     0.8955    0.5825    0.7059       103
+         bkl     0.6864    0.7364    0.7105       220
+          df     0.7000    0.6087    0.6512        23
+         mel     0.5097    0.7040    0.5913       223
+          nv     0.9258    0.9120    0.9189      1341
+        vasc     1.0000    0.8571    0.9231        28
+
+    accuracy                         0.8313      2003
+   macro avg     0.8062    0.6836    0.7206      2003
+weighted avg     0.8501    0.8313    0.8334      2003
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005640_std0p01_confusion_matrix.csv
+
+[std=0.0200]
+std=0.0200 | loss=1.0104 | top1=78.72% | top3=89.90% | acc=78.68% | bal_acc=50.61% | macro_f1=0.5231 | weighted_f1=0.7667 | precision_macro=0.7676 | recall_macro=0.5061 | qwk=0.6698 | mae=0.4244
+ovr_roc_auc_macro=0.9087 | ovr_pr_auc_macro=0.6033
+Classification Report:
+              precision    recall  f1-score   support
+
+       akiec     1.0000    0.0462    0.0882        65
+         bcc     1.0000    0.1553    0.2689       103
+         bkl     0.5654    0.6091    0.5864       220
+          df     0.4483    0.5652    0.5000        23
+         mel     0.4745    0.5830    0.5231       223
+          nv     0.8850    0.9411    0.9122      1341
+        vasc     1.0000    0.6429    0.7826        28
+
+    accuracy                         0.7868      2003
+   macro avg     0.7676    0.5061    0.5231      2003
+weighted avg     0.8104    0.7868    0.7667      2003
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005640_std0p02_confusion_matrix.csv
+
+[std=0.0300]
+std=0.0300 | loss=1.1030 | top1=74.50% | top3=87.66% | acc=74.44% | bal_acc=32.53% | macro_f1=0.3421 | weighted_f1=0.7044 | precision_macro=0.5881 | recall_macro=0.3253 | qwk=0.5893 | mae=0.5092
+ovr_roc_auc_macro=0.8686 | ovr_pr_auc_macro=0.4663
+Classification Report:
+              precision    recall  f1-score   support
+
+       akiec     0.0000    0.0000    0.0000        65
+         bcc     1.0000    0.0291    0.0566       103
+         bkl     0.4706    0.5091    0.4891       220
+          df     0.3571    0.2174    0.2703        23
+         mel     0.4615    0.4305    0.4455       223
+          nv     0.8275    0.9478    0.8836      1341
+        vasc     1.0000    0.1429    0.2500        28
+
+    accuracy                         0.7444      2003
+   macro avg     0.5881    0.3253    0.3421      2003
+weighted avg     0.7266    0.7444    0.7044      2003
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\HAM10000_Loss\logs\gaussian_noise_eval_best_ResNet_layer3_MECS_dast_20260415_005640_std0p03_confusion_matrix.csv
+
