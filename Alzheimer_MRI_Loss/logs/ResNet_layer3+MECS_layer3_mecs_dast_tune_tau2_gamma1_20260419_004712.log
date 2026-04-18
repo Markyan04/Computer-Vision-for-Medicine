@@ -271,3 +271,52 @@ Epoch 55/60 | Time 0m21s
   Train | loss=0.8835 | top1=99.91% | top2=99.98% | top3=100.00%
   Valid | loss=0.8868 | top1=98.24% | top2=99.41% | top3=100.00% | acc=98.24% | bal_acc=98.54% | macro_f1=0.9858 | weighted_f1=0.9824 | precision_macro=0.9863 | recall_macro=0.9854 | qwk=0.9791 | mae=0.0195
         ovr_roc_auc_macro=0.9977 | ovr_pr_auc_macro=0.9963
+Epoch 56/60 | Time 0m21s
+  Train | loss=0.8835 | top1=99.91% | top2=100.00% | top3=100.00%
+  Valid | loss=0.8866 | top1=98.44% | top2=99.61% | top3=100.00% | acc=98.44% | bal_acc=98.64% | macro_f1=0.9880 | weighted_f1=0.9844 | precision_macro=0.9898 | recall_macro=0.9864 | qwk=0.9861 | mae=0.0156
+        ovr_roc_auc_macro=0.9978 | ovr_pr_auc_macro=0.9968
+  -> best macro_f1 updated to 0.9880 (epoch 56)
+Epoch 57/60 | Time 0m21s
+  Train | loss=0.8834 | top1=99.87% | top2=100.00% | top3=100.00%
+  Valid | loss=0.8864 | top1=98.44% | top2=99.61% | top3=100.00% | acc=98.44% | bal_acc=98.64% | macro_f1=0.9880 | weighted_f1=0.9844 | precision_macro=0.9898 | recall_macro=0.9864 | qwk=0.9861 | mae=0.0156
+        ovr_roc_auc_macro=0.9983 | ovr_pr_auc_macro=0.9981
+Epoch 58/60 | Time 0m21s
+  Train | loss=0.8834 | top1=99.93% | top2=100.00% | top3=100.00%
+  Valid | loss=0.8865 | top1=98.44% | top2=99.61% | top3=100.00% | acc=98.44% | bal_acc=98.64% | macro_f1=0.9880 | weighted_f1=0.9844 | precision_macro=0.9898 | recall_macro=0.9864 | qwk=0.9861 | mae=0.0156
+        ovr_roc_auc_macro=0.9984 | ovr_pr_auc_macro=0.9979
+Epoch 59/60 | Time 0m21s
+  Train | loss=0.8835 | top1=99.87% | top2=100.00% | top3=100.00%
+  Valid | loss=0.8866 | top1=98.44% | top2=99.61% | top3=100.00% | acc=98.44% | bal_acc=98.64% | macro_f1=0.9880 | weighted_f1=0.9844 | precision_macro=0.9898 | recall_macro=0.9864 | qwk=0.9861 | mae=0.0156
+        ovr_roc_auc_macro=0.9978 | ovr_pr_auc_macro=0.9958
+Epoch 60/60 | Time 0m21s
+  Train | loss=0.8835 | top1=99.87% | top2=100.00% | top3=100.00%
+  Valid | loss=0.8866 | top1=98.24% | top2=99.61% | top3=100.00% | acc=98.24% | bal_acc=98.54% | macro_f1=0.9858 | weighted_f1=0.9824 | precision_macro=0.9863 | recall_macro=0.9854 | qwk=0.9791 | mae=0.0195
+        ovr_roc_auc_macro=0.9978 | ovr_pr_auc_macro=0.9965
+
+[TEST] loss=dast
+  Test | loss=0.8859 | top1=98.28% | top2=99.92% | top3=99.92% | acc=98.28% | bal_acc=96.54% | macro_f1=0.9754 | weighted_f1=0.9828 | precision_macro=0.9862 | recall_macro=0.9654 | qwk=0.9826 | mae=0.0180
+        ovr_roc_auc_macro=0.9992 | ovr_pr_auc_macro=0.9987
+  Confusion Matrix:
+[[632   7   1   0]
+ [  6 441   1   0]
+ [  0   6 173   0]
+ [  0   0   1  12]]
+  Classification Report:
+                  precision    recall  f1-score   support
+
+     NonDemented     0.9906    0.9875    0.9890       640
+VeryMildDemented     0.9714    0.9844    0.9778       448
+    MildDemented     0.9830    0.9665    0.9746       179
+ModerateDemented     1.0000    0.9231    0.9600        13
+
+        accuracy                         0.9828      1280
+       macro avg     0.9862    0.9654    0.9754      1280
+    weighted avg     0.9829    0.9828    0.9828      1280
+
+
+==========================================================================================
+Summary CSV saved: E:\Coding\Computer-Vision-for-Medicine\Alzheimer_MRI_Loss\logs\ResNet_layer3+MECS_layer3_mecs_dast_tune_tau2_gamma1_20260419_004712_summary.csv
+Top results by test_macro_f1:
+  dast: macro_f1=0.9754, acc=98.28%, bal_acc=96.54%
+Log file saved: E:\Coding\Computer-Vision-for-Medicine\Alzheimer_MRI_Loss\logs\ResNet_layer3+MECS_layer3_mecs_dast_tune_tau2_gamma1_20260419_004712.log
+==========================================================================================
