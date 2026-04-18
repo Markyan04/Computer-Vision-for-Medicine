@@ -1,0 +1,103 @@
+Gaussian Noise Robustness Analysis
+Device: cuda
+Data root: E:\Paper\Computer-Vision-for-Medicine\Knee_Osteoarthritis
+Model script: ResNet_baseline.py
+Checkpoint: E:\Paper\Computer-Vision-for-Medicine\Knee\checkpoints\best_resnet50_knee_oa_standard_ce.pt
+Loss: ce
+Noise stds: 0.0000, 0.0050, 0.0100, 0.0150, 0.0200
+Noise seed: 1234
+Classes (5): ['0_Normal', '1_Doubtful', '2_Mild', '3_Moderate', '4_Severe']
+Split sizes | train=5778, valid=826, test=1656, auto_test=1526
+Model params: 23,518,277
+Criterion: CrossEntropyLoss | trainable_params=0
+
+[std=0.0000]
+std=0.0000 | loss=0.8211 | top1=66.29% | top2=90.20% | top3=99.16% | acc=66.12% | bal_acc=67.56% | macro_f1=0.6659 | weighted_f1=0.6583 | precision_macro=0.6727 | recall_macro=0.6756 | qwk=0.8192 | mae=0.3973
+ovr_roc_auc_macro=0.8942 | ovr_pr_auc_macro=0.7312
+Classification Report:
+              precision    recall  f1-score   support
+
+    0_Normal     0.7293    0.8263    0.7748       639
+  1_Doubtful     0.3299    0.3209    0.3253       296
+      2_Mild     0.6675    0.6242    0.6451       447
+  3_Moderate     0.9057    0.6457    0.7539       223
+    4_Severe     0.7313    0.9608    0.8305        51
+
+    accuracy                         0.6612      1656
+   macro avg     0.6727    0.6756    0.6659      1656
+weighted avg     0.6650    0.6612    0.6583      1656
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Knee\logs\gaussian_noise_eval_best_resnet50_knee_oa_standard_ce_20260415_190109_std0_confusion_matrix.csv
+
+[std=0.0050]
+std=0.0050 | loss=1.0125 | top1=50.94% | top2=87.26% | top3=99.22% | acc=50.72% | bal_acc=62.85% | macro_f1=0.5933 | weighted_f1=0.5161 | precision_macro=0.6661 | recall_macro=0.6285 | qwk=0.7347 | mae=0.5399
+ovr_roc_auc_macro=0.8745 | ovr_pr_auc_macro=0.7063
+Classification Report:
+              precision    recall  f1-score   support
+
+    0_Normal     0.8341    0.2676    0.4052       639
+  1_Doubtful     0.2497    0.6284    0.3573       296
+      2_Mild     0.6062    0.6577    0.6309       447
+  3_Moderate     0.9091    0.6278    0.7427       223
+    4_Severe     0.7313    0.9608    0.8305        51
+
+    accuracy                         0.5072      1656
+   macro avg     0.6661    0.6285    0.5933      1656
+weighted avg     0.6751    0.5072    0.5161      1656
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Knee\logs\gaussian_noise_eval_best_resnet50_knee_oa_standard_ce_20260415_190109_std0p005_confusion_matrix.csv
+
+[std=0.0100]
+std=0.0100 | loss=1.1041 | top1=49.32% | top2=79.45% | top3=97.48% | acc=49.09% | bal_acc=60.53% | macro_f1=0.5530 | weighted_f1=0.4792 | precision_macro=0.5941 | recall_macro=0.6053 | qwk=0.6490 | mae=0.6365
+ovr_roc_auc_macro=0.8515 | ovr_pr_auc_macro=0.6697
+Classification Report:
+              precision    recall  f1-score   support
+
+    0_Normal     0.8041    0.2441    0.3745       639
+  1_Doubtful     0.2540    0.4257    0.3182       296
+      2_Mild     0.4751    0.7472    0.5809       447
+  3_Moderate     0.7884    0.6682    0.7233       223
+    4_Severe     0.6486    0.9412    0.7680        51
+
+    accuracy                         0.4909      1656
+   macro avg     0.5941    0.6053    0.5530      1656
+weighted avg     0.6101    0.4909    0.4792      1656
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Knee\logs\gaussian_noise_eval_best_resnet50_knee_oa_standard_ce_20260415_190109_std0p01_confusion_matrix.csv
+
+[std=0.0150]
+std=0.0150 | loss=1.2372 | top1=44.05% | top2=72.40% | top3=94.05% | acc=43.84% | bal_acc=54.00% | macro_f1=0.4802 | weighted_f1=0.4051 | precision_macro=0.5373 | recall_macro=0.5400 | qwk=0.5173 | mae=0.7953
+ovr_roc_auc_macro=0.8210 | ovr_pr_auc_macro=0.6097
+Classification Report:
+              precision    recall  f1-score   support
+
+    0_Normal     0.8243    0.1909    0.3100       639
+  1_Doubtful     0.2287    0.1993    0.2130       296
+      2_Mild     0.3685    0.7808    0.5007       447
+  3_Moderate     0.6595    0.6861    0.6725       223
+    4_Severe     0.6056    0.8431    0.7049        51
+
+    accuracy                         0.4384      1656
+   macro avg     0.5373    0.5400    0.4802      1656
+weighted avg     0.5659    0.4384    0.4051      1656
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Knee\logs\gaussian_noise_eval_best_resnet50_knee_oa_standard_ce_20260415_190109_std0p015_confusion_matrix.csv
+
+[std=0.0200]
+std=0.0200 | loss=1.3972 | top1=38.22% | top2=68.33% | top3=89.04% | acc=38.10% | bal_acc=46.53% | macro_f1=0.3877 | weighted_f1=0.3055 | precision_macro=0.4872 | recall_macro=0.4653 | qwk=0.3542 | mae=0.9813
+ovr_roc_auc_macro=0.7771 | ovr_pr_auc_macro=0.5229
+Classification Report:
+              precision    recall  f1-score   support
+
+    0_Normal     0.7778    0.0986    0.1750       639
+  1_Doubtful     0.2319    0.0541    0.0877       296
+      2_Mild     0.3148    0.8121    0.4537       447
+  3_Moderate     0.5254    0.6951    0.5985       223
+    4_Severe     0.5862    0.6667    0.6239        51
+
+    accuracy                         0.3810      1656
+   macro avg     0.4872    0.4653    0.3877      1656
+weighted avg     0.5154    0.3810    0.3055      1656
+
+Confusion matrix CSV: E:\Paper\Computer-Vision-for-Medicine\Knee\logs\gaussian_noise_eval_best_resnet50_knee_oa_standard_ce_20260415_190109_std0p02_confusion_matrix.csv
+

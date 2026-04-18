@@ -775,7 +775,7 @@ def run_ham10000_medical_losses_experiments(
     set_seed(SEED)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "16"))
+    batch_size = int(os.getenv("HAM10000_BATCH_SIZE", "32"))
     epochs = int(os.getenv("HAM10000_EPOCHS", "50"))
     num_workers = int(os.getenv("HAM10000_NUM_WORKERS", "2"))
     image_size = int(os.getenv("HAM10000_IMAGE_SIZE", "224"))
