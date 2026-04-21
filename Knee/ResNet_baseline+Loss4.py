@@ -17,11 +17,13 @@ Knee_Osteoarthritis/
 ...
 """
 
+import csv
 import os
 import time
 import random
 import warnings
 
+from datetime import datetime
 from pathlib import Path
 import sys
 
@@ -62,6 +64,30 @@ from medical_losses import DistanceAwareSoftTargetLoss
 warnings.filterwarnings("ignore")
 
 
+def sanitize_run_tag(run_tag: str) -> str:
+    cleaned = "".join(ch if ch.isalnum() or ch in "._-" else "-" for ch in run_tag.strip())
+    while "--" in cleaned:
+        cleaned = cleaned.replace("--", "-")
+    return cleaned.strip("-._")
+
+
+def resolve_checkpoint_path(filename: str, run_suffix: str) -> Path:
+    checkpoint_name = Path(filename)
+    if run_suffix:
+        checkpoint_dir = THIS_DIR / "checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        return (checkpoint_dir / f"{checkpoint_name.stem}{run_suffix}{checkpoint_name.suffix}").resolve()
+    return (THIS_DIR / filename).resolve()
+
+
+def write_summary_row(summary_path: Path, row: dict) -> None:
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(summary_path, "w", encoding="utf-8-sig", newline="") as fp:
+        writer = csv.DictWriter(fp, fieldnames=list(row.keys()))
+        writer.writeheader()
+        writer.writerow(row)
+
+
 # =======================
 # Early Stopping
 # =======================
@@ -89,6 +115,7 @@ class EarlyStopping:
                 self.save_path,
             )
             print(f" Initial best model saved to {self.save_path} (QWK={score:.4f})")
+            return True
 
         elif score > self.best_score + self.delta:
             self.best_score = score
@@ -101,6 +128,7 @@ class EarlyStopping:
                 self.save_path,
             )
             print(f" Validation improved. Saved best model to {self.save_path} (QWK={score:.4f})")
+            return True
 
         else:
             self.num_bad_epochs += 1
@@ -108,7 +136,8 @@ class EarlyStopping:
 
         if self.num_bad_epochs >= self.patience:
             self.early_stop = True
-            print("⏹ Early stopping triggered.")
+            print("Early stopping triggered.")
+        return False
 
 
 # =======================
@@ -125,19 +154,24 @@ torch.backends.cudnn.benchmark = False
 # =======================
 # Config
 # =======================
-DATA_ROOT = r"../Knee_Osteoarthritis"
+DATA_ROOT = os.getenv("KNEE_DATA_ROOT", str((PROJECT_ROOT / "Knee_Osteoarthritis").resolve()))
 
-IMG_SIZE = 224
-BATCH_SIZE = 32
-EPOCHS = 50
+IMG_SIZE = int(os.getenv("KNEE_IMAGE_SIZE", "224"))
+BATCH_SIZE = int(os.getenv("KNEE_BATCH_SIZE", "32"))
+EPOCHS = int(os.getenv("KNEE_EPOCHS", "60"))
 
-LR_BACKBONE = 1e-4
-LR_HEAD = 1e-3
-WEIGHT_DECAY = 1e-4
+LR_BACKBONE = float(os.getenv("KNEE_LR_BACKBONE", "1e-4"))
+LR_HEAD = float(os.getenv("KNEE_LR_HEAD", "1e-3"))
+WEIGHT_DECAY = float(os.getenv("KNEE_WEIGHT_DECAY", "1e-4"))
 
-NUM_WORKERS = 4
-PATIENCE = 10
-EARLY_STOP_DELTA = 1e-4
+NUM_WORKERS = int(os.getenv("KNEE_NUM_WORKERS", "2"))
+PATIENCE = int(os.getenv("KNEE_PATIENCE", "15"))
+EARLY_STOP_DELTA = float(os.getenv("KNEE_EARLY_DELTA", "1e-4"))
+DAST_TAU = float(os.getenv("KNEE_DAST_TAU", "1.0"))
+DAST_GAMMA = float(os.getenv("KNEE_DAST_GAMMA", "1.5"))
+RUN_TAG = sanitize_run_tag(os.getenv("KNEE_RUN_TAG", ""))
+RUN_SUFFIX = f"_{RUN_TAG}" if RUN_TAG else ""
+LOGS_DIR = THIS_DIR / "logs"
 
 TOPK = (1, 2, 3)
 
@@ -211,6 +245,10 @@ def epoch_time(start_time, end_time):
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def top_value(metrics, key):
+    return metrics.get(key)
 
 
 def print_dataset_stats(name, dataset):
@@ -399,10 +437,28 @@ def main():
     print(f"Using device: {device}")
     if torch.cuda.is_available():
         print(f"CUDA device: {torch.cuda.get_device_name(0)}")
+    if RUN_TAG:
+        print(f"Run tag: {RUN_TAG}")
+
+    if DAST_TAU <= 0:
+        raise ValueError("KNEE_DAST_TAU must be > 0.")
+    if DAST_GAMMA < 0:
+        raise ValueError("KNEE_DAST_GAMMA must be >= 0.")
 
     if not os.path.exists(DATA_ROOT):
-        print(f"DATA_ROOT not found: {DATA_ROOT}")
-        return
+        raise FileNotFoundError(f"DATA_ROOT not found: {DATA_ROOT}")
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    summary_path = (LOGS_DIR / f"ResNet_baseline+Loss4{RUN_SUFFIX}_{timestamp}_summary.csv").resolve()
+
+    print(f"Data root: {DATA_ROOT}")
+    print(
+        "Config | "
+        f"img_size={IMG_SIZE}, batch_size={BATCH_SIZE}, epochs={EPOCHS}, "
+        f"num_workers={NUM_WORKERS}, lr_backbone={LR_BACKBONE}, lr_head={LR_HEAD}, "
+        f"weight_decay={WEIGHT_DECAY}, patience={PATIENCE}, early_delta={EARLY_STOP_DELTA}"
+    )
+    print(f"DAST config | tau={DAST_TAU:.4f}, gamma={DAST_GAMMA:.4f}")
 
     train_loader, valid_loader, test_loader, auto_test_loader, train_dataset = make_dataloaders()
 
@@ -427,7 +483,11 @@ def main():
     print(f"\n[INFO] Class counts in training set: {class_counts}")
 
     # ===== 核心修改处：使用 Distance-Aware Soft Target Loss =====
-    criterion = DistanceAwareSoftTargetLoss(num_classes=NUM_CLASSES, tau=1.0, gamma=1.5)
+    criterion = DistanceAwareSoftTargetLoss(
+        num_classes=NUM_CLASSES,
+        tau=DAST_TAU,
+        gamma=DAST_GAMMA,
+    )
     criterion = criterion.to(device)
     print("\n[INFO] Using Distance-Aware Soft Target Loss (DAST)")
     print("       - Feature: Clinically-aware ordinal grading")
@@ -459,12 +519,18 @@ def main():
         anneal_strategy="cos",
     )
 
-    best_path = "best_resnet50_knee_oa_DAST.pt"
+    best_path = resolve_checkpoint_path("best_resnet50_knee_oa_DAST.pt", RUN_SUFFIX)
     early_stopping = EarlyStopping(
         patience=PATIENCE,
         delta=EARLY_STOP_DELTA,
-        save_path=best_path,
+        save_path=str(best_path),
     )
+
+    best_epoch = 0
+    best_valid_loss = float("inf")
+    best_valid_macro_f1 = float("nan")
+    best_valid_qwk = float("nan")
+    trained_epochs = 0
 
     print("Starting training...")
     for epoch in range(EPOCHS):
@@ -480,6 +546,7 @@ def main():
 
         end_time = time.time()
         epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+        trained_epochs = epoch + 1
 
         print(f"\nEpoch {epoch + 1:02d}/{EPOCHS} | Time {epoch_mins}m {epoch_secs}s")
         print(
@@ -505,7 +572,12 @@ def main():
                 f" | ovr_pr_auc_macro={valid_metrics['ovr_pr_auc_macro']:.4f}"
             )
 
-        early_stopping(valid_metrics["qwk"], model)
+        improved = early_stopping(valid_metrics["qwk"], model)
+        if improved:
+            best_epoch = epoch + 1
+            best_valid_loss = valid_loss
+            best_valid_macro_f1 = valid_metrics["macro_f1"]
+            best_valid_qwk = valid_metrics["qwk"]
 
         if early_stopping.early_stop:
             print(f" Training stopped early at epoch {epoch + 1}.")
@@ -545,6 +617,36 @@ def main():
     print("\nClassification Report:")
     print(test_metrics["classification_report"])
 
+    summary_row = {
+        "script_name": "ResNet_baseline+Loss4.py",
+        "loss_name": "dast",
+        "status": "success",
+        "run_tag": RUN_TAG,
+        "dast_tau": DAST_TAU,
+        "dast_gamma": DAST_GAMMA,
+        "trained_epochs": trained_epochs,
+        "best_epoch": best_epoch,
+        "best_valid_loss": best_valid_loss,
+        "best_valid_macro_f1": best_valid_macro_f1,
+        "best_valid_qwk": best_valid_qwk,
+        "test_loss": test_loss,
+        "test_top1": top_value(test_top, "top1"),
+        "test_top2": top_value(test_top, "top2"),
+        "test_top3": top_value(test_top, "top3"),
+        "test_acc": test_metrics["acc"],
+        "test_balanced_acc": test_metrics["balanced_acc"],
+        "test_macro_f1": test_metrics["macro_f1"],
+        "test_weighted_f1": test_metrics["weighted_f1"],
+        "test_precision_macro": test_metrics["precision_macro"],
+        "test_recall_macro": test_metrics["recall_macro"],
+        "test_qwk": test_metrics["qwk"],
+        "test_mae": test_metrics["mae"],
+        "test_ovr_roc_auc_macro": test_metrics["ovr_roc_auc_macro"],
+        "test_ovr_pr_auc_macro": test_metrics["ovr_pr_auc_macro"],
+        "checkpoint_path": str(best_path),
+        "summary_path": str(summary_path),
+    }
+
     if auto_test_loader is not None:
         print("\nEvaluating on auto_test set...")
         auto_test_loss, auto_test_top, auto_test_metrics = evaluate(
@@ -569,7 +671,24 @@ def main():
                 f"         ovr_roc_auc_macro={auto_test_metrics['ovr_roc_auc_macro']:.4f}"
                 f" | ovr_pr_auc_macro={auto_test_metrics['ovr_pr_auc_macro']:.4f}"
             )
+        summary_row["auto_test_loss"] = auto_test_loss
+        summary_row["auto_test_top1"] = top_value(auto_test_top, "top1")
+        summary_row["auto_test_top2"] = top_value(auto_test_top, "top2")
+        summary_row["auto_test_top3"] = top_value(auto_test_top, "top3")
+        summary_row["auto_test_acc"] = auto_test_metrics["acc"]
+        summary_row["auto_test_balanced_acc"] = auto_test_metrics["balanced_acc"]
+        summary_row["auto_test_macro_f1"] = auto_test_metrics["macro_f1"]
+        summary_row["auto_test_weighted_f1"] = auto_test_metrics["weighted_f1"]
+        summary_row["auto_test_precision_macro"] = auto_test_metrics["precision_macro"]
+        summary_row["auto_test_recall_macro"] = auto_test_metrics["recall_macro"]
+        summary_row["auto_test_qwk"] = auto_test_metrics["qwk"]
+        summary_row["auto_test_mae"] = auto_test_metrics["mae"]
+        summary_row["auto_test_ovr_roc_auc_macro"] = auto_test_metrics["ovr_roc_auc_macro"]
+        summary_row["auto_test_ovr_pr_auc_macro"] = auto_test_metrics["ovr_pr_auc_macro"]
 
+    write_summary_row(summary_path, summary_row)
+    print(f"Summary CSV saved: {summary_path}")
+    print(f"Checkpoint saved: {best_path}")
     print("\nKnee Osteoarthritis ResNet50 baseline (DAST) completed!")
 
 

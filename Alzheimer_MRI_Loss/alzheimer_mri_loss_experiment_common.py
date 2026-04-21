@@ -36,9 +36,15 @@ from sklearn.model_selection import train_test_split
 THIS_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = THIS_DIR.parent
 CHEST_LOSS_DIR = PROJECT_ROOT / "chest-x-ray-image_Loss"
-for path in (PROJECT_ROOT, CHEST_LOSS_DIR, THIS_DIR):
-    if str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+preferred_sys_path_order = (
+    str(THIS_DIR),
+    str(PROJECT_ROOT),
+    str(CHEST_LOSS_DIR),
+)
+for path_str in reversed(preferred_sys_path_order):
+    if path_str in sys.path:
+        sys.path.remove(path_str)
+    sys.path.insert(0, path_str)
 
 from chest_xray_loss_experiment_common import (  # noqa: E402
     DEFAULT_LOSS_ORDER as CHEST_SUPPORTED_LOSS_ORDER,
@@ -300,11 +306,11 @@ def run_alzheimer_mri_medical_losses_experiments(
     test_ratio = float(os.getenv("ALZHEIMER_TEST_RATIO", "0.2"))
     val_ratio = float(os.getenv("ALZHEIMER_VAL_RATIO", "0.1"))
     batch_size = int(os.getenv("ALZHEIMER_BATCH_SIZE", "32"))
-    epochs = int(os.getenv("ALZHEIMER_EPOCHS", "60"))
+    epochs = int(os.getenv("ALZHEIMER_EPOCHS", "50"))
     num_workers = int(os.getenv("ALZHEIMER_NUM_WORKERS", "2"))
     image_size = int(os.getenv("ALZHEIMER_IMAGE_SIZE", "224"))
     base_lr = float(os.getenv("ALZHEIMER_BASE_LR", "1e-4"))
-    patience = int(os.getenv("ALZHEIMER_PATIENCE", "15"))
+    patience = int(os.getenv("ALZHEIMER_PATIENCE", "10"))
     early_delta = float(os.getenv("ALZHEIMER_EARLY_DELTA", "1e-4"))
     dast_tau = float(os.getenv("ALZHEIMER_DAST_TAU", "1.0"))
     dast_gamma = float(os.getenv("ALZHEIMER_DAST_GAMMA", "1.5"))

@@ -1,0 +1,10 @@
+
+====================================================================================================
+RUN TAG: baseline_dast_tune_tau1p5_gamma1p5
+SCRIPT: ResNet_baseline.py
+LOSS: dast
+tau=1.5, gamma=1.5
+BATCH SIZE: 32
+START TIME: 2026-04-18T22:37:43
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\Alzheimer_MRI_Loss\batch_logs\dast_tuning_20260418_195536\baseline_dast_tune_tau1p5_gamma1p5.log
+====================================================================================================

@@ -1,0 +1,334 @@
+==========================================================================================
+Script: ResNet_baseline
+Run tag: baseline_dast_tune_tau1_gamma2
+Module: Baseline | Insert after: none
+Device: cuda
+CUDA: NVIDIA GeForce RTX 4080 SUPER
+Data root: E:\Paper\Computer-Vision-for-Medicine\Alzheimer_MRI\OriginalDataset
+Class order: ['NonDemented', 'VeryMildDemented', 'MildDemented', 'ModerateDemented'] (used for labels/QWK/MAE/ordinal losses)
+Config | batch_size=32, epochs=60, num_workers=2, image_size=224, base_lr=0.0001, test_ratio=0.2, val_ratio_within_train=0.1, patience=15
+Losses to run: ['dast']
+DAST config | tau=1.0000, gamma=2.0000
+==========================================================================================
+Split sizes | train=4608, valid=512, test=1280
+Classes (4): ['NonDemented', 'VeryMildDemented', 'MildDemented', 'ModerateDemented']
+Train class counts: [2304, 1613, 645, 46]
+Valid class counts: [256, 179, 72, 5]
+Test class counts : [640, 448, 179, 13]
+Loading torchvision ResNet50 pretrained weights once...
+Pretrained state keys: 320
+
+##########################################################################################
+Starting loss: dast
+##########################################################################################
+Model params: 23,516,228 | pretrained loaded: 320/320 | feat_dim=2048
+Criterion: DistanceAwareSoftTargetLoss
+Criterion trainable params: 0
+Criterion hparams | tau=1.0000, gamma=2.0000
+Epoch 01/60 | Time 0m23s
+  Train | loss=0.7333 | top1=45.23% | top2=75.52% | top3=87.83%
+  Valid | loss=0.7059 | top1=48.83% | top2=83.59% | top3=95.12% | acc=48.83% | bal_acc=24.67% | macro_f1=0.1788 | weighted_f1=0.3486 | precision_macro=0.1997 | recall_macro=0.2467 | qwk=-0.0006 | mae=0.6680
+        ovr_roc_auc_macro=0.5194 | ovr_pr_auc_macro=0.2576
+  -> best macro_f1 updated to 0.1788 (epoch 1)
+Epoch 02/60 | Time 0m23s
+  Train | loss=0.6673 | top1=48.16% | top2=84.98% | top3=95.68%
+  Valid | loss=0.6507 | top1=49.22% | top2=85.16% | top3=98.63% | acc=49.22% | bal_acc=24.78% | macro_f1=0.1752 | weighted_f1=0.3441 | precision_macro=0.1875 | recall_macro=0.2478 | qwk=0.0096 | mae=0.6602
+        ovr_roc_auc_macro=0.5595 | ovr_pr_auc_macro=0.2698
+Epoch 03/60 | Time 0m23s
+  Train | loss=0.6226 | top1=49.76% | top2=85.00% | top3=98.94%
+  Valid | loss=0.6144 | top1=50.39% | top2=84.96% | top3=99.02% | acc=50.39% | bal_acc=25.66% | macro_f1=0.1930 | weighted_f1=0.3696 | precision_macro=0.2458 | recall_macro=0.2566 | qwk=0.0072 | mae=0.6504
+        ovr_roc_auc_macro=0.6116 | ovr_pr_auc_macro=0.2973
+  -> best macro_f1 updated to 0.1930 (epoch 3)
+Epoch 04/60 | Time 0m23s
+  Train | loss=0.5950 | top1=50.13% | top2=85.00% | top3=99.00%
+  Valid | loss=0.5937 | top1=51.56% | top2=84.96% | top3=99.02% | acc=51.56% | bal_acc=26.37% | macro_f1=0.2028 | weighted_f1=0.3854 | precision_macro=0.2501 | recall_macro=0.2637 | qwk=0.0511 | mae=0.6270
+        ovr_roc_auc_macro=0.6504 | ovr_pr_auc_macro=0.3238
+  -> best macro_f1 updated to 0.2028 (epoch 4)
+Epoch 05/60 | Time 0m22s
+  Train | loss=0.5795 | top1=51.91% | top2=85.00% | top3=99.00%
+  Valid | loss=0.5806 | top1=52.15% | top2=84.96% | top3=99.02% | acc=52.15% | bal_acc=27.75% | macro_f1=0.2416 | weighted_f1=0.4394 | precision_macro=0.2414 | recall_macro=0.2775 | qwk=0.1341 | mae=0.5879
+        ovr_roc_auc_macro=0.6971 | ovr_pr_auc_macro=0.3615
+  -> best macro_f1 updated to 0.2416 (epoch 5)
+Epoch 06/60 | Time 0m22s
+  Train | loss=0.5673 | top1=54.36% | top2=85.03% | top3=99.00%
+  Valid | loss=0.5664 | top1=51.95% | top2=85.16% | top3=99.02% | acc=51.95% | bal_acc=28.20% | macro_f1=0.2526 | weighted_f1=0.4547 | precision_macro=0.2390 | recall_macro=0.2820 | qwk=0.1973 | mae=0.5625
+        ovr_roc_auc_macro=0.7291 | ovr_pr_auc_macro=0.4027
+  -> best macro_f1 updated to 0.2526 (epoch 6)
+Epoch 07/60 | Time 0m22s
+  Train | loss=0.5543 | top1=57.03% | top2=85.39% | top3=99.00%
+  Valid | loss=0.5559 | top1=54.69% | top2=87.89% | top3=99.02% | acc=54.69% | bal_acc=31.71% | macro_f1=0.2911 | weighted_f1=0.5090 | precision_macro=0.2717 | recall_macro=0.3171 | qwk=0.3453 | mae=0.4863
+        ovr_roc_auc_macro=0.7700 | ovr_pr_auc_macro=0.4452
+  -> best macro_f1 updated to 0.2911 (epoch 7)
+Epoch 08/60 | Time 0m23s
+  Train | loss=0.5464 | top1=57.90% | top2=86.15% | top3=99.00%
+  Valid | loss=0.5467 | top1=54.49% | top2=88.09% | top3=99.02% | acc=54.49% | bal_acc=31.57% | macro_f1=0.2898 | weighted_f1=0.5071 | precision_macro=0.2705 | recall_macro=0.3157 | qwk=0.3434 | mae=0.4883
+        ovr_roc_auc_macro=0.7820 | ovr_pr_auc_macro=0.4693
+Epoch 09/60 | Time 0m23s
+  Train | loss=0.5393 | top1=58.05% | top2=86.76% | top3=99.00%
+  Valid | loss=0.5395 | top1=55.47% | top2=88.67% | top3=99.02% | acc=55.47% | bal_acc=32.82% | macro_f1=0.2993 | weighted_f1=0.5204 | precision_macro=0.2865 | recall_macro=0.3282 | qwk=0.3930 | mae=0.4629
+        ovr_roc_auc_macro=0.7979 | ovr_pr_auc_macro=0.5369
+  -> best macro_f1 updated to 0.2993 (epoch 9)
+Epoch 10/60 | Time 0m23s
+  Train | loss=0.5327 | top1=59.05% | top2=87.35% | top3=99.00%
+  Valid | loss=0.5365 | top1=56.45% | top2=89.65% | top3=99.02% | acc=56.45% | bal_acc=33.34% | macro_f1=0.3175 | weighted_f1=0.5320 | precision_macro=0.5279 | recall_macro=0.3334 | qwk=0.3889 | mae=0.4648
+        ovr_roc_auc_macro=0.8063 | ovr_pr_auc_macro=0.5234
+  -> best macro_f1 updated to 0.3175 (epoch 10)
+Epoch 11/60 | Time 0m23s
+  Train | loss=0.5280 | top1=60.09% | top2=88.35% | top3=99.00%
+  Valid | loss=0.5306 | top1=57.81% | top2=88.67% | top3=99.02% | acc=58.01% | bal_acc=35.25% | macro_f1=0.3437 | weighted_f1=0.5555 | precision_macro=0.4563 | recall_macro=0.3525 | qwk=0.4337 | mae=0.4434
+        ovr_roc_auc_macro=0.8147 | ovr_pr_auc_macro=0.5371
+  -> best macro_f1 updated to 0.3437 (epoch 11)
+Epoch 12/60 | Time 0m23s
+  Train | loss=0.5181 | top1=60.31% | top2=88.67% | top3=99.00%
+  Valid | loss=0.5249 | top1=60.35% | top2=89.84% | top3=99.02% | acc=60.35% | bal_acc=38.42% | macro_f1=0.3871 | weighted_f1=0.5897 | precision_macro=0.4649 | recall_macro=0.3842 | qwk=0.4983 | mae=0.4141
+        ovr_roc_auc_macro=0.8277 | ovr_pr_auc_macro=0.5476
+  -> best macro_f1 updated to 0.3871 (epoch 12)
+Epoch 13/60 | Time 0m23s
+  Train | loss=0.5184 | top1=61.18% | top2=90.08% | top3=99.00%
+  Valid | loss=0.5204 | top1=61.13% | top2=88.87% | top3=99.02% | acc=61.13% | bal_acc=41.52% | macro_f1=0.4236 | weighted_f1=0.6091 | precision_macro=0.4711 | recall_macro=0.4152 | qwk=0.5394 | mae=0.4023
+        ovr_roc_auc_macro=0.8281 | ovr_pr_auc_macro=0.5274
+  -> best macro_f1 updated to 0.4236 (epoch 13)
+Epoch 14/60 | Time 0m23s
+  Train | loss=0.5092 | top1=62.67% | top2=90.08% | top3=99.00%
+  Valid | loss=0.5105 | top1=64.06% | top2=91.02% | top3=99.02% | acc=64.06% | bal_acc=43.11% | macro_f1=0.4398 | weighted_f1=0.6360 | precision_macro=0.5031 | recall_macro=0.4311 | qwk=0.5759 | mae=0.3691
+        ovr_roc_auc_macro=0.8464 | ovr_pr_auc_macro=0.5826
+  -> best macro_f1 updated to 0.4398 (epoch 14)
+Epoch 15/60 | Time 0m23s
+  Train | loss=0.5009 | top1=64.47% | top2=90.91% | top3=99.07%
+  Valid | loss=0.5067 | top1=65.23% | top2=91.02% | top3=99.22% | acc=65.23% | bal_acc=45.53% | macro_f1=0.4622 | weighted_f1=0.6508 | precision_macro=0.5108 | recall_macro=0.4553 | qwk=0.5785 | mae=0.3633
+        ovr_roc_auc_macro=0.8584 | ovr_pr_auc_macro=0.6088
+  -> best macro_f1 updated to 0.4622 (epoch 15)
+Epoch 16/60 | Time 0m23s
+  Train | loss=0.4875 | top1=67.12% | top2=92.21% | top3=99.26%
+  Valid | loss=0.4936 | top1=66.99% | top2=91.60% | top3=99.41% | acc=66.99% | bal_acc=47.27% | macro_f1=0.4825 | weighted_f1=0.6690 | precision_macro=0.5101 | recall_macro=0.4727 | qwk=0.6103 | mae=0.3477
+        ovr_roc_auc_macro=0.8700 | ovr_pr_auc_macro=0.6295
+  -> best macro_f1 updated to 0.4825 (epoch 16)
+Epoch 17/60 | Time 0m22s
+  Train | loss=0.4765 | top1=69.53% | top2=92.80% | top3=99.37%
+  Valid | loss=0.4873 | top1=69.73% | top2=92.38% | top3=99.22% | acc=69.73% | bal_acc=47.80% | macro_f1=0.4903 | weighted_f1=0.6885 | precision_macro=0.5163 | recall_macro=0.4780 | qwk=0.6131 | mae=0.3320
+        ovr_roc_auc_macro=0.8807 | ovr_pr_auc_macro=0.6333
+  -> best macro_f1 updated to 0.4903 (epoch 17)
+Epoch 18/60 | Time 0m23s
+  Train | loss=0.4668 | top1=71.09% | top2=93.84% | top3=99.59%
+  Valid | loss=0.4882 | top1=69.53% | top2=91.02% | top3=99.41% | acc=69.53% | bal_acc=50.67% | macro_f1=0.5037 | weighted_f1=0.6966 | precision_macro=0.5067 | recall_macro=0.5067 | qwk=0.6521 | mae=0.3242
+        ovr_roc_auc_macro=0.8844 | ovr_pr_auc_macro=0.6766
+  -> best macro_f1 updated to 0.5037 (epoch 18)
+Epoch 19/60 | Time 0m24s
+  Train | loss=0.4575 | top1=72.57% | top2=94.47% | top3=99.72%
+  Valid | loss=0.4712 | top1=71.48% | top2=92.97% | top3=99.41% | acc=71.48% | bal_acc=48.73% | macro_f1=0.4991 | weighted_f1=0.7086 | precision_macro=0.5360 | recall_macro=0.4873 | qwk=0.6581 | mae=0.3008
+        ovr_roc_auc_macro=0.8940 | ovr_pr_auc_macro=0.6822
+Epoch 20/60 | Time 0m25s
+  Train | loss=0.4450 | top1=75.15% | top2=95.62% | top3=99.74%
+  Valid | loss=0.4639 | top1=73.05% | top2=94.14% | top3=99.02% | acc=73.05% | bal_acc=52.79% | macro_f1=0.5298 | weighted_f1=0.7270 | precision_macro=0.5325 | recall_macro=0.5279 | qwk=0.7008 | mae=0.2852
+        ovr_roc_auc_macro=0.9017 | ovr_pr_auc_macro=0.6736
+  -> best macro_f1 updated to 0.5298 (epoch 20)
+Epoch 21/60 | Time 0m24s
+  Train | loss=0.4325 | top1=77.06% | top2=96.38% | top3=99.72%
+  Valid | loss=0.4559 | top1=74.02% | top2=94.34% | top3=99.22% | acc=74.02% | bal_acc=54.20% | macro_f1=0.5431 | weighted_f1=0.7377 | precision_macro=0.5451 | recall_macro=0.5420 | qwk=0.7210 | mae=0.2715
+        ovr_roc_auc_macro=0.9142 | ovr_pr_auc_macro=0.7490
+  -> best macro_f1 updated to 0.5431 (epoch 21)
+Epoch 22/60 | Time 0m23s
+  Train | loss=0.4267 | top1=78.91% | top2=96.64% | top3=99.72%
+  Valid | loss=0.4443 | top1=76.17% | top2=94.73% | top3=99.22% | acc=76.17% | bal_acc=55.74% | macro_f1=0.5540 | weighted_f1=0.7607 | precision_macro=0.5528 | recall_macro=0.5574 | qwk=0.7423 | mae=0.2500
+        ovr_roc_auc_macro=0.9279 | ovr_pr_auc_macro=0.7628
+  -> best macro_f1 updated to 0.5540 (epoch 22)
+Epoch 23/60 | Time 0m22s
+  Train | loss=0.4104 | top1=81.18% | top2=97.33% | top3=99.85%
+  Valid | loss=0.4314 | top1=78.71% | top2=95.90% | top3=99.80% | acc=78.71% | bal_acc=58.00% | macro_f1=0.5745 | weighted_f1=0.7847 | precision_macro=0.5696 | recall_macro=0.5800 | qwk=0.7758 | mae=0.2227
+        ovr_roc_auc_macro=0.9364 | ovr_pr_auc_macro=0.7902
+  -> best macro_f1 updated to 0.5745 (epoch 23)
+Epoch 24/60 | Time 0m22s
+  Train | loss=0.4045 | top1=82.47% | top2=97.79% | top3=99.87%
+  Valid | loss=0.4238 | top1=80.08% | top2=96.68% | top3=99.41% | acc=80.08% | bal_acc=58.64% | macro_f1=0.5870 | weighted_f1=0.7950 | precision_macro=0.5883 | recall_macro=0.5864 | qwk=0.7884 | mae=0.2090
+        ovr_roc_auc_macro=0.9430 | ovr_pr_auc_macro=0.8076
+  -> best macro_f1 updated to 0.5870 (epoch 24)
+Epoch 25/60 | Time 0m22s
+  Train | loss=0.3948 | top1=84.27% | top2=97.96% | top3=99.91%
+  Valid | loss=0.4150 | top1=82.23% | top2=96.09% | top3=99.41% | acc=82.23% | bal_acc=60.43% | macro_f1=0.6025 | weighted_f1=0.8200 | precision_macro=0.6034 | recall_macro=0.6043 | qwk=0.8031 | mae=0.1875
+        ovr_roc_auc_macro=0.9518 | ovr_pr_auc_macro=0.8181
+  -> best macro_f1 updated to 0.6025 (epoch 25)
+Epoch 26/60 | Time 0m24s
+  Train | loss=0.3862 | top1=85.94% | top2=98.52% | top3=99.98%
+  Valid | loss=0.4164 | top1=81.84% | top2=96.68% | top3=99.61% | acc=81.84% | bal_acc=60.23% | macro_f1=0.6006 | weighted_f1=0.8144 | precision_macro=0.5990 | recall_macro=0.6023 | qwk=0.8091 | mae=0.1895
+        ovr_roc_auc_macro=0.9496 | ovr_pr_auc_macro=0.8292
+Epoch 27/60 | Time 0m23s
+  Train | loss=0.3749 | top1=88.04% | top2=98.76% | top3=99.91%
+  Valid | loss=0.4126 | top1=81.25% | top2=96.68% | top3=99.61% | acc=81.25% | bal_acc=59.52% | macro_f1=0.5976 | weighted_f1=0.8077 | precision_macro=0.6006 | recall_macro=0.5952 | qwk=0.7856 | mae=0.2012
+        ovr_roc_auc_macro=0.9532 | ovr_pr_auc_macro=0.8142
+Epoch 28/60 | Time 0m23s
+  Train | loss=0.3714 | top1=88.61% | top2=99.00% | top3=99.98%
+  Valid | loss=0.4009 | top1=84.18% | top2=96.48% | top3=99.61% | acc=84.18% | bal_acc=61.95% | macro_f1=0.6186 | weighted_f1=0.8385 | precision_macro=0.6192 | recall_macro=0.6195 | qwk=0.8171 | mae=0.1699
+        ovr_roc_auc_macro=0.9615 | ovr_pr_auc_macro=0.8541
+  -> best macro_f1 updated to 0.6186 (epoch 28)
+Epoch 29/60 | Time 0m24s
+  Train | loss=0.3687 | top1=88.67% | top2=98.98% | top3=99.89%
+  Valid | loss=0.3948 | top1=85.55% | top2=97.07% | top3=99.61% | acc=85.55% | bal_acc=63.38% | macro_f1=0.6310 | weighted_f1=0.8519 | precision_macro=0.6287 | recall_macro=0.6338 | qwk=0.8374 | mae=0.1543
+        ovr_roc_auc_macro=0.9663 | ovr_pr_auc_macro=0.8745
+  -> best macro_f1 updated to 0.6310 (epoch 29)
+Epoch 30/60 | Time 0m24s
+  Train | loss=0.3618 | top1=90.26% | top2=99.11% | top3=99.93%
+  Valid | loss=0.3894 | top1=85.16% | top2=97.27% | top3=99.61% | acc=85.16% | bal_acc=62.48% | macro_f1=0.6271 | weighted_f1=0.8476 | precision_macro=0.6311 | recall_macro=0.6248 | qwk=0.8253 | mae=0.1602
+        ovr_roc_auc_macro=0.9681 | ovr_pr_auc_macro=0.8778
+Epoch 31/60 | Time 0m24s
+  Train | loss=0.3594 | top1=90.39% | top2=99.07% | top3=100.00%
+  Valid | loss=0.3893 | top1=85.74% | top2=97.07% | top3=99.61% | acc=85.74% | bal_acc=63.48% | macro_f1=0.6314 | weighted_f1=0.8537 | precision_macro=0.6282 | recall_macro=0.6348 | qwk=0.8399 | mae=0.1523
+        ovr_roc_auc_macro=0.9718 | ovr_pr_auc_macro=0.9170
+  -> best macro_f1 updated to 0.6314 (epoch 31)
+Epoch 32/60 | Time 0m24s
+  Train | loss=0.3516 | top1=91.95% | top2=99.48% | top3=100.00%
+  Valid | loss=0.3891 | top1=85.35% | top2=97.66% | top3=99.61% | acc=85.35% | bal_acc=62.87% | macro_f1=0.6271 | weighted_f1=0.8500 | precision_macro=0.6265 | recall_macro=0.6287 | qwk=0.8399 | mae=0.1543
+        ovr_roc_auc_macro=0.9706 | ovr_pr_auc_macro=0.9139
+Epoch 33/60 | Time 0m24s
+  Train | loss=0.3485 | top1=92.66% | top2=99.50% | top3=99.96%
+  Valid | loss=0.3773 | top1=87.70% | top2=98.05% | top3=99.61% | acc=87.70% | bal_acc=65.62% | macro_f1=0.6498 | weighted_f1=0.8732 | precision_macro=0.6439 | recall_macro=0.6562 | qwk=0.8646 | mae=0.1309
+        ovr_roc_auc_macro=0.9772 | ovr_pr_auc_macro=0.9229
+  -> best macro_f1 updated to 0.6498 (epoch 33)
+Epoch 34/60 | Time 0m23s
+  Train | loss=0.3459 | top1=93.06% | top2=99.61% | top3=99.98%
+  Valid | loss=0.3717 | top1=88.48% | top2=97.85% | top3=99.80% | acc=88.48% | bal_acc=70.21% | macro_f1=0.7365 | weighted_f1=0.8825 | precision_macro=0.9048 | recall_macro=0.7021 | qwk=0.8600 | mae=0.1270
+        ovr_roc_auc_macro=0.9795 | ovr_pr_auc_macro=0.9339
+  -> best macro_f1 updated to 0.7365 (epoch 34)
+Epoch 35/60 | Time 0m23s
+  Train | loss=0.3441 | top1=92.82% | top2=99.50% | top3=100.00%
+  Valid | loss=0.3730 | top1=89.06% | top2=98.05% | top3=99.80% | acc=89.06% | bal_acc=72.04% | macro_f1=0.7468 | weighted_f1=0.8889 | precision_macro=0.9070 | recall_macro=0.7204 | qwk=0.8681 | mae=0.1211
+        ovr_roc_auc_macro=0.9787 | ovr_pr_auc_macro=0.9335
+  -> best macro_f1 updated to 0.7468 (epoch 35)
+Epoch 36/60 | Time 0m23s
+  Train | loss=0.3396 | top1=93.97% | top2=99.70% | top3=99.98%
+  Valid | loss=0.3710 | top1=88.09% | top2=98.44% | top3=100.00% | acc=88.09% | bal_acc=70.35% | macro_f1=0.7351 | weighted_f1=0.8792 | precision_macro=0.9007 | recall_macro=0.7035 | qwk=0.8565 | mae=0.1309
+        ovr_roc_auc_macro=0.9793 | ovr_pr_auc_macro=0.9362
+Epoch 37/60 | Time 0m23s
+  Train | loss=0.3373 | top1=94.53% | top2=99.57% | top3=100.00%
+  Valid | loss=0.3694 | top1=89.45% | top2=98.44% | top3=99.80% | acc=89.45% | bal_acc=71.53% | macro_f1=0.7469 | weighted_f1=0.8925 | precision_macro=0.9120 | recall_macro=0.7153 | qwk=0.8701 | mae=0.1172
+        ovr_roc_auc_macro=0.9797 | ovr_pr_auc_macro=0.9467
+  -> best macro_f1 updated to 0.7469 (epoch 37)
+Epoch 38/60 | Time 0m24s
+  Train | loss=0.3344 | top1=94.77% | top2=99.70% | top3=100.00%
+  Valid | loss=0.3657 | top1=90.62% | top2=99.02% | top3=99.80% | acc=90.62% | bal_acc=72.53% | macro_f1=0.7554 | weighted_f1=0.9038 | precision_macro=0.9190 | recall_macro=0.7253 | qwk=0.8825 | mae=0.1055
+        ovr_roc_auc_macro=0.9818 | ovr_pr_auc_macro=0.9516
+  -> best macro_f1 updated to 0.7554 (epoch 38)
+Epoch 39/60 | Time 0m23s
+  Train | loss=0.3346 | top1=95.23% | top2=99.65% | top3=100.00%
+  Valid | loss=0.3664 | top1=90.62% | top2=98.05% | top3=99.61% | acc=90.62% | bal_acc=77.98% | macro_f1=0.8175 | weighted_f1=0.9057 | precision_macro=0.9200 | recall_macro=0.7798 | qwk=0.8879 | mae=0.1035
+        ovr_roc_auc_macro=0.9826 | ovr_pr_auc_macro=0.9515
+  -> best macro_f1 updated to 0.8175 (epoch 39)
+Epoch 40/60 | Time 0m24s
+  Train | loss=0.3323 | top1=95.53% | top2=99.76% | top3=100.00%
+  Valid | loss=0.3658 | top1=90.62% | top2=98.05% | top3=99.61% | acc=90.62% | bal_acc=78.60% | macro_f1=0.8174 | weighted_f1=0.9058 | precision_macro=0.9148 | recall_macro=0.7860 | qwk=0.8850 | mae=0.1055
+        ovr_roc_auc_macro=0.9829 | ovr_pr_auc_macro=0.9527
+Epoch 41/60 | Time 0m23s
+  Train | loss=0.3300 | top1=95.81% | top2=99.74% | top3=100.00%
+  Valid | loss=0.3644 | top1=90.23% | top2=98.63% | top3=100.00% | acc=90.23% | bal_acc=77.49% | macro_f1=0.8135 | weighted_f1=0.9009 | precision_macro=0.9180 | recall_macro=0.7749 | qwk=0.8816 | mae=0.1094
+        ovr_roc_auc_macro=0.9830 | ovr_pr_auc_macro=0.9534
+Epoch 42/60 | Time 0m23s
+  Train | loss=0.3279 | top1=96.01% | top2=99.80% | top3=100.00%
+  Valid | loss=0.3582 | top1=91.41% | top2=98.63% | top3=100.00% | acc=91.41% | bal_acc=73.63% | macro_f1=0.7632 | weighted_f1=0.9120 | precision_macro=0.9238 | recall_macro=0.7363 | qwk=0.8898 | mae=0.0977
+        ovr_roc_auc_macro=0.9851 | ovr_pr_auc_macro=0.9568
+Epoch 43/60 | Time 0m23s
+  Train | loss=0.3269 | top1=96.53% | top2=99.83% | top3=100.00%
+  Valid | loss=0.3594 | top1=91.02% | top2=98.44% | top3=99.80% | acc=91.02% | bal_acc=78.59% | macro_f1=0.8199 | weighted_f1=0.9092 | precision_macro=0.9196 | recall_macro=0.7859 | qwk=0.8993 | mae=0.0977
+        ovr_roc_auc_macro=0.9853 | ovr_pr_auc_macro=0.9702
+  -> best macro_f1 updated to 0.8199 (epoch 43)
+Epoch 44/60 | Time 0m23s
+  Train | loss=0.3263 | top1=96.70% | top2=99.78% | top3=100.00%
+  Valid | loss=0.3578 | top1=91.60% | top2=98.63% | top3=99.80% | acc=91.60% | bal_acc=77.72% | macro_f1=0.8215 | weighted_f1=0.9150 | precision_macro=0.9308 | recall_macro=0.7772 | qwk=0.8900 | mae=0.0957
+        ovr_roc_auc_macro=0.9858 | ovr_pr_auc_macro=0.9578
+  -> best macro_f1 updated to 0.8215 (epoch 44)
+Epoch 45/60 | Time 0m23s
+  Train | loss=0.3242 | top1=96.51% | top2=99.87% | top3=100.00%
+  Valid | loss=0.3569 | top1=91.41% | top2=98.44% | top3=99.80% | acc=91.41% | bal_acc=83.40% | macro_f1=0.8691 | weighted_f1=0.9138 | precision_macro=0.9293 | recall_macro=0.8340 | qwk=0.8909 | mae=0.0977
+        ovr_roc_auc_macro=0.9851 | ovr_pr_auc_macro=0.9579
+  -> best macro_f1 updated to 0.8691 (epoch 45)
+Epoch 46/60 | Time 0m24s
+  Train | loss=0.3248 | top1=96.74% | top2=99.87% | top3=100.00%
+  Valid | loss=0.3550 | top1=91.80% | top2=98.63% | top3=99.80% | acc=91.80% | bal_acc=83.47% | macro_f1=0.8710 | weighted_f1=0.9179 | precision_macro=0.9327 | recall_macro=0.8347 | qwk=0.9042 | mae=0.0898
+        ovr_roc_auc_macro=0.9861 | ovr_pr_auc_macro=0.9596
+  -> best macro_f1 updated to 0.8710 (epoch 46)
+Epoch 47/60 | Time 0m24s
+  Train | loss=0.3232 | top1=96.85% | top2=99.93% | top3=100.00%
+  Valid | loss=0.3555 | top1=91.80% | top2=98.44% | top3=99.80% | acc=91.80% | bal_acc=83.96% | macro_f1=0.8709 | weighted_f1=0.9176 | precision_macro=0.9280 | recall_macro=0.8396 | qwk=0.9014 | mae=0.0918
+        ovr_roc_auc_macro=0.9864 | ovr_pr_auc_macro=0.9737
+Epoch 48/60 | Time 0m24s
+  Train | loss=0.3222 | top1=97.05% | top2=99.87% | top3=100.00%
+  Valid | loss=0.3530 | top1=92.77% | top2=98.63% | top3=99.80% | acc=92.77% | bal_acc=84.08% | macro_f1=0.8771 | weighted_f1=0.9272 | precision_macro=0.9387 | recall_macro=0.8408 | qwk=0.9036 | mae=0.0840
+        ovr_roc_auc_macro=0.9874 | ovr_pr_auc_macro=0.9745
+  -> best macro_f1 updated to 0.8771 (epoch 48)
+Epoch 49/60 | Time 0m24s
+  Train | loss=0.3195 | top1=97.40% | top2=99.91% | top3=100.00%
+  Valid | loss=0.3536 | top1=92.77% | top2=98.63% | top3=99.80% | acc=92.77% | bal_acc=84.08% | macro_f1=0.8771 | weighted_f1=0.9272 | precision_macro=0.9387 | recall_macro=0.8408 | qwk=0.9036 | mae=0.0840
+        ovr_roc_auc_macro=0.9869 | ovr_pr_auc_macro=0.9742
+Epoch 50/60 | Time 0m24s
+  Train | loss=0.3208 | top1=97.18% | top2=99.91% | top3=100.00%
+  Valid | loss=0.3543 | top1=91.60% | top2=98.24% | top3=99.80% | acc=91.60% | bal_acc=83.87% | macro_f1=0.8697 | weighted_f1=0.9161 | precision_macro=0.9264 | recall_macro=0.8387 | qwk=0.9037 | mae=0.0918
+        ovr_roc_auc_macro=0.9872 | ovr_pr_auc_macro=0.9751
+Epoch 51/60 | Time 0m24s
+  Train | loss=0.3191 | top1=98.03% | top2=99.91% | top3=100.00%
+  Valid | loss=0.3511 | top1=92.77% | top2=98.44% | top3=99.80% | acc=92.77% | bal_acc=84.37% | macro_f1=0.8786 | weighted_f1=0.9273 | precision_macro=0.9386 | recall_macro=0.8437 | qwk=0.9037 | mae=0.0840
+        ovr_roc_auc_macro=0.9878 | ovr_pr_auc_macro=0.9763
+  -> best macro_f1 updated to 0.8786 (epoch 51)
+Epoch 52/60 | Time 0m24s
+  Train | loss=0.3198 | top1=97.42% | top2=100.00% | top3=100.00%
+  Valid | loss=0.3522 | top1=92.38% | top2=98.44% | top3=99.80% | acc=92.38% | bal_acc=84.55% | macro_f1=0.8777 | weighted_f1=0.9238 | precision_macro=0.9353 | recall_macro=0.8455 | qwk=0.9052 | mae=0.0859
+        ovr_roc_auc_macro=0.9877 | ovr_pr_auc_macro=0.9761
+Epoch 53/60 | Time 0m22s
+  Train | loss=0.3192 | top1=97.59% | top2=99.98% | top3=100.00%
+  Valid | loss=0.3526 | top1=92.97% | top2=98.24% | top3=99.80% | acc=92.97% | bal_acc=89.70% | macro_f1=0.9142 | weighted_f1=0.9298 | precision_macro=0.9373 | recall_macro=0.8970 | qwk=0.9169 | mae=0.0781
+        ovr_roc_auc_macro=0.9878 | ovr_pr_auc_macro=0.9760
+  -> best macro_f1 updated to 0.9142 (epoch 53)
+Epoch 54/60 | Time 0m23s
+  Train | loss=0.3198 | top1=97.22% | top2=99.89% | top3=100.00%
+  Valid | loss=0.3494 | top1=93.16% | top2=98.63% | top3=99.80% | acc=93.16% | bal_acc=89.72% | macro_f1=0.9163 | weighted_f1=0.9316 | precision_macro=0.9412 | recall_macro=0.8972 | qwk=0.9083 | mae=0.0801
+        ovr_roc_auc_macro=0.9887 | ovr_pr_auc_macro=0.9784
+  -> best macro_f1 updated to 0.9163 (epoch 54)
+Epoch 55/60 | Time 0m23s
+  Train | loss=0.3210 | top1=97.22% | top2=99.91% | top3=100.00%
+  Valid | loss=0.3520 | top1=93.16% | top2=98.63% | top3=99.80% | acc=93.16% | bal_acc=84.90% | macro_f1=0.8803 | weighted_f1=0.9315 | precision_macro=0.9370 | recall_macro=0.8490 | qwk=0.9182 | mae=0.0762
+        ovr_roc_auc_macro=0.9880 | ovr_pr_auc_macro=0.9770
+Epoch 56/60 | Time 0m23s
+  Train | loss=0.3205 | top1=97.48% | top2=99.89% | top3=100.00%
+  Valid | loss=0.3523 | top1=92.38% | top2=98.63% | top3=99.80% | acc=92.38% | bal_acc=84.42% | macro_f1=0.8755 | weighted_f1=0.9236 | precision_macro=0.9323 | recall_macro=0.8442 | qwk=0.9113 | mae=0.0840
+        ovr_roc_auc_macro=0.9877 | ovr_pr_auc_macro=0.9767
+Epoch 57/60 | Time 0m22s
+  Train | loss=0.3182 | top1=97.79% | top2=99.93% | top3=100.00%
+  Valid | loss=0.3507 | top1=93.16% | top2=98.44% | top3=99.80% | acc=93.16% | bal_acc=84.90% | macro_f1=0.8813 | weighted_f1=0.9314 | precision_macro=0.9390 | recall_macro=0.8490 | qwk=0.9076 | mae=0.0801
+        ovr_roc_auc_macro=0.9882 | ovr_pr_auc_macro=0.9771
+Epoch 58/60 | Time 0m22s
+  Train | loss=0.3200 | top1=97.72% | top2=99.87% | top3=99.98%
+  Valid | loss=0.3507 | top1=93.16% | top2=98.44% | top3=99.80% | acc=93.16% | bal_acc=84.90% | macro_f1=0.8811 | weighted_f1=0.9314 | precision_macro=0.9386 | recall_macro=0.8490 | qwk=0.9128 | mae=0.0781
+        ovr_roc_auc_macro=0.9881 | ovr_pr_auc_macro=0.9770
+Epoch 59/60 | Time 0m22s
+  Train | loss=0.3188 | top1=97.72% | top2=99.98% | top3=100.00%
+  Valid | loss=0.3529 | top1=92.77% | top2=98.44% | top3=99.80% | acc=92.77% | bal_acc=89.61% | macro_f1=0.9139 | weighted_f1=0.9279 | precision_macro=0.9377 | recall_macro=0.8961 | qwk=0.9097 | mae=0.0820
+        ovr_roc_auc_macro=0.9875 | ovr_pr_auc_macro=0.9764
+Epoch 60/60 | Time 0m22s
+  Train | loss=0.3183 | top1=97.72% | top2=99.98% | top3=100.00%
+  Valid | loss=0.3520 | top1=92.58% | top2=98.44% | top3=99.80% | acc=92.58% | bal_acc=84.65% | macro_f1=0.8769 | weighted_f1=0.9258 | precision_macro=0.9329 | recall_macro=0.8465 | qwk=0.9128 | mae=0.0820
+        ovr_roc_auc_macro=0.9881 | ovr_pr_auc_macro=0.9771
+
+[TEST] loss=dast
+  Test | loss=0.3439 | top1=92.34% | top2=99.45% | top3=100.00% | acc=92.34% | bal_acc=82.35% | macro_f1=0.8624 | weighted_f1=0.9232 | precision_macro=0.9362 | recall_macro=0.8235 | qwk=0.9282 | mae=0.0773
+        ovr_roc_auc_macro=0.9914 | ovr_pr_auc_macro=0.9586
+  Confusion Matrix:
+[[603  36   1   0]
+ [ 26 412  10   0]
+ [  0  19 160   0]
+ [  0   0   6   7]]
+  Classification Report:
+                  precision    recall  f1-score   support
+
+     NonDemented     0.9587    0.9422    0.9504       640
+VeryMildDemented     0.8822    0.9196    0.9005       448
+    MildDemented     0.9040    0.8939    0.8989       179
+ModerateDemented     1.0000    0.5385    0.7000        13
+
+        accuracy                         0.9234      1280
+       macro avg     0.9362    0.8235    0.8624      1280
+    weighted avg     0.9247    0.9234    0.9232      1280
+
+
+==========================================================================================
+Summary CSV saved: E:\Paper\Computer-Vision-for-Medicine\Alzheimer_MRI_Loss\logs\ResNet_baseline_baseline_dast_tune_tau1_gamma2_20260418_210435_summary.csv
+Top results by test_macro_f1:
+  dast: macro_f1=0.8624, acc=92.34%, bal_acc=82.35%
+Log file saved: E:\Paper\Computer-Vision-for-Medicine\Alzheimer_MRI_Loss\logs\ResNet_baseline_baseline_dast_tune_tau1_gamma2_20260418_210435.log
+==========================================================================================

@@ -1,0 +1,9 @@
+
+====================================================================================================
+RUN TAG: baseline_dast_tune_tau0p5_gamma2
+SCRIPT: ResNet_baseline+Loss4.py
+tau=0.5, gamma=2.0
+BATCH SIZE: 32
+START TIME: 2026-04-19T22:48:16
+LOG FILE: E:\Paper\Computer-Vision-for-Medicine\Knee\batch_logs\dast_tuning_20260419_224816\baseline_dast_tune_tau0p5_gamma2.log
+====================================================================================================
